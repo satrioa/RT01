@@ -5,13 +5,45 @@ import { formatRupiah, formatDateShort } from "@/lib/format";
 import { getPocketSummary } from "@/lib/data/transactions";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PocketPeriodFilter } from "@/components/pockets/pocket-period-filter";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Wallet, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function PocketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+function resolvePeriod(period: string | undefined, from: string | undefined, to: string | undefined): { period: "today" | "this_week" | "this_month" | "custom"; from: string; to: string } {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const today = fmt(now);
+  if (period === "today") return { period: "today", from: today, to: today };
+  if (period === "this_week") {
+    const day = now.getDay(); // 0 Sun
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { period: "this_week", from: fmt(monday), to: fmt(sunday) };
+  }
+  if (period === "custom" && from && to) return { period: "custom", from, to };
+  // default this_month
+  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  if (period === "custom") return { period: "custom", from: fmt(first), to: fmt(last) };
+  return { period: "this_month", from: fmt(first), to: fmt(last) };
+}
+
+export default async function PocketDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
+  const resolved = resolvePeriod(sp.period, sp.from, sp.to);
 
   if (!hasSupabaseEnv()) {
     return (
@@ -36,15 +68,18 @@ export default async function PocketDetailPage({ params }: { params: Promise<{ i
   const supabase = createServerClient();
   const summary = await getPocketSummary(id);
 
-  // Also fetch recent transactions for list
-  const { data: txs } = await supabase
+  // Fetch filtered transactions for list (periode filter ganti Tambah Transaksi)
+  let txQuery = supabase
     .from("transactions")
     .select("*, category:categories(name)")
     .eq("pocket_id", id)
     .eq("rt_id", DEV_RT_ID)
+    .gte("transaction_date", resolved.from)
+    .lte("transaction_date", resolved.to)
     .order("transaction_date", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(50);
+  const { data: txs } = await txQuery;
 
   const pocket = summary.pocket;
 
@@ -126,14 +161,15 @@ export default async function PocketDetailPage({ params }: { params: Promise<{ i
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="px-1 text-sm font-semibold">Transaksi terbaru</h2>
-              <Link href={`/transactions/new?pocket=${id}`}>
-                <Button size="sm" className="h-8 rounded-xl">Tambah Transaksi</Button>
-              </Link>
+              <h2 className="px-1 text-sm font-semibold">Transaksi</h2>
+              <span className="text-xs text-muted-foreground">
+                {resolved.period === "today" ? "Hari ini" : resolved.period === "this_week" ? "Minggu ini" : resolved.period === "this_month" ? "Bulan ini" : `${resolved.from} → ${resolved.to}`}
+              </span>
             </div>
+            <PocketPeriodFilter initialPeriod={resolved.period} initialFrom={resolved.from} initialTo={resolved.to} />
             {(!txs || txs.length === 0) ? (
               <Card className="border-dashed">
-                <CardContent className="p-6 text-center text-sm text-muted-foreground">Belum ada transaksi di kantong ini.</CardContent>
+                <CardContent className="p-6 text-center text-sm text-muted-foreground">Tidak ada transaksi di periode ini.</CardContent>
               </Card>
             ) : (
               (txs as unknown as { id: string; amount: string; type: string; description: string | null; transaction_date: string; category: { name: string } | null }[]).map((t) => (
