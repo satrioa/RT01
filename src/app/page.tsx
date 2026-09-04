@@ -62,10 +62,6 @@ export default async function Page() {
             </div>
             <RecentTransactions transactions={data.recentTransactions} transfers={data.recentTransfers} />
           </section>
-
-          <p className="pb-2 text-center text-[11px] tracking-wide text-muted-foreground">
-            Transfer tidak mempengaruhi total saldo
-          </p>
         </main>
 
         <BottomNavSpacer />

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Receipt, BarChart3, Settings, Plus } from "lucide-react";
+import { motion, type Transition } from "framer-motion";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -18,60 +20,127 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
+const dockSpring: Transition = {
+  stiffness: 300,
+  damping: 22,
+  mass: 0.7,
+};
+
 export function BottomNav() {
   const pathname = usePathname();
+  const [animateId, setAnimateId] = useState<string | null>(null);
+
+  const handleClick = (id: string) => {
+    setAnimateId(id);
+    setTimeout(() => setAnimateId(null), 200);
+  };
 
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-30 mx-auto flex w-full max-w-[430px] items-center justify-around border-t bg-card px-1 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+      className="fixed inset-x-0 bottom-0 z-30 flex w-full justify-center bg-transparent px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2"
     >
-      {NAV.slice(0, 2).map((item) => {
-        const active = isActive(pathname, item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[11px] font-medium transition-colors",
-              active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <item.icon className="size-5" strokeWidth={active ? 2.4 : 1.8} />
-            {item.label}
-          </Link>
-        );
-      })}
-
-      {/* FAB — centered + action */}
-      <Link
-        href="/transactions/new"
-        aria-label="Tambah transaksi"
-        className="flex size-12 -translate-y-2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background transition-transform hover:scale-105 active:scale-95"
+      <motion.div
+        layout
+        transition={dockSpring}
+        className="relative flex items-end gap-3.5 rounded-3xl border-[1.5px] border-[#E5E5E9] bg-white px-3 py-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <Plus className="size-6" />
-      </Link>
+        {NAV.slice(0, 2).map((item) => {
+          const active = isActive(pathname, item.href);
+          return (
+            <motion.div
+              key={item.href}
+              className="relative"
+              onClick={() => handleClick(item.href)}
+              style={{ transformOrigin: "bottom" }}
+              whileHover={{ y: -4 }}
+              animate={{
+                scale: animateId === item.href ? 1.3 : 1,
+                y: animateId === item.href ? -6 : 0,
+              }}
+              transition={{ type: "spring", stiffness: 550, damping: 15, mass: 1.1 }}
+            >
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-md transition-colors",
+                  active ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "bg-[#F4F4FB] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-600"
+                )}
+              >
+                <item.icon className={cn("size-5", active && "text-white dark:text-zinc-900")} strokeWidth={active ? 2.2 : 1.8} />
+              </Link>
+              <motion.div
+                className={cn(
+                  "absolute mt-1 flex w-full items-center justify-center opacity-0 transition-opacity duration-300",
+                  active && "opacity-100"
+                )}
+              >
+                <div className="size-1 rounded-full bg-zinc-900 dark:bg-zinc-100" />
+              </motion.div>
+            </motion.div>
+          );
+        })}
 
-      {NAV.slice(2).map((item) => {
-        const active = isActive(pathname, item.href);
-        return (
+        <motion.div
+          className="relative"
+          onClick={() => handleClick("fab")}
+          style={{ transformOrigin: "bottom" }}
+          whileHover={{ y: -4 }}
+          animate={{
+            scale: animateId === "fab" ? 1.3 : 1,
+            y: animateId === "fab" ? -6 : 0,
+          }}
+          transition={{ type: "spring", stiffness: 550, damping: 15, mass: 1.1 }}
+        >
           <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[11px] font-medium transition-colors",
-              active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
+            href="/transactions/new"
+            aria-label="Tambah transaksi"
+            className="flex size-10 items-center justify-center rounded-md bg-zinc-900 text-white shadow-md dark:bg-zinc-100 dark:text-zinc-900"
           >
-            <item.icon className="size-5" strokeWidth={active ? 2.4 : 1.8} />
-            {item.label}
+            <Plus className="size-5" />
           </Link>
-        );
-      })}
+        </motion.div>
+
+        {NAV.slice(2).map((item) => {
+          const active = isActive(pathname, item.href);
+          return (
+            <motion.div
+              key={item.href}
+              className="relative"
+              onClick={() => handleClick(item.href)}
+              style={{ transformOrigin: "bottom" }}
+              whileHover={{ y: -4 }}
+              animate={{
+                scale: animateId === item.href ? 1.3 : 1,
+                y: animateId === item.href ? -6 : 0,
+              }}
+              transition={{ type: "spring", stiffness: 550, damping: 15, mass: 1.1 }}
+            >
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-md transition-colors",
+                  active ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900" : "bg-[#F4F4FB] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-600"
+                )}
+              >
+                <item.icon className={cn("size-5", active && "text-white dark:text-zinc-900")} strokeWidth={active ? 2.2 : 1.8} />
+              </Link>
+              <motion.div
+                className={cn(
+                  "absolute mt-1 flex w-full items-center justify-center opacity-0 transition-opacity duration-300",
+                  active && "opacity-100"
+                )}
+              >
+                <div className="size-1 rounded-full bg-zinc-900 dark:bg-zinc-100" />
+              </motion.div>
+            </motion.div>
+          );
+        })}
+      </motion.div>
     </nav>
   );
 }
 
 export function BottomNavSpacer() {
-  return <div aria-hidden className="h-[72px] shrink-0" />;
+  return <div aria-hidden className="h-[88px] shrink-0" />;
 }
