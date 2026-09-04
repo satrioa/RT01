@@ -228,7 +228,18 @@ async function parseForRt(trimmed: string, rtId: string) {
   try {
     raw = await provider.parse(trimmed, ctx);
   } catch (e) {
-    return { type: "error" as const, error: e instanceof Error ? e.message : "Gagal parse AI" };
+    const msg = e instanceof Error ? e.message : "Gagal parse AI";
+    const isAuthError = msg.includes("401") || msg.toLowerCase().includes("user not found") || msg.toLowerCase().includes("unauthorized");
+    if (isAuthError) {
+      try {
+        const fallback = new MockProvider();
+        raw = await fallback.parse(trimmed, ctx);
+      } catch {
+        return { type: "error" as const, error: msg };
+      }
+    } else {
+      return { type: "error" as const, error: msg };
+    }
   }
 
   // Reuse same validation as parser.ts — simplified

@@ -77,16 +77,63 @@ export async function parseSmartInput(rawInput: string): Promise<SmartParseResul
 
   const ctx = await getContext();
 
-  // Choose provider
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  const provider = apiKey ? new OpenRouterProvider(apiKey) : new MockProvider();
+  // Provider/model from DB (per RT) with env fallback
+  let providerId: string = "openrouter";
+  let modelId: string | undefined;
+  try {
+    const { data: s } = await createServerClient().from("rt_ai_settings").select("provider, model, is_enabled").eq("rt_id", DEV_RT_ID).maybeSingle();
+    if (s) {
+      const row = s as unknown as { provider: string; model: string; is_enabled: boolean };
+      if (row.is_enabled === false) {
+        return { type: "error", error: "AI dimatikan di Pengaturan. Aktifkan dulu." };
+      }
+      providerId = row.provider;
+      modelId = row.model;
+    } else {
+      providerId = process.env.AI_PROVIDER ?? "openrouter";
+      modelId = process.env.OPENROUTER_MODEL;
+    }
+  } catch {
+    providerId = process.env.AI_PROVIDER ?? "openrouter";
+    modelId = process.env.OPENROUTER_MODEL;
+  }
+
+  let provider: import("./provider").AiProvider;
+  if (providerId === "mock") {
+    provider = new MockProvider();
+  } else {
+    const envKeyMap: Record<string, string | undefined> = {
+      openrouter: process.env.OPENROUTER_API_KEY,
+      openai: process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_API_KEY,
+      anthropic: process.env.ANTHROPIC_API_KEY ?? process.env.OPENROUTER_API_KEY,
+    };
+    const apiKey = envKeyMap[providerId] ?? process.env.OPENROUTER_API_KEY;
+    const model = modelId ?? process.env.OPENROUTER_MODEL ?? "google/gemini-2.0-flash-001";
+    if (!apiKey) {
+      provider = new MockProvider();
+    } else {
+      provider = new OpenRouterProvider(apiKey, model);
+    }
+  }
 
   let raw: AiParsedResult;
   try {
     raw = await provider.parse(input, ctx);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Gagal parse AI";
-    return { type: "error", error: msg };
+    // Fallback to Mock on auth errors — keep app usable with bad/missing key
+    const isAuthError = msg.includes("401") || msg.toLowerCase().includes("user not found") || msg.toLowerCase().includes("unauthorized");
+    if (isAuthError && providerId !== "mock") {
+      try {
+        const fallback = new MockProvider();
+        raw = await fallback.parse(input, ctx);
+        // continue to validation with fallback result — intentionally not returning error
+      } catch {
+        return { type: "error", error: `${msg} (fallback Mock juga gagal)` };
+      }
+    } else {
+      return { type: "error", error: msg };
+    }
   }
 
   // Validate & enrich — never invent
