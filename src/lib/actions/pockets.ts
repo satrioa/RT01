@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentRtId } from "@/lib/auth";
-import { pocketSchema } from "@/lib/validations/pocket";
+import { pocketSchema, pocketUpdateSchema } from "@/lib/validations/pocket";
 
 export type PocketActionResult = { ok: boolean; error?: string; id?: string };
 
@@ -18,8 +18,9 @@ function parseAmountToNumber(raw: FormDataEntryValue | null): number {
 }
 
 function parsePocketForm(formData: FormData) {
+  const rawName = formData.get("name") as string | null;
   const raw: Record<string, unknown> = {
-    name: formData.get("name"),
+    name: rawName ?? undefined,
     description: (formData.get("description") as string) || null,
     icon: (formData.get("icon") as string) || null,
     color: (formData.get("color") as string) || null,
@@ -27,7 +28,6 @@ function parsePocketForm(formData: FormData) {
     is_active: formData.get("is_active") === "false" ? false : true,
     sort_order: Number(formData.get("sort_order") ?? 0),
   };
-  // coerce empty strings to null for optional fields
   if (raw.description === "") raw.description = null;
   if (raw.icon === "") raw.icon = null;
   if (raw.color === "") raw.color = null;
@@ -68,8 +68,8 @@ export async function createPocketAction(formData: FormData): Promise<PocketActi
 
 export async function updatePocketAction(id: string, formData: FormData): Promise<PocketActionResult> {
   const raw = parsePocketForm(formData);
-  // allow partial but require name
-  const parsed = pocketSchema.safeParse(raw);
+  // allow partial updates — require at least name if present
+  const parsed = pocketUpdateSchema.safeParse(raw);
   if (!parsed.success) {
     const msg = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     return { ok: false, error: msg };
@@ -83,7 +83,13 @@ export async function updatePocketAction(id: string, formData: FormData): Promis
   if (!existing) return { ok: false, error: "Kantong tidak ditemukan" };
   if ((existing as { rt_id: string }).rt_id !== rtId) return { ok: false, error: "Bukan kantong RT Anda" };
 
-  const { error } = await supabase.from("pockets").update(parsed.data).eq("id", id);
+  const updateData: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(parsed.data)) {
+    if (v !== undefined) updateData[k] = v;
+  }
+  if (Object.keys(updateData).length === 0) return { ok: false, error: "Tidak ada data untuk diperbarui" };
+
+  const { error } = await supabase.from("pockets").update(updateData).eq("id", id);
 
   if (error) {
     if (String(error.message).includes("duplicate") || String(error.code) === "23505") {

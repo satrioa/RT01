@@ -14,4 +14,8 @@ export const pocketSchema = z.object({
   sort_order: z.number().int().min(0).default(0),
 });
 
+export const pocketUpdateSchema = pocketSchema.partial().extend({
+  name: z.string().trim().min(1, "Name is required").max(50).optional(),
+});
+
 export type PocketInput = z.infer<typeof pocketSchema>;

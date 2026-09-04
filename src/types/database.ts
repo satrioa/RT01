@@ -98,6 +98,18 @@ export interface TransactionAttachment {
   created_at: string;
 }
 
+export type AiProviderId = "openrouter" | "openai" | "anthropic" | "mock";
+
+export interface RtAiSettings {
+  id: string;
+  rt_id: string;
+  provider: AiProviderId;
+  model: string;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // ---------------------------------------------------------------------------
 // Views / derived
 // ---------------------------------------------------------------------------

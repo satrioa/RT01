@@ -128,154 +128,123 @@ export function SmartInput() {
         </CardContent>
       </Card>
 
-      {/* Deterministic answer */}
-      {result?.type === "deterministic" && (
-        <Card className="border-success/20 bg-success/5">
-          <CardContent className="p-4">
-            <div className="flex gap-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success">
-                <Wallet className="size-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">Jawaban</p>
-                <p className="mt-1 text-sm leading-relaxed">{result.answer}</p>
-                <Button variant="ghost" size="sm" className="mt-2 h-7 rounded-xl px-3 text-xs" onClick={handleCancel}>
-                  Tutup
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Confirmation overlay */}
+        {result && (result.type === "deterministic" || result.type === "needs_confirmation" || result.type === "transaction" || result.type === "transfer" || result.type === "error") && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={handleCancel}>
+            <div className="w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+              {/* Deterministic answer */}
+              {result.type === "deterministic" && (
+                <Card className="border-success/20 bg-success/5">
+                  <CardContent className="p-4">
+                    <div className="flex gap-3">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success">
+                        <Wallet className="size-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold">Jawaban</p>
+                        <p className="mt-1 text-sm leading-relaxed">{result.answer}</p>
+                        <Button variant="ghost" size="sm" className="mt-2 h-7 rounded-xl px-3 text-xs" onClick={handleCancel}>
+                          Tutup
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-      {/* Needs confirmation */}
-      {result?.type === "needs_confirmation" && (
-        <Card className="border-warning/20 bg-warning/5">
-          <CardContent className="p-4">
-            <div className="flex gap-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-warning/15 text-warning">
-                <AlertTriangle className="size-4" />
-              </span>
-              <div className="min-w-0 flex-1 space-y-2">
-                <p className="text-sm font-semibold">Perlu konfirmasi</p>
-                {result.data.questions.map((q, i) => (
-                  <p key={i} className="text-sm leading-relaxed">
-                    {q}
-                  </p>
-                ))}
-                {result.data.options && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {result.data.options.map((opt) => (
-                      <Badge key={opt} variant="outline" className="rounded-full">
-                        {opt}
+              {/* Needs confirmation */}
+              {result.type === "needs_confirmation" && (
+                <Card className="border-warning/20 bg-warning/5">
+                  <CardContent className="p-4">
+                    <div className="flex gap-3">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-warning/15 text-warning">
+                        <AlertTriangle className="size-4" />
+                      </span>
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <p className="text-sm font-semibold">Perlu konfirmasi</p>
+                        {result.data.questions.map((q, i) => (
+                          <p key={i} className="text-sm leading-relaxed">{q}</p>
+                        ))}
+                        {result.data.options && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {result.data.options.map((opt) => (
+                              <Badge key={opt} variant="outline" className="rounded-full">{opt}</Badge>
+                            ))}
+                          </div>
+                        )}
+                        {result.data.partial && (
+                          <p className="text-xs text-muted-foreground">Terdeteksi: {JSON.stringify(result.data.partial)}</p>
+                        )}
+                        <div className="flex gap-2 pt-1">
+                          <Button variant="outline" size="sm" className="rounded-xl" onClick={handleCancel}>Tutup</Button>
+                          <Button size="sm" className="rounded-xl" onClick={() => toast({ title: "Lengkapi di form", description: "Buka Tambah Transaksi untuk melengkapi kantong yang hilang." })}>Buka Form</Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Transaction confirmation */}
+              {result.type === "transaction" && (
+                <Card className="border">
+                  <CardContent className="p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <Badge variant={result.data.type === "income" ? "success" : "destructive"} className="rounded-full">
+                        {result.data.type === "income" ? "Pemasukan" : "Pengeluaran"}
                       </Badge>
-                    ))}
-                  </div>
-                )}
-                {result.data.partial && (
-                  <p className="text-xs text-muted-foreground">Terdeteksi: {JSON.stringify(result.data.partial)}</p>
-                )}
-                <div className="flex gap-2 pt-1">
-                  <Button variant="outline" size="sm" className="rounded-xl" onClick={handleCancel}>
-                    Tutup
-                  </Button>
-                  <Button size="sm" className="rounded-xl" onClick={() => toast({ title: "Lengkapi di form", description: "Buka Tambah Transaksi untuk melengkapi kantong yang hilang." })}>
-                    Buka Form
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                      <span className="text-xs text-muted-foreground">conf {(result.data.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                    <p className="text-2xl font-bold tabular-nums">{formatRupiah(result.data.amount)}</p>
+                    <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-3 text-sm">
+                      <div><p className="text-xs text-muted-foreground">Kantong</p><p className="font-medium">{result.data.pocket}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Kategori</p><p className="font-medium">{result.data.category ?? "—"}</p></div>
+                      <div className="col-span-2"><p className="text-xs text-muted-foreground">Deskripsi</p><p className="font-medium">{result.data.description ?? "—"}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Tanggal</p><p className="font-medium">{result.data.transaction_date ?? "Hari ini"}</p></div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <Button variant="outline" className="rounded-xl" onClick={handleCancel} disabled={saving}><X className="size-4" /> Batal</Button>
+                      <Button className="rounded-xl" onClick={handleConfirmTransaction} disabled={saving}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Simpan</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-      {/* Transaction confirmation */}
-      {result?.type === "transaction" && (
-        <Card className="border">
-          <CardContent className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <Badge variant={result.data.type === "income" ? "success" : "destructive"} className="rounded-full">
-                {result.data.type === "income" ? "Pemasukan" : "Pengeluaran"}
-              </Badge>
-              <span className="text-xs text-muted-foreground">conf {(result.data.confidence * 100).toFixed(0)}%</span>
-            </div>
-            <p className="text-2xl font-bold tabular-nums">{formatRupiah(result.data.amount)}</p>
-            <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-3 text-sm">
-              <div>
-                <p className="text-xs text-muted-foreground">Kantong</p>
-                <p className="font-medium">{result.data.pocket}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Kategori</p>
-                <p className="font-medium">{result.data.category ?? "—"}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-xs text-muted-foreground">Deskripsi</p>
-                <p className="font-medium">{result.data.description ?? "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Tanggal</p>
-                <p className="font-medium">{result.data.transaction_date ?? "Hari ini"}</p>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button variant="outline" className="rounded-xl" onClick={handleCancel} disabled={saving}>
-                <X className="size-4" /> Batal
-              </Button>
-              <Button className="rounded-xl" onClick={handleConfirmTransaction} disabled={saving}>
-                {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Simpan
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              {/* Transfer confirmation */}
+              {result.type === "transfer" && (
+                <Card className="border">
+                  <CardContent className="p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <Badge variant="outline" className="rounded-full">Pindah Kantong</Badge>
+                      <span className="text-xs text-muted-foreground">conf {(result.data.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                    <p className="text-2xl font-bold tabular-nums">{formatRupiah(result.data.amount)}</p>
+                    <p className="text-xs text-muted-foreground">Transfer tidak mengubah total saldo RT.</p>
+                    <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-3 text-sm">
+                      <div><p className="text-xs text-muted-foreground">Dari</p><p className="font-medium">{result.data.from_pocket}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Ke</p><p className="font-medium">{result.data.to_pocket}</p></div>
+                      <div className="col-span-2"><p className="text-xs text-muted-foreground">Catatan</p><p className="font-medium">{result.data.description ?? "—"}</p></div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <Button variant="outline" className="rounded-xl" onClick={handleCancel} disabled={saving}><X className="size-4" /> Batal</Button>
+                      <Button className="rounded-xl" onClick={handleConfirmTransfer} disabled={saving}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Simpan</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-      {/* Transfer confirmation */}
-      {result?.type === "transfer" && (
-        <Card className="border">
-          <CardContent className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <Badge variant="outline" className="rounded-full">
-                Pindah Kantong
-              </Badge>
-              <span className="text-xs text-muted-foreground">conf {(result.data.confidence * 100).toFixed(0)}%</span>
+              {/* Error */}
+              {result.type === "error" && (
+                <Card className="border-destructive/30 bg-destructive/5">
+                  <CardContent className="flex gap-3 p-4">
+                    <AlertTriangle className="size-4 shrink-0 text-destructive" />
+                    <p className="text-sm leading-relaxed text-destructive">{result.error}</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
-            <p className="text-2xl font-bold tabular-nums">{formatRupiah(result.data.amount)}</p>
-            <p className="text-xs text-muted-foreground">Transfer tidak mengubah total saldo RT.</p>
-            <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-3 text-sm">
-              <div>
-                <p className="text-xs text-muted-foreground">Dari</p>
-                <p className="font-medium">{result.data.from_pocket}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Ke</p>
-                <p className="font-medium">{result.data.to_pocket}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-xs text-muted-foreground">Catatan</p>
-                <p className="font-medium">{result.data.description ?? "—"}</p>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button variant="outline" className="rounded-xl" onClick={handleCancel} disabled={saving}>
-                <X className="size-4" /> Batal
-              </Button>
-              <Button className="rounded-xl" onClick={handleConfirmTransfer} disabled={saving}>
-                {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Simpan
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {result?.type === "error" && (
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="flex gap-3 p-4">
-            <AlertTriangle className="size-4 shrink-0 text-destructive" />
-            <p className="text-sm leading-relaxed text-destructive">{result.error}</p>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
     </div>
   );
 }

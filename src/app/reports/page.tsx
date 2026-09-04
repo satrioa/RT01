@@ -3,7 +3,7 @@ import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { DetailKpiCards } from "@/components/reports/detail-kpi-cards";
-import { MonthlyChart } from "@/components/reports/monthly-chart";
+import { Gauge } from "@/components/charts/gauge";
 import { CategoryBreakdown } from "@/components/reports/category-breakdown";
 import { PocketBreakdown } from "@/components/reports/pocket-breakdown";
 import { TransactionRow } from "@/components/transactions/transaction-row";
@@ -24,6 +24,8 @@ export default async function ReportsPage({
   const data = await getReportsData({ range, customFrom: sp.from, customTo: sp.to });
 
   const hasTx = data.transactions.length > 0;
+  const total = data.totalIncome + data.totalExpense;
+  const incomePercent = total > 0 ? Math.round((data.totalIncome / total) * 100) : 0;
 
   return (
     <div className="min-h-dvh bg-background">
@@ -67,12 +69,33 @@ export default async function ReportsPage({
             />
           </section>
 
-          {/* Monthly overview — lightweight chart */}
+          {/* Perbandingan — gauge */}
           <section className="space-y-3">
             <h2 className="px-1 text-sm font-semibold">Perbandingan</h2>
             <Card>
               <CardContent className="p-4">
-                <MonthlyChart totalIncome={data.totalIncome} totalExpense={data.totalExpense} label={data.rangeLabel} />
+                <Gauge
+                  centerValue={data.totalIncome}
+                  defaultLabel="Pemasukan"
+                  endAngle={360}
+                  formatOptions={{ style: "currency", currency: "IDR", maximumFractionDigits: 0 } as unknown as Record<string, unknown> & { maximumFractionDigits: number }}
+                  inactiveFillOpacity={0.4}
+                  spacing={60}
+                  startAngle={180}
+                  totalNotches={33}
+                  value={incomePercent}
+                />
+                <div className="mt-3 grid grid-cols-2 gap-2 text-center text-xs">
+                  <div className="rounded-xl bg-success/10 p-2">
+                    <p className="text-muted-foreground">Pemasukan</p>
+                    <p className="font-semibold text-success">{incomePercent}%</p>
+                  </div>
+                  <div className="rounded-xl bg-destructive/10 p-2">
+                    <p className="text-muted-foreground">Pengeluaran</p>
+                    <p className="font-semibold text-destructive">{total > 0 ? 100 - incomePercent : 0}%</p>
+                  </div>
+                </div>
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">{data.rangeLabel} • Total {total.toLocaleString("id-ID")}</p>
               </CardContent>
             </Card>
           </section>

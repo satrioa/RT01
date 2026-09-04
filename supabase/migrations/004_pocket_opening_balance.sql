@@ -10,8 +10,9 @@ alter table public.pockets
 
 comment on column public.pockets.opening_balance is 'Saldo awal kantong saat dibuat — ikut hitung balance. Default 0.';
 
--- Recreate pocket_balances view to include opening_balance
-create or replace view public.pocket_balances as
+-- Recreate pocket_balances view to include opening_balance (drop first to allow column reorder)
+drop view if exists public.pocket_balances;
+create view public.pocket_balances as
 select
   p.id,
   p.rt_id,
