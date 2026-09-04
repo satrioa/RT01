@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,12 +35,22 @@ export function TransactionForm({
     [categories, type]
   );
 
+  const [pocketId, setPocketId] = React.useState<string>(defaultPocketId ?? pockets[0]?.id ?? "");
+  const [categoryId, setCategoryId] = React.useState<string>("__none__");
+
+  React.useEffect(() => {
+    setPocketId(defaultPocketId ?? pockets[0]?.id ?? "");
+  }, [defaultPocketId, pockets]);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true);
     const fd = new FormData(e.currentTarget);
-    // Force type to current tab
+    // Force type to current tab + shadcn Select values (hidden inputs already in FormData, but ensure)
     fd.set("type", type);
+    fd.set("pocket_id", pocketId);
+    if (categoryId && categoryId !== "__none__") fd.set("category_id", categoryId);
+    else fd.delete("category_id");
     const res = await createTransactionAction(fd);
     setSubmitting(false);
     if (res.ok) {
@@ -73,17 +83,20 @@ export function TransactionForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="pocket_id">Kantong *</Label>
-        <Select name="pocket_id" id="pocket_id" required defaultValue={defaultPocketId ?? pockets[0]?.id ?? ""}>
-          <option value="" disabled>
-            Pilih kantong
-          </option>
-          {pockets.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} — {p.is_active ? "Aktif" : "Arsip"}
-            </option>
-          ))}
+        <Label>Kantong *</Label>
+        <Select value={pocketId} onValueChange={setPocketId} required>
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih kantong" />
+          </SelectTrigger>
+          <SelectContent>
+            {pockets.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.name} — {p.is_active ? "Aktif" : "Arsip"}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
+        <input type="hidden" name="pocket_id" value={pocketId} />
       </div>
 
       <div className="space-y-2">
@@ -93,15 +106,21 @@ export function TransactionForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="category_id">Kategori</Label>
-        <Select name="category_id" id="category_id" defaultValue="">
-          <option value="">Tanpa kategori</option>
-          {filteredCategories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} ({c.type})
-            </option>
-          ))}
+        <Label>Kategori</Label>
+        <Select value={categoryId} onValueChange={setCategoryId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Tanpa kategori" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">Tanpa kategori</SelectItem>
+            {filteredCategories.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name} ({c.type})
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
+        <input type="hidden" name="category_id" value={categoryId === "__none__" ? "" : categoryId} />
       </div>
 
       <div className="space-y-2">

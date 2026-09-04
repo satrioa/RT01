@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { OverviewCards } from "@/components/reports/overview-cards";
 import { MonthlyChart } from "@/components/reports/monthly-chart";
 import { CategoryBreakdown } from "@/components/reports/category-breakdown";
 import { PocketBreakdown } from "@/components/reports/pocket-breakdown";
 import { TransactionRow } from "@/components/transactions/transaction-row";
+import { ReportsFilter } from "@/components/reports/reports-filter";
 import { getReportsData, type DateRange } from "@/lib/data/reports";
 import { AlertTriangle, BarChart3 } from "lucide-react";
 
@@ -43,40 +41,7 @@ export default async function ReportsPage({
         </header>
 
         <main className="flex flex-1 flex-col gap-6 p-5 pb-6">
-          {/* Date range selector — GET form, no JS required, readable at 375px */}
-          <form method="GET" className="space-y-3 rounded-[20px] border bg-card p-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">Periode</label>
-                <Select name="range" defaultValue={range}>
-                  <option value="this_month">Bulan ini</option>
-                  <option value="last_month">Bulan lalu</option>
-                  <option value="this_year">Tahun ini</option>
-                  <option value="custom">Custom</option>
-                </Select>
-              </div>
-              <div className="flex flex-col justify-end">
-                <Button type="submit" size="sm" className="rounded-xl">
-                  Terapkan
-                </Button>
-              </div>
-            </div>
-            {range === "custom" && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Dari</label>
-                  <Input type="date" name="from" defaultValue={data.from} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Sampai</label>
-                  <Input type="date" name="to" defaultValue={data.to} />
-                </div>
-              </div>
-            )}
-            <p className="text-center text-[11px] text-muted-foreground">
-              {data.from} → {data.to} • Transfer tidak dihitung
-            </p>
-          </form>
+          <ReportsFilter initialRange={range} initialFrom={data.from} initialTo={data.to} />
 
           {data.error && (
             <Card className="border-warning/30 bg-warning/5">

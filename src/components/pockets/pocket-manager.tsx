@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toaster";
 import {
   Drawer,
@@ -33,12 +34,17 @@ function PocketForm({
   const { toast } = useToast();
   const [submitting, setSubmitting] = React.useState(false);
   const [color, setColor] = React.useState(initial?.color ?? "#111827");
+  const [isActive, setIsActive] = React.useState<string>(initial ? String(initial.is_active) : "true");
   const isEdit = !!initial;
 
   // keep color in sync when switching between pockets without remount edge
   React.useEffect(() => {
     setColor(initial?.color ?? "#111827");
   }, [initial?.color, initial?.id]);
+
+  React.useEffect(() => {
+    setIsActive(initial ? String(initial.is_active) : "true");
+  }, [initial?.is_active, initial?.id]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -95,11 +101,17 @@ function PocketForm({
           <Input name="icon" id="pocket-icon" maxLength={50} defaultValue={initial?.icon ?? ""} placeholder="wallet / building / heart" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="pocket-active">Status</Label>
-          <select name="is_active" id="pocket-active" defaultValue={initial ? String(initial.is_active) : "true"} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm">
-            <option value="true">Aktif</option>
-            <option value="false">Arsip (nonaktif)</option>
-          </select>
+          <Label>Status</Label>
+          <Select value={isActive} onValueChange={setIsActive}>
+            <SelectTrigger>
+              <SelectValue placeholder="Pilih status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Aktif</SelectItem>
+              <SelectItem value="false">Arsip (nonaktif)</SelectItem>
+            </SelectContent>
+          </Select>
+          <input type="hidden" name="is_active" value={isActive} />
         </div>
       </div>
 

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { extractSheet, parseWorkbook } from "@/lib/excel/parser";
@@ -246,12 +246,17 @@ export function ExcelImportClient({
           {sheetNames.length > 1 && (
             <div className="space-y-2">
               <Label>Pilih Sheet</Label>
-              <Select value={selectedSheet ?? ""} onChange={(e) => handleSheetChange((e.target as HTMLSelectElement).value)}>
-                {sheetNames.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
+              <Select value={selectedSheet ?? ""} onValueChange={handleSheetChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih sheet" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sheetNames.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
           )}
@@ -304,79 +309,114 @@ export function ExcelImportClient({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Tanggal *</Label>
-                  <Select value={mapping.date ?? ""} onChange={(e) => setMapping((m) => ({ ...m, date: (e.target as HTMLSelectElement).value || null }))}>
-                    <option value="">— pilih —</option>
-                    {headers.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
+                  <Select value={mapping.date ?? "__none__"} onValueChange={(v) => setMapping((m) => ({ ...m, date: v === "__none__" ? null : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="— pilih —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— pilih —</SelectItem>
+                      {headers.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Deskripsi *</Label>
-                  <Select value={mapping.description ?? ""} onChange={(e) => setMapping((m) => ({ ...m, description: (e.target as HTMLSelectElement).value || null }))}>
-                    <option value="">— pilih —</option>
-                    {headers.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
+                  <Select value={mapping.description ?? "__none__"} onValueChange={(v) => setMapping((m) => ({ ...m, description: v === "__none__" ? null : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="— pilih —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— pilih —</SelectItem>
+                      {headers.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Pemasukan</Label>
-                  <Select value={mapping.income ?? ""} onChange={(e) => setMapping((m) => ({ ...m, income: (e.target as HTMLSelectElement).value || null }))}>
-                    <option value="">— tidak ada —</option>
-                    {headers.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
+                  <Select value={mapping.income ?? "__none__"} onValueChange={(v) => setMapping((m) => ({ ...m, income: v === "__none__" ? null : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="— tidak ada —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— tidak ada —</SelectItem>
+                      {headers.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Pengeluaran</Label>
-                  <Select value={mapping.expense ?? ""} onChange={(e) => setMapping((m) => ({ ...m, expense: (e.target as HTMLSelectElement).value || null }))}>
-                    <option value="">— tidak ada —</option>
-                    {headers.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
+                  <Select value={mapping.expense ?? "__none__"} onValueChange={(v) => setMapping((m) => ({ ...m, expense: v === "__none__" ? null : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="— tidak ada —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— tidak ada —</SelectItem>
+                      {headers.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Amount (alternatif)</Label>
-                  <Select value={mapping.amount ?? ""} onChange={(e) => setMapping((m) => ({ ...m, amount: (e.target as HTMLSelectElement).value || null }))}>
-                    <option value="">— tidak ada —</option>
-                    {headers.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
+                  <Select value={mapping.amount ?? "__none__"} onValueChange={(v) => setMapping((m) => ({ ...m, amount: v === "__none__" ? null : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="— tidak ada —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— tidak ada —</SelectItem>
+                      {headers.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Kantong</Label>
-                  <Select value={mapping.pocket ?? ""} onChange={(e) => setMapping((m) => ({ ...m, pocket: (e.target as HTMLSelectElement).value || null }))}>
-                    <option value="">— pakai default —</option>
-                    {headers.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
+                  <Select value={mapping.pocket ?? "__none__"} onValueChange={(v) => setMapping((m) => ({ ...m, pocket: v === "__none__" ? null : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="— pakai default —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— pakai default —</SelectItem>
+                      {headers.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="col-span-2">
                   <Label>Kategori</Label>
-                  <Select value={mapping.category ?? ""} onChange={(e) => setMapping((m) => ({ ...m, category: (e.target as HTMLSelectElement).value || null }))}>
-                    <option value="">— tanpa kategori —</option>
-                    {headers.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
+                  <Select value={mapping.category ?? "__none__"} onValueChange={(v) => setMapping((m) => ({ ...m, category: v === "__none__" ? null : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="— tanpa kategori —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— tanpa kategori —</SelectItem>
+                      {headers.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
               </div>
@@ -385,12 +425,17 @@ export function ExcelImportClient({
 
               <div>
                 <Label>Kantong default (jika Excel tanpa kolom kantong)</Label>
-                <Select value={defaultPocketId} onChange={(e) => setDefaultPocketId((e.target as HTMLSelectElement).value)}>
-                  {pockets.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
+                <Select value={defaultPocketId} onValueChange={setDefaultPocketId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kantong" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pockets.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
 
@@ -403,15 +448,20 @@ export function ExcelImportClient({
                       <span className="min-w-0 flex-1 truncate rounded-xl border bg-muted/20 px-3 py-2 text-xs">{val}</span>
                       <span className="text-xs">→</span>
                       <Select
-                        value={pocketMapping[val] ?? ""}
-                        onChange={(e) => setPocketMapping((m) => ({ ...m, [val]: (e.target as HTMLSelectElement).value }))}
+                        value={pocketMapping[val] ?? "__auto__"}
+                        onValueChange={(v) => setPocketMapping((m) => ({ ...m, [val]: v === "__auto__" ? "" : v }))}
                       >
-                        <option value="">— auto by name —</option>
-                        {pockets.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
+                        <SelectTrigger>
+                          <SelectValue placeholder="— auto by name —" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__auto__">— auto by name —</SelectItem>
+                          {pockets.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
                       </Select>
                     </div>
                   ))}
@@ -427,15 +477,20 @@ export function ExcelImportClient({
                       <span className="min-w-0 flex-1 truncate rounded-xl border bg-muted/20 px-3 py-2 text-xs">{val}</span>
                       <span className="text-xs">→</span>
                       <Select
-                        value={categoryMapping[val] ?? ""}
-                        onChange={(e) => setCategoryMapping((m) => ({ ...m, [val]: (e.target as HTMLSelectElement).value }))}
+                        value={categoryMapping[val] ?? "__auto__"}
+                        onValueChange={(v) => setCategoryMapping((m) => ({ ...m, [val]: v === "__auto__" ? "" : v }))}
                       >
-                        <option value="">— auto by name —</option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name} ({c.type})
-                          </option>
-                        ))}
+                        <SelectTrigger>
+                          <SelectValue placeholder="— auto by name —" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__auto__">— auto by name —</SelectItem>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name} ({c.type})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
                       </Select>
                     </div>
                   ))}

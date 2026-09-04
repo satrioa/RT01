@@ -1,4 +1,7 @@
-import { Select } from "@/components/ui/select";
+"use client";
+
+import * as React from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
@@ -15,6 +18,15 @@ export function TransactionFilters({
   current: { pocket?: string; type?: string; category?: string; from?: string; to?: string; q?: string };
 }) {
   const hasActive = Boolean(current.pocket || current.type || current.category || current.from || current.to || current.q);
+  const [pocket, setPocket] = React.useState(current.pocket ?? "");
+  const [type, setType] = React.useState(current.type ?? "");
+  const [category, setCategory] = React.useState(current.category ?? "");
+
+  React.useEffect(() => {
+    setPocket(current.pocket ?? "");
+    setType(current.type ?? "");
+    setCategory(current.category ?? "");
+  }, [current.pocket, current.type, current.category]);
 
   return (
     <form method="GET" className="space-y-3 rounded-[20px] border bg-card p-4">
@@ -33,33 +45,51 @@ export function TransactionFilters({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">Kantong</label>
-          <Select name="pocket" defaultValue={current.pocket ?? ""}>
-            <option value="">Semua kantong</option>
-            {pockets.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
+          <Select value={pocket || "__all__"} onValueChange={(v) => setPocket(v === "__all__" ? "" : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Semua kantong" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Semua kantong</SelectItem>
+              {pockets.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
+          <input type="hidden" name="pocket" value={pocket} />
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">Tipe</label>
-          <Select name="type" defaultValue={current.type ?? ""}>
-            <option value="">Semua tipe</option>
-            <option value="income">Pemasukan</option>
-            <option value="expense">Pengeluaran</option>
+          <Select value={type || "__all__"} onValueChange={(v) => setType(v === "__all__" ? "" : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Semua tipe" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Semua tipe</SelectItem>
+              <SelectItem value="income">Pemasukan</SelectItem>
+              <SelectItem value="expense">Pengeluaran</SelectItem>
+            </SelectContent>
           </Select>
+          <input type="hidden" name="type" value={type} />
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">Kategori</label>
-          <Select name="category" defaultValue={current.category ?? ""}>
-            <option value="">Semua kategori</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
+          <Select value={category || "__all__"} onValueChange={(v) => setCategory(v === "__all__" ? "" : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Semua kategori" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Semua kategori</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
+          <input type="hidden" name="category" value={category} />
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">Dari tgl</label>

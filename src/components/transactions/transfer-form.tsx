@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -61,14 +61,20 @@ export function TransferForm({ pockets, defaultFromPocketId }: { pockets: Pocket
       </Card>
 
       <div className="space-y-2">
-        <Label htmlFor="from_pocket_id">Dari kantong *</Label>
-        <Select name="from_pocket_id" id="from_pocket_id" required value={from} onChange={(e) => setFrom(e.target.value)}>
-          {pockets.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
+        <Label>Dari kantong *</Label>
+        <Select value={from} onValueChange={setFrom} required>
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih kantong" />
+          </SelectTrigger>
+          <SelectContent>
+            {pockets.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
+        <input type="hidden" name="from_pocket_id" value={from} />
       </div>
 
       <div className="flex justify-center">
@@ -78,14 +84,20 @@ export function TransferForm({ pockets, defaultFromPocketId }: { pockets: Pocket
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="to_pocket_id">Ke kantong *</Label>
-        <Select name="to_pocket_id" id="to_pocket_id" required value={to} onChange={(e) => setTo(e.target.value)}>
-          {pockets.map((p) => (
-            <option key={p.id} value={p.id} disabled={p.id === from}>
-              {p.name}
-            </option>
-          ))}
+        <Label>Ke kantong *</Label>
+        <Select value={to} onValueChange={setTo} required>
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih kantong" />
+          </SelectTrigger>
+          <SelectContent>
+            {pockets.map((p) => (
+              <SelectItem key={p.id} value={p.id} disabled={p.id === from}>
+                {p.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
+        <input type="hidden" name="to_pocket_id" value={to} />
       </div>
 
       <div className="space-y-2">
