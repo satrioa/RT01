@@ -8,7 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toaster";
-import { Sheet, SheetHeader, SheetTitle, SheetDescription, SheetContentWrapper, SheetFooter } from "@/components/ui/sheet";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+} from "@/components/ui/drawer";
 import { createPocketAction, updatePocketAction, deletePocketAction, archivePocketAction } from "@/lib/actions/pockets";
 import type { Pocket } from "@/types/database";
 import { Pencil, Trash2, Plus, Wallet, Archive, Loader2 } from "lucide-react";
@@ -235,40 +242,42 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
         </CardContent>
       </Card>
 
-      <Sheet open={isSheetOpen} onOpenChange={(o) => !o && closeSheet()}>
-        <SheetHeader>
-          <SheetTitle>{sheetMode === "edit" ? `Edit: ${editing?.name ?? "Kantong"}` : "Tambah Kantong"}</SheetTitle>
-          <SheetDescription>
-            {sheetMode === "edit" ? "Ubah nama, deskripsi, warna atau urutan. Klik Simpan untuk menyimpan." : "Buat kantong baru untuk memisahkan dana. Nama harus unik."}
-          </SheetDescription>
-        </SheetHeader>
-        <SheetContentWrapper>
-          {sheetMode === "edit" && editing ? (
-            <PocketForm
-              key={editing.id}
-              initial={editing}
-              onClose={closeSheet}
-              onSuccess={() => {
-                closeSheet();
-                router.refresh();
-              }}
-            />
-          ) : (
-            <PocketForm
-              key="add"
-              initial={null}
-              onClose={closeSheet}
-              onSuccess={() => {
-                closeSheet();
-                router.refresh();
-              }}
-            />
-          )}
-        </SheetContentWrapper>
-        <SheetFooter>
-          <p className="text-center text-[11px] text-muted-foreground">Sheet bisa ditutup dengan klik backdrop atau tombol Batal.</p>
-        </SheetFooter>
-      </Sheet>
+      <Drawer open={isSheetOpen} onOpenChange={(o: boolean) => !o && closeSheet()} direction="bottom">
+        <DrawerContent className="max-h-[92dvh] sm:max-h-[90vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>{sheetMode === "edit" ? `Edit: ${editing?.name ?? "Kantong"}` : "Tambah Kantong"}</DrawerTitle>
+            <DrawerDescription>
+              {sheetMode === "edit" ? "Ubah nama, deskripsi, warna atau urutan. Klik Simpan untuk menyimpan." : "Buat kantong baru untuk memisahkan dana. Nama harus unik."}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            {sheetMode === "edit" && editing ? (
+              <PocketForm
+                key={editing.id}
+                initial={editing}
+                onClose={closeSheet}
+                onSuccess={() => {
+                  closeSheet();
+                  router.refresh();
+                }}
+              />
+            ) : (
+              <PocketForm
+                key="add"
+                initial={null}
+                onClose={closeSheet}
+                onSuccess={() => {
+                  closeSheet();
+                  router.refresh();
+                }}
+              />
+            )}
+          </div>
+          <DrawerFooter>
+            <p className="text-center text-[11px] text-muted-foreground">Geser handle di atas atau tap backdrop untuk menutup.</p>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
