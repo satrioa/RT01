@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, Landmark, Settings2 } from "lucide-react";
+import { Bell, Settings2 } from "lucide-react";
 import { greetingForHour } from "@/lib/format";
 
 export function GreetingHeader({
@@ -38,9 +38,6 @@ export function GreetingHeader({
         >
           <Bell className="size-4" />
         </button>
-        <div className="hidden size-9 items-center justify-center rounded-full bg-primary text-primary-foreground sm:flex">
-          <Landmark className="size-4" />
-        </div>
       </div>
     </header>
   );
