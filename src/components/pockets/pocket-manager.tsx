@@ -76,10 +76,12 @@ function PocketForm({
         <Input name="name" id="pocket-name" required maxLength={50} defaultValue={initial?.name ?? ""} placeholder="Contoh: Kas, BOP, Sosial" />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="pocket-saldo">Saldo Awal</Label>
+      <div className="rounded-2xl border border-[#d5efd6] bg-[#f0faf0] p-3 space-y-2">
+        <Label htmlFor="pocket-saldo" className="flex items-center gap-1.5 text-foreground">
+          <Wallet className="size-3.5 text-[#0d9488]" /> Saldo Awal
+        </Label>
         <AmountInput name="opening_balance" defaultValue={initial?.opening_balance ?? "0"} placeholder="Rp 0" />
-        <p className="text-[11px] text-muted-foreground">Nilai awal kantong saat dibuat — ikut hitung saldo akhir.</p>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">Nilai awal kantong saat dibuat — langsung ikut hitung <span className="font-medium text-foreground">saldo akhir</span> di dashboard & laporan.</p>
       </div>
 
       <div className="space-y-2">
