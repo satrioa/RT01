@@ -16,6 +16,7 @@ import {
   DrawerDescription,
   DrawerFooter,
 } from "@/components/ui/drawer";
+import { ColorPickerPopover } from "@/components/ui/color-picker";
 import { createPocketAction, updatePocketAction, deletePocketAction, archivePocketAction } from "@/lib/actions/pockets";
 import type { Pocket } from "@/types/database";
 import { Pencil, Trash2, Plus, Wallet, Archive, Loader2 } from "lucide-react";
@@ -31,13 +32,20 @@ function PocketForm({
 }) {
   const { toast } = useToast();
   const [submitting, setSubmitting] = React.useState(false);
+  const [color, setColor] = React.useState(initial?.color ?? "#111827");
   const isEdit = !!initial;
+
+  // keep color in sync when switching between pockets without remount edge
+  React.useEffect(() => {
+    setColor(initial?.color ?? "#111827");
+  }, [initial?.color, initial?.id]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true);
     const fd = new FormData(e.currentTarget);
-    // ensure is_active always sent (select may be uncontrolled)
+    // override color from controlled picker (hidden input already holds it, but ensure)
+    fd.set("color", color);
     if (!fd.get("is_active")) fd.set("is_active", "true");
     const res = isEdit && initial
       ? await updatePocketAction(initial.id, fd)
@@ -65,11 +73,15 @@ function PocketForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label htmlFor="pocket-color">Warna (hex)</Label>
-          <div className="flex gap-2">
-            <Input name="color" id="pocket-color" maxLength={20} defaultValue={initial?.color ?? ""} placeholder="#111827" className="flex-1" />
-            <span className="size-10 shrink-0 rounded-xl border" style={{ background: initial?.color || "#111827" }} title={initial?.color ?? ""} />
-          </div>
+          <Label>Warna</Label>
+          <ColorPickerPopover
+            value={color}
+            onValueChange={setColor}
+            swatches={["#111827", "#374151", "#0d9488", "#0ea5e9", "#e11d48", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#6366f1"]}
+            triggerShowValue
+            triggerLabel="Pilih warna"
+          />
+          <input type="hidden" name="color" value={color} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="pocket-order">Urutan</Label>
