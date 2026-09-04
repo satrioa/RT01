@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toaster";
+import { Sheet, SheetHeader, SheetTitle, SheetDescription, SheetContentWrapper, SheetFooter } from "@/components/ui/sheet";
 import { createPocketAction, updatePocketAction, deletePocketAction, archivePocketAction } from "@/lib/actions/pockets";
 import type { Pocket } from "@/types/database";
-import { Pencil, Trash2, Plus, Wallet, Archive, Loader2, X } from "lucide-react";
+import { Pencil, Trash2, Plus, Wallet, Archive, Loader2 } from "lucide-react";
 
 function PocketForm({
   initial,
@@ -29,6 +30,8 @@ function PocketForm({
     e.preventDefault();
     setSubmitting(true);
     const fd = new FormData(e.currentTarget);
+    // ensure is_active always sent (select may be uncontrolled)
+    if (!fd.get("is_active")) fd.set("is_active", "true");
     const res = isEdit && initial
       ? await updatePocketAction(initial.id, fd)
       : await createPocketAction(fd);
@@ -42,43 +45,39 @@ function PocketForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border bg-card p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">{isEdit ? "Edit Kantong" : "Tambah Kantong"}</h3>
-        <button type="button" onClick={onClose} className="flex size-8 items-center justify-center rounded-full border hover:bg-accent">
-          <X className="size-4" />
-        </button>
+    <form key={initial?.id ?? "new"} onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="pocket-name">Nama *</Label>
+        <Input name="name" id="pocket-name" required maxLength={50} defaultValue={initial?.name ?? ""} placeholder="Contoh: Kas, BOP, Sosial" />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="name">Nama *</Label>
-        <Input name="name" id="name" required maxLength={50} defaultValue={initial?.name ?? ""} placeholder="Contoh: Kas, BOP, Sosial" />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Deskripsi</Label>
-        <Textarea name="description" id="description" rows={2} maxLength={200} defaultValue={initial?.description ?? ""} placeholder="Deskripsi singkat (opsional)" />
+        <Label htmlFor="pocket-desc">Deskripsi</Label>
+        <Textarea name="description" id="pocket-desc" rows={2} maxLength={200} defaultValue={initial?.description ?? ""} placeholder="Deskripsi singkat (opsional)" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label htmlFor="color">Warna (hex)</Label>
-          <Input name="color" id="color" maxLength={20} defaultValue={initial?.color ?? ""} placeholder="#111827" />
+          <Label htmlFor="pocket-color">Warna (hex)</Label>
+          <div className="flex gap-2">
+            <Input name="color" id="pocket-color" maxLength={20} defaultValue={initial?.color ?? ""} placeholder="#111827" className="flex-1" />
+            <span className="size-10 shrink-0 rounded-xl border" style={{ background: initial?.color || "#111827" }} title={initial?.color ?? ""} />
+          </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="sort_order">Urutan</Label>
-          <Input name="sort_order" id="sort_order" type="number" min={0} defaultValue={String(initial?.sort_order ?? 0)} />
+          <Label htmlFor="pocket-order">Urutan</Label>
+          <Input name="sort_order" id="pocket-order" type="number" min={0} defaultValue={String(initial?.sort_order ?? 0)} />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label htmlFor="icon">Icon</Label>
-          <Input name="icon" id="icon" maxLength={50} defaultValue={initial?.icon ?? ""} placeholder="wallet / building" />
+          <Label htmlFor="pocket-icon">Icon</Label>
+          <Input name="icon" id="pocket-icon" maxLength={50} defaultValue={initial?.icon ?? ""} placeholder="wallet / building / heart" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="is_active">Status</Label>
-          <select name="is_active" id="is_active" defaultValue={initial ? String(initial.is_active) : "true"} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm">
+          <Label htmlFor="pocket-active">Status</Label>
+          <select name="is_active" id="pocket-active" defaultValue={initial ? String(initial.is_active) : "true"} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm">
             <option value="true">Aktif</option>
             <option value="false">Arsip (nonaktif)</option>
           </select>
@@ -92,6 +91,9 @@ function PocketForm({
           {isEdit ? "Simpan" : "Buat Kantong"}
         </Button>
       </div>
+      <p className="text-[11px] leading-relaxed text-muted-foreground">
+        Nama harus unik per RT. Urutan menentukan posisi di dashboard & form transaksi.
+      </p>
     </form>
   );
 }
@@ -103,10 +105,17 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
   const [editing, setEditing] = React.useState<Pocket | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
+  const isSheetOpen = showAdd || !!editing;
+  const sheetMode: "add" | "edit" = editing ? "edit" : "add";
+
+  function closeSheet() {
+    setShowAdd(false);
+    setEditing(null);
+  }
+
   async function handleDelete(id: string) {
     if (!confirm("Hapus kantong ini? Jika ada transaksi, akan diarsip (nonaktif) bukan dihapus permanen.")) return;
     setDeletingId(id);
-    // try hard delete, fallback to archive inside action
     const res = await deletePocketAction(id);
     setDeletingId(null);
     if (res.ok) {
@@ -139,8 +148,8 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
           <CardTitle className="flex items-center gap-2 text-sm">
             <Wallet className="size-4" /> Kantong ({pockets.length})
           </CardTitle>
-          <Button size="sm" onClick={() => { setEditing(null); setShowAdd((v) => !v); }} className="h-8 rounded-xl">
-            <Plus className="size-4" /> {showAdd ? "Tutup" : "Tambah"}
+          <Button size="sm" onClick={() => { setEditing(null); setShowAdd(true); }} className="h-8 rounded-xl">
+            <Plus className="size-4" /> Tambah
           </Button>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -160,7 +169,7 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
                   <span className="hidden text-[11px] font-medium text-success sm:inline">Aktif</span>
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => { setShowAdd(false); setEditing(p); }}
+                      onClick={() => { setEditing(p); setShowAdd(false); }}
                       className="flex size-8 items-center justify-center rounded-full border hover:bg-accent"
                       aria-label="Edit"
                     >
@@ -200,7 +209,7 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
                       <span className="text-[11px] font-medium text-muted-foreground">Arsip</span>
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => { setShowAdd(false); setEditing(p); }}
+                          onClick={() => { setEditing(p); setShowAdd(false); }}
                           className="flex size-8 items-center justify-center rounded-full border bg-card hover:bg-accent"
                         >
                           <Pencil className="size-3.5" />
@@ -221,26 +230,45 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
           )}
 
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Kantong dengan transaksi tidak bisa dihapus permanen — akan diarsip (is_active=false) agar ledger tetap valid.
+            Tap pensil untuk edit — kantong dengan transaksi tidak bisa dihapus permanen, akan diarsip.
           </p>
         </CardContent>
       </Card>
 
-      {showAdd && (
-        <PocketForm
-          initial={null}
-          onClose={() => setShowAdd(false)}
-          onSuccess={() => { setShowAdd(false); router.refresh(); }}
-        />
-      )}
-
-      {editing && (
-        <PocketForm
-          initial={editing}
-          onClose={() => setEditing(null)}
-          onSuccess={() => { setEditing(null); router.refresh(); }}
-        />
-      )}
+      <Sheet open={isSheetOpen} onOpenChange={(o) => !o && closeSheet()}>
+        <SheetHeader>
+          <SheetTitle>{sheetMode === "edit" ? `Edit: ${editing?.name ?? "Kantong"}` : "Tambah Kantong"}</SheetTitle>
+          <SheetDescription>
+            {sheetMode === "edit" ? "Ubah nama, deskripsi, warna atau urutan. Klik Simpan untuk menyimpan." : "Buat kantong baru untuk memisahkan dana. Nama harus unik."}
+          </SheetDescription>
+        </SheetHeader>
+        <SheetContentWrapper>
+          {sheetMode === "edit" && editing ? (
+            <PocketForm
+              key={editing.id}
+              initial={editing}
+              onClose={closeSheet}
+              onSuccess={() => {
+                closeSheet();
+                router.refresh();
+              }}
+            />
+          ) : (
+            <PocketForm
+              key="add"
+              initial={null}
+              onClose={closeSheet}
+              onSuccess={() => {
+                closeSheet();
+                router.refresh();
+              }}
+            />
+          )}
+        </SheetContentWrapper>
+        <SheetFooter>
+          <p className="text-center text-[11px] text-muted-foreground">Sheet bisa ditutup dengan klik backdrop atau tombol Batal.</p>
+        </SheetFooter>
+      </Sheet>
     </div>
   );
 }

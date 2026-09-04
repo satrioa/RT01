@@ -14,7 +14,7 @@ import { validateRows, type ColumnMapping } from "@/lib/excel/validator";
 import { importTransactionsAction, type ImportPayloadRow } from "@/lib/actions/import";
 import { useToast } from "@/components/ui/toaster";
 import { formatRupiah } from "@/lib/format";
-import { Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertTriangle, CheckCircle2, XCircle, Loader2, Download } from "lucide-react";
 import type { Pocket, Category } from "@/types/database";
 
 function guessMapping(headers: string[]): ColumnMapping {
@@ -212,6 +212,26 @@ export function ExcelImportClient({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Template Download */}
+      <Card className="border-dashed bg-muted/20">
+        <CardContent className="flex items-center gap-3 p-4">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Download className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Butuh template?</p>
+            <p className="text-xs text-muted-foreground">Download format resmi — tinggal isi dan upload.</p>
+          </div>
+          <a
+            href="/api/template/import"
+            download
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground"
+          >
+            <Download className="size-4" /> Download
+          </a>
+        </CardContent>
+      </Card>
+
       {/* Upload */}
       <Card>
         <CardHeader className="pb-2">
