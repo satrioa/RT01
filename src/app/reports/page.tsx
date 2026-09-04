@@ -2,7 +2,6 @@ import Link from "next/link";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { OverviewCards } from "@/components/reports/overview-cards";
 import { DetailKpiCards } from "@/components/reports/detail-kpi-cards";
 import { MonthlyChart } from "@/components/reports/monthly-chart";
 import { CategoryBreakdown } from "@/components/reports/category-breakdown";
@@ -55,20 +54,9 @@ export default async function ReportsPage({
             </Card>
           )}
 
-          {/* Overview */}
+          {/* KPI — Ringkasan utama (samakan value: Pemasukan/Pengeluaran/Nett/Saldo) */}
           <section className="space-y-3">
             <h2 className="px-1 text-sm font-semibold">Ringkasan</h2>
-            <OverviewCards
-              totalIncome={data.totalIncome}
-              totalExpense={data.totalExpense}
-              netChange={data.netChange}
-              currentBalance={data.currentBalance}
-            />
-          </section>
-
-          {/* Detail KPI — spectrum stat-cards ringkasan baru di bawah (samakan value: Pemasukan/Pengeluaran/Nett/Saldo) */}
-          <section className="space-y-3">
-            <h2 className="px-1 text-sm font-semibold">Rincian KPI</h2>
             <DetailKpiCards
               totalIncome={data.totalIncome}
               totalExpense={data.totalExpense}

@@ -52,7 +52,7 @@ export function DetailKpiCards({
       previous: netChange * 0.6,
       format: formatWithSign,
       deltaLabel: "Income − Expense",
-      goodWhen: "up",
+      goodWhen: netChange >= 0 ? "up" : "down",
       caption: "Net",
     },
     {
