@@ -34,7 +34,6 @@ export function AmountInput({
     <div className={cn("relative", className)}>
       <Input
         inputMode="numeric"
-        pattern="[0-9]*"
         placeholder={placeholder}
         value={display}
         onChange={(e) => {
@@ -51,9 +50,10 @@ export function AmountInput({
         className="pr-12 text-base font-semibold tabular-nums"
         aria-label="Jumlah"
         required={required}
+        autoComplete="off"
       />
       {/* hidden field sent to server: plain digits without formatting */}
-      <input type="hidden" name={name} value={rawValue} />
+      <input type="hidden" name={name} value={rawValue} required={required} />
       <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">IDR</span>
     </div>
   );
