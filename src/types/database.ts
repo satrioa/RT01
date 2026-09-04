@@ -44,6 +44,7 @@ export interface Pocket {
   description: string | null;
   icon: string | null;
   color: string | null;
+  opening_balance: string; // NUMERIC(15,2) saldo awal
   is_active: boolean;
   sort_order: number;
   created_at: string;

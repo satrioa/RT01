@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,6 +23,7 @@ export function TransactionFilters({
   const [category, setCategory] = React.useState(current.category ?? "");
 
   React.useEffect(() => {
+    // eslint-disable-next-line
     setPocket(current.pocket ?? "");
     setType(current.type ?? "");
     setCategory(current.category ?? "");

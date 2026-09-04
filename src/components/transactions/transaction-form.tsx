@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -39,6 +39,7 @@ export function TransactionForm({
   const [categoryId, setCategoryId] = React.useState<string>("__none__");
 
   React.useEffect(() => {
+    // eslint-disable-next-line
     setPocketId(defaultPocketId ?? pockets[0]?.id ?? "");
   }, [defaultPocketId, pockets]);
 
@@ -91,7 +92,7 @@ export function TransactionForm({
           <SelectContent>
             {pockets.map((p) => (
               <SelectItem key={p.id} value={p.id}>
-                {p.name} — {p.is_active ? "Aktif" : "Arsip"}
+                {p.name} â€” {p.is_active ? "Aktif" : "Arsip"}
               </SelectItem>
             ))}
           </SelectContent>
@@ -136,12 +137,12 @@ export function TransactionForm({
       <div className="space-y-2">
         <Label htmlFor="attachment">Bukti / Lampiran</Label>
         <Input type="file" name="attachment" id="attachment" accept="image/*,application/pdf" />
-        <p className="text-xs text-muted-foreground">Opsional — foto bukti atau PDF. Max ~5MB.</p>
+        <p className="text-xs text-muted-foreground">Opsional â€” foto bukti atau PDF. Max ~5MB.</p>
       </div>
 
       <Card className="border-dashed bg-muted/30">
         <CardContent className="p-3 text-xs leading-relaxed text-muted-foreground">
-          Transaksi akan menambah/mengurangi saldo kantong terpilih. Saldo dihitung dari ledger — tidak disimpan manual.
+          Transaksi akan menambah/mengurangi saldo kantong terpilih. Saldo dihitung dari ledger â€” tidak disimpan manual.
         </CardContent>
       </Card>
 

@@ -5,6 +5,11 @@ export const pocketSchema = z.object({
   description: z.string().trim().max(200).optional().nullable(),
   icon: z.string().trim().max(50).optional().nullable(),
   color: z.string().trim().max(20).optional().nullable(),
+  opening_balance: z
+    .number()
+    .min(0, "Saldo awal tidak boleh negatif")
+    .max(9999999999999.99)
+    .default(0),
   is_active: z.boolean().default(true),
   sort_order: z.number().int().min(0).default(0),
 });

@@ -7,12 +7,23 @@ import { pocketSchema } from "@/lib/validations/pocket";
 
 export type PocketActionResult = { ok: boolean; error?: string; id?: string };
 
+function parseAmountToNumber(raw: FormDataEntryValue | null): number {
+  if (raw == null) return 0;
+  const s = String(raw).trim();
+  if (s === "" || s === "-") return 0;
+  // handle "Rp 1.000.000" or "1_000_000" style
+  const cleaned = s.replace(/[^0-9.-]/g, "");
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function parsePocketForm(formData: FormData) {
   const raw: Record<string, unknown> = {
     name: formData.get("name"),
     description: (formData.get("description") as string) || null,
     icon: (formData.get("icon") as string) || null,
     color: (formData.get("color") as string) || null,
+    opening_balance: parseAmountToNumber(formData.get("opening_balance")),
     is_active: formData.get("is_active") === "false" ? false : true,
     sort_order: Number(formData.get("sort_order") ?? 0),
   };

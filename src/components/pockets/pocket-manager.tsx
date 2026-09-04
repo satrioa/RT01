@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AmountInput } from "@/components/transactions/amount-input";
 import { useToast } from "@/components/ui/toaster";
+import { formatRupiah } from "@/lib/format";
 import {
   Drawer,
   DrawerContent,
@@ -39,10 +41,12 @@ function PocketForm({
 
   // keep color in sync when switching between pockets without remount edge
   React.useEffect(() => {
+    // eslint-disable-next-line
     setColor(initial?.color ?? "#111827");
   }, [initial?.color, initial?.id]);
 
   React.useEffect(() => {
+    // eslint-disable-next-line
     setIsActive(initial ? String(initial.is_active) : "true");
   }, [initial?.is_active, initial?.id]);
 
@@ -70,6 +74,12 @@ function PocketForm({
       <div className="space-y-2">
         <Label htmlFor="pocket-name">Nama *</Label>
         <Input name="name" id="pocket-name" required maxLength={50} defaultValue={initial?.name ?? ""} placeholder="Contoh: Kas, BOP, Sosial" />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="pocket-saldo">Saldo Awal</Label>
+        <AmountInput name="opening_balance" defaultValue={initial?.opening_balance ?? "0"} placeholder="Rp 0" />
+        <p className="text-[11px] text-muted-foreground">Nilai awal kantong saat dibuat — ikut hitung saldo akhir.</p>
       </div>
 
       <div className="space-y-2">
@@ -195,7 +205,9 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
                   <span className="size-3 shrink-0 rounded-full" style={{ background: p.color || "#111827" }} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{p.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{p.description || `Urutan ${p.sort_order} • ${p.icon || "wallet"}`}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {p.description || `Urutan ${p.sort_order} • ${p.icon || "wallet"}`} • Saldo awal {formatRupiah(Number(p.opening_balance ?? 0))}
+                    </p>
                   </div>
                   <span className="hidden text-[11px] font-medium text-success sm:inline">Aktif</span>
                   <div className="flex items-center gap-1">
@@ -235,7 +247,9 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
                       <span className="size-3 shrink-0 rounded-full" style={{ background: p.color || "#6b7280" }} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{p.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{p.description || "Diarsip"}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {p.description || "Diarsip"} • Saldo awal {formatRupiah(Number(p.opening_balance ?? 0))}
+                        </p>
                       </div>
                       <span className="text-[11px] font-medium text-muted-foreground">Arsip</span>
                       <div className="flex items-center gap-1">
@@ -261,7 +275,7 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
           )}
 
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Tap pensil untuk edit — kantong dengan transaksi tidak bisa dihapus permanen, akan diarsip.
+            Tap pensil untuk edit â€” kantong dengan transaksi tidak bisa dihapus permanen, akan diarsip.
           </p>
         </CardContent>
       </Card>
