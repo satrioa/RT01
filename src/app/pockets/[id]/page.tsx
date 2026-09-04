@@ -75,12 +75,21 @@ export default async function PocketDetailPage({ params }: { params: Promise<{ i
             <CardContent>
               <p className="text-[11px] tracking-widest text-primary-foreground/60">SALDO SAAT INI</p>
               <p className="text-3xl font-bold tracking-tight">{formatRupiah(Number(pocket?.balance ?? 0))}</p>
+              <p className="mt-1 text-xs text-primary-foreground/60">Saldo awal: {formatRupiah(Number((pocket as unknown as { opening_balance?: string | number })?.opening_balance ?? 0))}</p>
               <Link href="/transactions/new?type=transfer" className="mt-3 inline-flex text-xs font-medium text-primary-foreground/80 underline">Pindah Kantong →</Link>
             </CardContent>
           </Card>
 
           {/* Summary grid */}
           <div className="grid grid-cols-2 gap-3">
+            <Card className="col-span-2 border-primary/20 bg-primary/5">
+              <CardContent className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Wallet className="size-3.5" /> Saldo Awal
+                </div>
+                <p className="text-sm font-bold">{formatRupiah(Number((pocket as unknown as { opening_balance?: string | number })?.opening_balance ?? 0))}</p>
+              </CardContent>
+            </Card>
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
