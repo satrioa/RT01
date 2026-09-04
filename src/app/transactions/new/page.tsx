@@ -81,16 +81,6 @@ export default async function NewTransactionPage({
         </header>
 
         <main className="flex flex-1 flex-col gap-4 p-5">
-          {/* Tab switcher */}
-          <div className="flex gap-2">
-            <Link href="/transactions/new?type=expense" className={`flex-1 rounded-xl border px-3 py-2 text-center text-sm font-medium ${tab !== "transfer" ? "bg-primary text-primary-foreground" : "bg-card"}`}>
-              Transaksi
-            </Link>
-            <Link href="/transactions/new?type=transfer" className={`flex-1 rounded-xl border px-3 py-2 text-center text-sm font-medium ${tab === "transfer" ? "bg-primary text-primary-foreground" : "bg-card"}`}>
-              Transfer
-            </Link>
-          </div>
-
           {tab === "transfer" ? (
             <TransferForm pockets={pockets} defaultFromPocketId={pocketParam} />
           ) : (
