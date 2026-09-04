@@ -28,20 +28,22 @@ export default async function ReportsPage({
   return (
     <div className="min-h-dvh bg-background">
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-background">
-        <header className="sticky top-0 z-10 border-b bg-card px-5 py-4">
-          <div className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <BarChart3 className="size-4" />
-            </span>
-            <div>
-              <h1 className="text-sm font-semibold">Laporan</h1>
-              <p className="text-xs text-muted-foreground">Rekap derivasi ledger • {data.rangeLabel}</p>
+        <header className="sticky top-0 z-10 border-b bg-card px-5 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <BarChart3 className="size-4" />
+              </span>
+              <div className="min-w-0">
+                <h1 className="truncate text-sm font-semibold">Laporan</h1>
+                <p className="truncate text-xs text-muted-foreground">{data.rangeLabel}</p>
+              </div>
             </div>
+            <ReportsFilter initialRange={range} initialFrom={data.from} initialTo={data.to} />
           </div>
         </header>
 
         <main className="flex flex-1 flex-col gap-6 p-5 pb-6">
-          <ReportsFilter initialRange={range} initialFrom={data.from} initialTo={data.to} />
 
           {data.error && (
             <Card className="border-warning/30 bg-warning/5">
