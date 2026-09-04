@@ -124,10 +124,6 @@ export default async function PocketDetailPage({ params }: { params: Promise<{ i
             </Card>
           </div>
 
-          <div className="flex items-center justify-end">
-            <span className="text-xs text-muted-foreground">Transfer tidak hitung total RT</span>
-          </div>
-
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="px-1 text-sm font-semibold">Transaksi terbaru</h2>
