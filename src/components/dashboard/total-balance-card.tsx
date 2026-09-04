@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShaderBackground } from "@/components/motion/shader-background";
 import { formatRupiah } from "@/lib/format";
@@ -40,12 +41,18 @@ export function TotalBalanceCard({
         </p>
       </CardHeader>
       <CardContent className="relative flex gap-2 pt-1">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+        <Link
+          href="/transactions/new?type=income"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white/15 px-3 py-2.5 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20 active:bg-white/25"
+        >
           <ArrowUpRight className="size-3.5" /> Pemasukan
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+        </Link>
+        <Link
+          href="/transactions/new?type=expense"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white/15 px-3 py-2.5 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20 active:bg-white/25"
+        >
           <ArrowDownRight className="size-3.5" /> Pengeluaran
-        </span>
+        </Link>
       </CardContent>
     </Card>
   );

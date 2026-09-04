@@ -1,6 +1,5 @@
 import { GreetingHeader } from "@/components/dashboard/greeting-header";
 import { PocketCarousel } from "@/components/dashboard/pocket-carousel";
-import { QuickActions } from "@/components/dashboard/quick-actions";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { TotalBalanceCard } from "@/components/dashboard/total-balance-card";
 import { SmartInput } from "@/components/ai/smart-input";
@@ -48,8 +47,6 @@ export default async function Page() {
             </div>
             <PocketCarousel pockets={data.pockets} />
           </section>
-
-          <QuickActions />
 
           <SmartInput />
 
