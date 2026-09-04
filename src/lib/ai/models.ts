@@ -1,0 +1,82 @@
+import type { AiProviderId } from "@/types/database";
+
+export interface AiModelOption {
+  id: string; // model id as sent to provider
+  label: string;
+  description: string;
+  recommended?: boolean;
+}
+
+export interface AiProviderOption {
+  id: AiProviderId;
+  label: string;
+  description: string;
+  models: AiModelOption[];
+  envKey: string; // env var name for api key
+  docsUrl?: string;
+}
+
+export const AI_PROVIDERS: AiProviderOption[] = [
+  {
+    id: "openrouter",
+    label: "OpenRouter",
+    description: "Akses banyak model via satu API (Gemini, GPT, Claude)",
+    envKey: "OPENROUTER_API_KEY",
+    docsUrl: "https://openrouter.ai/keys",
+    models: [
+      { id: "inclusionai/ling-3.0-flash-fin:free", label: "Ling 3.0 Flash Fin ★", description: "Fast & free — rekomendasi RT Finance", recommended: true },
+      { id: "google/gemma-4-31b-it:free", label: "Gemma 4 31B", description: "Free, 262K context" },
+      { id: "google/gemma-4-26b-a4b-it:free", label: "Gemma 4 26B A4B", description: "Free, multimodal" },
+      { id: "minimax/minimax-m3:free", label: "MiniMax M3", description: "Free, 1M context" },
+      { id: "minimax/minimax-m2.7:free", label: "MiniMax M2.7", description: "Free, 196K context" },
+      { id: "nvidia/nemotron-3.5-lightning:free", label: "Nemotron 3.5 Lightning", description: "Free, 1M context" },
+      { id: "nvidia/nemotron-3-super-120b-a12b:free", label: "Nemotron 3 Super", description: "Free, 262K context" },
+      { id: "thinkingmachines/inkling:free", label: "Inkling", description: "Free, 1M context" },
+      { id: "z-ai/glm-5.2:free", label: "GLM 5.2", description: "Free, 256K context" },
+      { id: "openai/gpt-4o-mini", label: "GPT-4o mini", description: "Berbayar, sangat akurat" },
+      { id: "anthropic/claude-3.5-haiku", label: "Claude 3.5 Haiku", description: "Berbayar, cepat" },
+    ],
+  },
+  {
+    id: "openai",
+    label: "OpenAI",
+    description: "Langsung ke OpenAI API",
+    envKey: "OPENAI_API_KEY",
+    docsUrl: "https://platform.openai.com/api-keys",
+    models: [
+      { id: "gpt-4o-mini", label: "GPT-4o mini", description: "Rekomendasi", recommended: true },
+      { id: "gpt-4o", label: "GPT-4o", description: "Paling akurat" },
+      { id: "gpt-3.5-turbo", label: "GPT-3.5 Turbo", description: "Murah" },
+    ],
+  },
+  {
+    id: "anthropic",
+    label: "Anthropic",
+    description: "Claude langsung",
+    envKey: "ANTHROPIC_API_KEY",
+    docsUrl: "https://console.anthropic.com/settings/keys",
+    models: [
+      { id: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku", description: "Cepat", recommended: true },
+      { id: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet", description: "Akurat" },
+    ],
+  },
+  {
+    id: "mock",
+    label: "Mock (tanpa AI)",
+    description: "Hanya heuristic lokal — tanpa biaya, untuk tes",
+    envKey: "",
+    models: [{ id: "mock", label: "Mock", description: "Tidak pakai LLM" }],
+  },
+];
+
+export function getProvider(id: AiProviderId): AiProviderOption | undefined {
+  return AI_PROVIDERS.find((p) => p.id === id);
+}
+
+export function getDefaultModel(provider: AiProviderId): string {
+  const p = getProvider(provider);
+  return p?.models.find((m) => m.recommended)?.id ?? p?.models[0]?.id ?? "mock";
+}
+
+export const DEFAULT_PROVIDER: AiProviderId = "openrouter";
+export const DEFAULT_MODEL = "inclusionai/ling-3.0-flash-fin:free";
