@@ -183,9 +183,9 @@ function StatCard({
           : { animation: `spectrum-mc-enter 420ms ${EASE} ${index * 70}ms both` }
       }
     >
-      <div className="flex min-w-0 flex-1 flex-col justify-between overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col justify-between overflow-visible">
         <p className="truncate text-[13px] text-neutral-500 dark:text-neutral-400">{label}</p>
-        <p className="mt-1.5 max-w-full truncate whitespace-nowrap text-[clamp(16px,4.2vw,26px)] font-medium leading-none tracking-tight text-neutral-950 dark:text-white">
+        <p className="mt-1.5 max-w-full break-words text-[clamp(12px,3.4vw,18px)] font-medium leading-tight tracking-tight text-neutral-950 dark:text-white">
           <RollingNumber
             value={hover != null ? shown : displayValue}
             format={format}
