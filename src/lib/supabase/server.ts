@@ -9,12 +9,18 @@ import { createClient } from "@supabase/supabase-js";
 export function createServerClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !anonKey) {
+  // DEV / server-side data fetching uses service_role to bypass RLS when
+  // no authenticated user is present (DEV_RT_ID fallback). If service key
+  // is not configured (e.g. preview), fall back to anon.
+  const key = serviceKey ?? anonKey ?? "";
+
+  if (!url || !key) {
     console.warn(
-      "[supabase:server] Missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY"
+      "[supabase:server] Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY"
     );
   }
 
-  return createClient(url ?? "", anonKey ?? "");
+  return createClient(url ?? "", key);
 }

@@ -35,8 +35,11 @@ export default async function NewTransactionPage({
 
   const pockets = (pRes.data as unknown as import("@/types/database").Pocket[] | null) ?? [];
   const categories = (cRes.data as unknown as import("@/types/database").Category[] | null) ?? [];
+  const pocketsError = (pRes.error as { message?: string } | null)?.message ?? null;
+  const categoriesError = (cRes.error as { message?: string } | null)?.message ?? null;
 
   if (pockets.length === 0) {
+    const hasError = !!pocketsError || !!categoriesError;
     return (
       <div className="min-h-dvh bg-background">
         <div className="mx-auto w-full max-w-[430px] bg-background">
@@ -46,8 +49,18 @@ export default async function NewTransactionPage({
             </Link>
             <h1 className="text-sm font-semibold">Tambah transaksi</h1>
           </header>
-          <main className="p-5">
+          <main className="p-5 space-y-3">
             <Card className="border-dashed"><CardContent className="p-6 text-center text-sm text-muted-foreground">Buat kantong terlebih dahulu di Pengaturan.</CardContent></Card>
+            {hasError && (
+              <Card className="border-destructive/30 bg-destructive/5">
+                <CardContent className="p-4 text-xs leading-relaxed text-muted-foreground">
+                  <p className="font-semibold text-destructive">Gagal memuat kantong (RLS / env):</p>
+                  <p className="mt-1 font-mono text-[11px] break-all">{pocketsError ?? categoriesError}</p>
+                  <p className="mt-2">Pastikan .env berisi NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY dan migrasi 001-002 sudah dijalankan. Cek Supabase Dashboard → Table Editor → pockets untuk RT {rtId}.</p>
+                </CardContent>
+              </Card>
+            )}
+            <Link href="/pengaturan" className="flex w-full justify-center rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground">Ke Pengaturan →</Link>
           </main>
         </div>
       </div>

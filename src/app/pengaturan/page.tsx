@@ -1,9 +1,30 @@
+import Link from "next/link";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { LinkTelegramCard } from "@/components/telegram/link-telegram";
-import { Settings2 } from "lucide-react";
+import { PocketManager } from "@/components/pockets/pocket-manager";
+import { createServerClient } from "@/lib/supabase/server";
+import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
+import { FileSpreadsheet } from "lucide-react";
 
-export default function PengaturanPage() {
+export const dynamic = "force-dynamic";
+
+export default async function PengaturanPage() {
+  let pockets: import("@/types/database").Pocket[] = [];
+  let loadError: string | null = null;
+
+  if (hasSupabaseEnv()) {
+    const supabase = createServerClient();
+    const { data, error } = await supabase
+      .from("pockets")
+      .select("*")
+      .eq("rt_id", DEV_RT_ID)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    pockets = (data as import("@/types/database").Pocket[] | null) ?? [];
+    loadError = (error as { message?: string } | null)?.message ?? null;
+  }
+
   return (
     <div className="min-h-dvh bg-background">
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-background">
@@ -12,18 +33,33 @@ export default function PengaturanPage() {
           <p className="text-xs text-muted-foreground">RT, kantong, kategori, Telegram</p>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-5 pb-6">
-          <LinkTelegramCard />
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center">
-              <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted">
-                <Settings2 className="size-5 text-muted-foreground" />
-              </div>
-              <p className="mt-3 text-sm font-semibold">Pengaturan RT</p>
-              <p className="mx-auto mt-1 max-w-[30ch] text-xs leading-relaxed text-muted-foreground">
-                Kelola kantong & kategori di fase berikutnya.
-              </p>
+          <Card>
+            <CardContent className="p-4">
+              <Link href="/import" className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <FileSpreadsheet className="size-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">Import Excel</p>
+                  <p className="text-xs text-muted-foreground">Migrasi data historis → ledger</p>
+                </div>
+                <span className="text-xs font-medium text-primary">Buka →</span>
+              </Link>
             </CardContent>
           </Card>
+
+          <LinkTelegramCard />
+
+          {/* Kantong CRUD */}
+          {loadError ? (
+            <Card className="border-destructive/30 bg-destructive/5">
+              <CardContent className="p-4 text-xs leading-relaxed text-muted-foreground">
+                <p className="font-semibold text-destructive">Gagal memuat kantong:</p>
+                <p className="mt-1 font-mono text-[11px] break-all">{loadError}</p>
+              </CardContent>
+            </Card>
+          ) : null}
+          <PocketManager pockets={pockets} />
         </main>
         <BottomNavSpacer />
       </div>
