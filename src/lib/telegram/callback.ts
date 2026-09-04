@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getPending, setPendingStatus } from "./pending";
 import { sendMessage, answerCallbackQuery, editMessageText } from "./client";
 import { formatRupiah } from "@/lib/format";
@@ -41,7 +41,7 @@ export async function handleCallback(
   // Expiry is at row level; check if needed (DB already has status)
   // if (pending.expires_at) {} // optional
 
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
 
   if (action === "cancel") {
     await setPendingStatus(pendingId, "cancelled");
@@ -87,7 +87,7 @@ export async function handleCallback(
       };
       // Use service_role to bypass RLS: supabase client uses anon but with service? For bot we use service_role if configured via SUPABASE_SERVICE_ROLE_KEY?
       // For now use same client (which may be anon). If RLS blocks, error will show.
-      const { error, data } = await supabase.from("transactions").insert(insert).select("id").single();
+      const { error } = await supabase.from("transactions").insert(insert).select("id").single();
       if (error) throw new Error(error.message);
       await setPendingStatus(pendingId, "confirmed");
       await answerCallbackQuery(callbackQueryId, "Tersimpan!");

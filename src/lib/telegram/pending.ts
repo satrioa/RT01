@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export interface PendingPayload {
   intent: "create_transaction" | "create_transfer";
@@ -25,7 +25,7 @@ export async function createPending(
   intentType: "create_transaction" | "create_transfer",
   payload: PendingPayload
 ): Promise<string> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("telegram_pending_confirmations")
     .insert({
@@ -51,7 +51,7 @@ export async function getPending(id: string): Promise<null | {
   payload: PendingPayload;
   status: string;
 }> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const { data } = await supabase.from("telegram_pending_confirmations").select("*").eq("id", id).maybeSingle();
   if (!data) return null;
   return data as unknown as {
@@ -66,6 +66,6 @@ export async function getPending(id: string): Promise<null | {
 }
 
 export async function setPendingStatus(id: string, status: "confirmed" | "cancelled"): Promise<void> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   await supabase.from("telegram_pending_confirmations").update({ status }).eq("id", id);
 }

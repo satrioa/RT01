@@ -1,5 +1,5 @@
 -- =============================================================================
--- RT Finance — Initial Schema
+-- RT Finance â€” Initial Schema
 -- Phase 1: Database & Domain Model
 -- =============================================================================
 -- Conventions:
@@ -25,16 +25,6 @@ begin
 end;
 $$;
 
--- Returns the rt_id of the current authenticated user (or null if anon)
-create or replace function public.auth_user_rt_id()
-returns uuid
-language sql
-security definer
-set search_path = public
-stable
-as $$
-  select rt_id from public.profiles where id = auth.uid() limit 1;
-$$;
 
 -- ---------------------------------------------------------------------------
 -- Enums
@@ -79,7 +69,7 @@ create trigger trg_rt_profiles_updated_at
 create index if not exists idx_rt_profiles_rt_rw on public.rt_profiles (rt_number, rw_number);
 
 -- ---------------------------------------------------------------------------
--- profiles  (app users — linked to auth.users)
+-- profiles  (app users â€” linked to auth.users)
 -- Supports: id, rt_id, name, role, created_at, updated_at
 -- ---------------------------------------------------------------------------
 create table if not exists public.profiles (
@@ -96,6 +86,17 @@ create trigger trg_profiles_updated_at
   for each row execute function public.update_updated_at_column();
 create index if not exists idx_profiles_rt_id on public.profiles (rt_id);
 create index if not exists idx_profiles_role on public.profiles (role);
+
+-- Helper depends on profiles — defined after profiles table
+create or replace function public.auth_user_rt_id()
+returns uuid
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select rt_id from public.profiles where id = auth.uid() limit 1;
+$$;
 
 -- ---------------------------------------------------------------------------
 -- pockets (kantong)
@@ -141,7 +142,7 @@ create index if not exists idx_categories_rt_id on public.categories (rt_id);
 create index if not exists idx_categories_type on public.categories (type);
 
 -- ---------------------------------------------------------------------------
--- transactions  (income / expense only — transfers are separate table)
+-- transactions  (income / expense only â€” transfers are separate table)
 -- ---------------------------------------------------------------------------
 create table if not exists public.transactions (
   id uuid primary key default gen_random_uuid(),
@@ -209,7 +210,7 @@ create trigger trg_validate_transaction_refs
   for each row execute function public.validate_transaction_refs();
 
 -- ---------------------------------------------------------------------------
--- transfers  (kantong → kantong, no income/expense semantics)
+-- transfers  (kantong â†’ kantong, no income/expense semantics)
 -- ---------------------------------------------------------------------------
 create table if not exists public.transfers (
   id uuid primary key default gen_random_uuid(),
@@ -275,7 +276,7 @@ create table if not exists public.transaction_attachments (
 create index if not exists idx_attachments_tx on public.transaction_attachments (transaction_id);
 
 -- ---------------------------------------------------------------------------
--- Derived balances — never stored mutable
+-- Derived balances â€” never stored mutable
 -- pocket_balances view + RPC functions
 -- balance = SUM(income) - SUM(expense) - SUM(outgoing transfers) + SUM(incoming transfers)
 -- ---------------------------------------------------------------------------
@@ -427,5 +428,5 @@ create policy "attachments_tenant_write"
     where t.id = transaction_id and t.rt_id = public.auth_user_rt_id()
   ));
 
--- Service role bypass: Supabase service_role bypasses RLS by default — no explicit policy needed.
+-- Service role bypass: Supabase service_role bypasses RLS by default â€” no explicit policy needed.
 -- Anon: no policies (deny).

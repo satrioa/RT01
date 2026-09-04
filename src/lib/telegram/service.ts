@@ -1,16 +1,14 @@
 /**
  * Business logic for Telegram — separated from webhook handler.
  */
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { formatRupiah } from "@/lib/format";
-import { handleDeterministic } from "@/lib/ai/deterministic";
-import { parseSmartInput } from "@/lib/ai/parser";
 
 // We import handleDeterministic which uses DEV_RT_ID; for Telegram we need rt-specific deterministic.
 // So we provide rt-aware deterministic handler inline.
 
 export async function getSaldoForPocket(rtId: string, pocketQuery?: string): Promise<string> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   if (!pocketQuery) {
     const { data } = await supabase.from("pocket_balances").select("balance").eq("rt_id", rtId);
     const total = ((data as { balance: string | number }[] | null) ?? []).reduce((s, p) => s + Number(p.balance), 0);
@@ -32,7 +30,7 @@ export async function getSaldoForPocket(rtId: string, pocketQuery?: string): Pro
 }
 
 export async function getTransaksiSummary(rtId: string, limit = 5): Promise<string> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const { data } = await supabase
     .from("transactions")
     .select("amount, type, description, transaction_date, pocket:pockets(name)")
@@ -51,7 +49,7 @@ export async function getTransaksiSummary(rtId: string, limit = 5): Promise<stri
 }
 
 export async function getLaporanSummary(rtId: string): Promise<string> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const now = new Date();
   const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
   const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
@@ -75,10 +73,4 @@ export async function getLaporanSummary(rtId: string): Promise<string> {
   ].join("\n");
 }
 
-// For natural language — reuse parser but with rtId context.
-// The existing parser uses DEV_RT_ID; we monkey-patch by temporarily using that RT.
-// Ideally refactor parser to accept rtId, but for Phase 7 we wrap by ensuring DEV_RT_ID is the linked rt (fallback path).
-// Since parser's getContext uses DEV_RT_ID, we need to make reports use correct RT: we call parser after ensuring DB has correct RT? 
-// Quick fix: we will provide a Telegram-specific parse that uses the linked rt's pockets/categories directly via provider call.
-
-export { parseSmartInput };
+// Natural language handled in router via rt-aware parseForRt — see src/lib/telegram/router.ts

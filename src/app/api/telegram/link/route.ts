@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { DEV_RT_ID } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -11,9 +11,9 @@ function generateCode(length = 6): string {
   return out;
 }
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
-    const supabase = createServerClient();
+    const supabase = createServiceClient();
     // In Phase 7 without real auth, use DEV_RT_ID and try to resolve profile
     const rtId = DEV_RT_ID;
 

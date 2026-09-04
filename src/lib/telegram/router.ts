@@ -1,7 +1,6 @@
 /**
  * Intent router — separates webhook plumbing from business logic.
  */
-import { getLinkedAccount } from "./auth";
 import { createPending } from "./pending";
 import { handleDeterministic } from "@/lib/ai/deterministic";
 import {
@@ -203,8 +202,8 @@ export async function routeMessage(
 // Helper: rt-aware parse (mirrors parseSmartInput but with rtId)
 async function parseForRt(trimmed: string, rtId: string) {
   // Duplicate minimal logic from parser.ts but rt-aware context
-  const { createServerClient } = await import("@/lib/supabase/server");
-  const supabase = createServerClient();
+  const { createServiceClient } = await import("@/lib/supabase/service");
+  const supabase = createServiceClient();
   const [pRes, cRes] = await Promise.all([
     supabase.from("pockets").select("name").eq("rt_id", rtId).eq("is_active", true),
     supabase.from("categories").select("name, type").eq("rt_id", rtId).eq("is_active", true),

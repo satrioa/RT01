@@ -1,11 +1,11 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import type { TelegramAccount } from "./types";
 
 /**
  * Returns linked account or null. Never allow unknown Telegram accounts to write.
  */
 export async function getLinkedAccount(telegramUserId: number): Promise<TelegramAccount | null> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("telegram_accounts")
     .select("*")
@@ -27,7 +27,7 @@ export async function linkByCode(
   chatId: number,
   code: string
 ): Promise<{ ok: boolean; message: string }> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   const normalized = code.trim().toUpperCase();
 
   const { data: codeRow, error } = await supabase
@@ -85,6 +85,6 @@ export async function linkByCode(
 }
 
 export async function unlinkAccount(telegramUserId: number): Promise<void> {
-  const supabase = createServerClient();
+  const supabase = createServiceClient();
   await supabase.from("telegram_accounts").delete().eq("telegram_user_id", telegramUserId);
 }

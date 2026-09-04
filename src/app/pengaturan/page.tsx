@@ -1,5 +1,6 @@
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
+import { LinkTelegramCard } from "@/components/telegram/link-telegram";
 import { Settings2 } from "lucide-react";
 
 export default function PengaturanPage() {
@@ -8,9 +9,10 @@ export default function PengaturanPage() {
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-background">
         <header className="sticky top-0 z-10 border-b bg-card px-5 py-4">
           <h1 className="text-sm font-semibold">Pengaturan</h1>
-          <p className="text-xs text-muted-foreground">RT, kantong, kategori</p>
+          <p className="text-xs text-muted-foreground">RT, kantong, kategori, Telegram</p>
         </header>
-        <main className="flex flex-1 flex-col p-5 pb-6">
+        <main className="flex flex-1 flex-col gap-4 p-5 pb-6">
+          <LinkTelegramCard />
           <Card className="border-dashed">
             <CardContent className="p-6 text-center">
               <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted">
