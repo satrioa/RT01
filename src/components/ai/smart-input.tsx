@@ -90,17 +90,17 @@ export function SmartInput() {
 
   return (
     <div className="space-y-3">
-      <Card className="border-0 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-sm">
+      <Card className="border border-border/50 bg-card text-card-foreground shadow-sm">
         <CardContent className="p-4">
           <div className="mb-3 flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-xl bg-white/15">
+            <span className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Sparkles className="size-4" />
             </span>
             <div>
               <p className="text-sm font-semibold">Smart Input</p>
-              <p className="text-xs opacity-70">Ketik transaksi dengan bahasa alami</p>
+              <p className="text-xs text-muted-foreground">Ketik transaksi dengan bahasa alami</p>
             </div>
-            <Badge variant="secondary" className="ml-auto rounded-full bg-white/20 text-primary-foreground border-0">
+            <Badge variant="secondary" className="ml-auto rounded-full bg-muted text-muted-foreground border-0">
               AI
             </Badge>
           </div>
@@ -123,7 +123,7 @@ export function SmartInput() {
                 </Button>
               </div>
             </div>
-            <p className="text-center text-[11px] opacity-60">AI tidak langsung menulis ke database — perlu konfirmasi. • “saldo kas” dijawab tanpa AI.</p>
+            <p className="text-center text-[11px] text-muted-foreground">AI tidak langsung menulis ke database — perlu konfirmasi. • “saldo kas” dijawab tanpa AI.</p>
           </form>
         </CardContent>
       </Card>
