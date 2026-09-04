@@ -3,6 +3,7 @@ import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { OverviewCards } from "@/components/reports/overview-cards";
+import { DetailKpiCards } from "@/components/reports/detail-kpi-cards";
 import { MonthlyChart } from "@/components/reports/monthly-chart";
 import { CategoryBreakdown } from "@/components/reports/category-breakdown";
 import { PocketBreakdown } from "@/components/reports/pocket-breakdown";
@@ -62,6 +63,19 @@ export default async function ReportsPage({
               totalExpense={data.totalExpense}
               netChange={data.netChange}
               currentBalance={data.currentBalance}
+            />
+          </section>
+
+          {/* Detail KPI — spectrum stat-cards ringkasan baru di bawah */}
+          <section className="space-y-3">
+            <h2 className="px-1 text-sm font-semibold">Rincian KPI</h2>
+            <DetailKpiCards
+              transactionCount={data.transactions.length}
+              avgAmount={data.transactions.length ? (data.totalIncome + data.totalExpense) / data.transactions.length : 0}
+              pocketCount={data.pocketBalances.length}
+              categoryCount={data.expenseByCategory.length + data.incomeByCategory.length}
+              totalIncome={data.totalIncome}
+              totalExpense={data.totalExpense}
             />
           </section>
 
