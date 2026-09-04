@@ -1,6 +1,7 @@
 "use client";
 
 import { StatCardData, StatCards } from "@/components/spectrumui/charts/stat-cards";
+import { formatRupiah } from "@/lib/format";
 
 function makeSeries(value: number, seed: number): number[] {
   if (value === 0) return [0, 0, 0, 0, 0, 0, 0];
@@ -10,61 +11,59 @@ function makeSeries(value: number, seed: number): number[] {
   return [0.5, 0.62, 0.71, 0.6, 0.84, 0.92, 1].map((f, i) => Math.max(0.01 * abs, sign * abs * (f + jitter(i))));
 }
 
+const formatWithSign = (v: number) => `${v >= 0 ? "+" : ""}${formatRupiah(v)}`;
+
 export function DetailKpiCards({
-  transactionCount,
-  avgAmount,
-  pocketCount,
-  categoryCount,
   totalIncome,
   totalExpense,
+  netChange,
+  currentBalance,
 }: {
-  transactionCount: number;
-  avgAmount: number;
-  pocketCount: number;
-  categoryCount: number;
   totalIncome: number;
   totalExpense: number;
+  netChange: number;
+  currentBalance: number;
 }) {
-  const expenseRatio = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
-  const clampedProgress = Math.max(0, Math.min(1, totalIncome > 0 ? totalExpense / Math.max(totalIncome, 1) : 0));
-
   const cards: StatCardData[] = [
     {
-      label: "Transaksi",
-      value: transactionCount,
-      series: makeSeries(transactionCount, 101),
-      previous: Math.max(0, transactionCount - 2),
-      format: (v) => `${Math.round(v)} trx`,
+      label: "Pemasukan",
+      value: totalIncome,
+      series: makeSeries(totalIncome, 111),
+      previous: totalIncome * 0.72,
+      format: (v) => formatRupiah(v),
+      deltaLabel: "per periode",
       goodWhen: "up",
-      deltaLabel: "vs awal periode",
-      caption: `${transactionCount} transaksi`,
+      caption: "Income",
     },
     {
-      label: "Rata-rata",
-      value: avgAmount,
-      series: makeSeries(avgAmount, 102),
-      previous: avgAmount * 0.78,
-      format: (v) => `Rp ${Math.round(v).toLocaleString("id-ID")}`,
-      goodWhen: "up",
-      deltaLabel: "per transaksi",
-      caption: "Avg amount",
+      label: "Pengeluaran",
+      value: totalExpense,
+      series: makeSeries(totalExpense, 112),
+      previous: totalExpense * 0.85,
+      format: (v) => formatRupiah(v),
+      deltaLabel: "per periode",
+      goodWhen: "down",
+      caption: "Expense",
     },
     {
-      label: "Kantong Aktif",
-      value: pocketCount,
-      series: makeSeries(pocketCount, 103),
-      previous: Math.max(1, pocketCount - 1),
-      format: (v) => `${Math.round(v)} kantong`,
+      label: "Nett",
+      value: netChange,
+      series: makeSeries(netChange, 113),
+      previous: netChange * 0.6,
+      format: formatWithSign,
+      deltaLabel: "Income − Expense",
       goodWhen: "up",
-      deltaLabel: pocketCount > 1 ? "multi kantong" : "single",
-      caption: `${pocketCount} aktif`,
+      caption: "Net",
     },
     {
-      label: "Efisiensi",
-      value: expenseRatio,
-      progress: clampedProgress,
-      format: (v) => `${v.toFixed(1)}%`,
-      caption: `Pengeluaran ${clampedProgress < 0.7 ? "terkendali" : "tinggi"} • ${categoryCount} kategori`,
+      label: "Saldo",
+      value: currentBalance,
+      series: makeSeries(currentBalance, 114),
+      previous: currentBalance * 0.8,
+      format: (v) => formatRupiah(v),
+      deltaLabel: "derivasi ledger",
+      goodWhen: "up",
+      caption: "Transfer 0",
     },
   ];
 

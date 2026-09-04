@@ -66,16 +66,14 @@ export default async function ReportsPage({
             />
           </section>
 
-          {/* Detail KPI — spectrum stat-cards ringkasan baru di bawah */}
+          {/* Detail KPI — spectrum stat-cards ringkasan baru di bawah (samakan value: Pemasukan/Pengeluaran/Nett/Saldo) */}
           <section className="space-y-3">
             <h2 className="px-1 text-sm font-semibold">Rincian KPI</h2>
             <DetailKpiCards
-              transactionCount={data.transactions.length}
-              avgAmount={data.transactions.length ? (data.totalIncome + data.totalExpense) / data.transactions.length : 0}
-              pocketCount={data.pocketBalances.length}
-              categoryCount={data.expenseByCategory.length + data.incomeByCategory.length}
               totalIncome={data.totalIncome}
               totalExpense={data.totalExpense}
+              netChange={data.netChange}
+              currentBalance={data.currentBalance}
             />
           </section>
 
