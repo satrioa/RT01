@@ -1,9 +1,12 @@
 import { z } from "zod";
+
 import { createServerClient } from "@/lib/supabase/server";
 import { DEV_RT_ID } from "@/lib/env";
+
 import { handleDeterministic } from "./deterministic";
-import { OpenRouterProvider } from "./openrouter";
+import { GeminiProvider } from "./gemini";
 import { MockProvider } from "./mock";
+
 import {
   aiTransactionOutputSchema,
   aiTransferOutputSchema,
@@ -11,7 +14,6 @@ import {
   type AiParsedResult,
   type AiContext,
 } from "./types";
-
 export type SmartParseResult =
   | { type: "deterministic"; answer: string }
   | { type: "transaction"; data: z.infer<typeof aiTransactionOutputSchema> & { pocketId?: string; categoryId?: string | null } }
@@ -78,7 +80,7 @@ export async function parseSmartInput(rawInput: string): Promise<SmartParseResul
   const ctx = await getContext();
 
   // Provider/model from DB (per RT) with env fallback
-  let providerId: string = "openrouter";
+  let providerId: string = "gemini";
   let modelId: string | undefined;
   try {
     const { data: s } = await createServerClient().from("rt_ai_settings").select("provider, model, is_enabled").eq("rt_id", DEV_RT_ID).maybeSingle();
@@ -90,30 +92,34 @@ export async function parseSmartInput(rawInput: string): Promise<SmartParseResul
       providerId = row.provider;
       modelId = row.model;
     } else {
-      providerId = process.env.AI_PROVIDER ?? "openrouter";
-      modelId = process.env.OPENROUTER_MODEL;
+      providerId = process.env.AI_PROVIDER ?? "gemini";
+      modelId = process.env.GEMINI_MODEL;
     }
   } catch {
-    providerId = process.env.AI_PROVIDER ?? "openrouter";
-    modelId = process.env.OPENROUTER_MODEL;
+    providerId = process.env.AI_PROVIDER ?? "gemini";
+    modelId = process.env.GEMINI_MODEL;
   }
-
   let provider: import("./provider").AiProvider;
+
   if (providerId === "mock") {
     provider = new MockProvider();
-  } else {
-    const envKeyMap: Record<string, string | undefined> = {
-      openrouter: process.env.OPENROUTER_API_KEY,
-      openai: process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_API_KEY,
-      anthropic: process.env.ANTHROPIC_API_KEY ?? process.env.OPENROUTER_API_KEY,
-    };
-    const apiKey = envKeyMap[providerId] ?? process.env.OPENROUTER_API_KEY;
-    const model = modelId ?? process.env.OPENROUTER_MODEL ?? "google/gemini-2.0-flash-001";
+  } else if (providerId === "gemini") {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const model =
+      modelId ??
+      process.env.GEMINI_MODEL ??
+      "gemini-2.5-flash";
+  
     if (!apiKey) {
       provider = new MockProvider();
     } else {
-      provider = new OpenRouterProvider(apiKey, model);
+      provider = new GeminiProvider(apiKey, model);
     }
+  } else {
+    return {
+      type: "error",
+      error: `Provider AI "${providerId}" belum didukung.`,
+    };
   }
 
   let raw: AiParsedResult;
