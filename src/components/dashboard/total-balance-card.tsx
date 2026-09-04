@@ -12,44 +12,44 @@ export function TotalBalanceCard({
   activeCount: number;
 }) {
   return (
-    <Card className="relative overflow-hidden border-0 text-white shadow-lg">
-      {/* Animated shader background */}
+    <Card className="relative overflow-hidden border border-[#d5efd6]/60 text-foreground shadow-lg">
+      {/* Light green animated shader background */}
       <div className="absolute inset-0">
         <ShaderBackground
           variant="mesh-gradient"
-          colors={["#0f172a", "#1e3a5f", "#0e7490", "#14532d", "#1a1a2e"]}
-          distortion={0.7}
-          swirl={0.5}
-          grainMixer={0.15}
-          grainOverlay={0.08}
-          speed={0.4}
+          colors={["#e6e6e6", "#ffffff", "#d5efd6", "#f0f8f0", "#e6e6e6"]}
+          distortion={0.6}
+          swirl={0.35}
+          grainMixer={0.08}
+          grainOverlay={0.04}
+          speed={0.35}
         />
       </div>
-      {/* Readability overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/35 via-black/15 to-black/40" />
-      {/* Subtle inner glow */}
-      <div className="absolute -top-24 -right-24 size-48 rounded-full bg-white/10 blur-3xl" />
-      <div className="absolute -bottom-20 -left-20 size-40 rounded-full bg-white/5 blur-3xl" />
+      {/* Light readability overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-[#d5efd6]/20" />
+      {/* Subtle green glow */}
+      <div className="absolute -top-16 -right-16 size-36 rounded-full bg-[#d5efd6]/40 blur-2xl" />
+      <div className="absolute -bottom-12 -left-12 size-32 rounded-full bg-white/60 blur-2xl" />
 
       <CardHeader className="relative pb-2">
-        <CardDescription className="text-white/70">Total Saldo</CardDescription>
-        <CardTitle className="text-[28px] font-bold tracking-tight text-white sm:text-3xl">
+        <CardDescription className="font-medium text-foreground/60">Total Saldo</CardDescription>
+        <CardTitle className="text-[28px] font-bold tracking-tight text-foreground sm:text-3xl">
           {formatRupiah(total)}
         </CardTitle>
-        <p className="text-xs text-white/60">
+        <p className="text-xs text-foreground/55">
           {activeCount} kantong aktif • saldo gabungan
         </p>
       </CardHeader>
       <CardContent className="relative flex gap-2 pt-1">
         <Link
           href="/transactions/new?type=income"
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white/15 px-3 py-2.5 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20 active:bg-white/25"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-foreground px-3 py-2.5 text-xs font-semibold text-background shadow-sm backdrop-blur-sm transition-colors hover:bg-foreground/90 active:bg-foreground/80"
         >
           <ArrowUpRight className="size-3.5" /> Pemasukan
         </Link>
         <Link
           href="/transactions/new?type=expense"
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white/15 px-3 py-2.5 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20 active:bg-white/25"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white px-3 py-2.5 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-white/90 active:bg-white/80 border border-foreground/10"
         >
           <ArrowDownRight className="size-3.5" /> Pengeluaran
         </Link>
