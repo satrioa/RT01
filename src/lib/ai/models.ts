@@ -25,6 +25,7 @@ export const AI_PROVIDERS: AiProviderOption[] = [
     docsUrl: "https://openrouter.ai/keys",
     models: [
       { id: "inclusionai/ling-3.0-flash-fin:free", label: "Ling 3.0 Flash Fin ★", description: "Fast & free — rekomendasi RT Finance", recommended: true },
+      { id: "google/gemini-2.0-flash-001", label: "Gemini 2.0 Flash", description: "Google — dari .env" },
       { id: "google/gemma-4-31b-it:free", label: "Gemma 4 31B", description: "Free, 262K context" },
       { id: "google/gemma-4-26b-a4b-it:free", label: "Gemma 4 26B A4B", description: "Free, multimodal" },
       { id: "minimax/minimax-m3:free", label: "MiniMax M3", description: "Free, 1M context" },
@@ -78,5 +79,7 @@ export function getDefaultModel(provider: AiProviderId): string {
   return p?.models.find((m) => m.recommended)?.id ?? p?.models[0]?.id ?? "mock";
 }
 
-export const DEFAULT_PROVIDER: AiProviderId = "openrouter";
-export const DEFAULT_MODEL = "inclusionai/ling-3.0-flash-fin:free";
+export const DEFAULT_PROVIDER: AiProviderId =
+  (process.env.AI_PROVIDER as AiProviderId) ?? "openrouter";
+export const DEFAULT_MODEL =
+  process.env.OPENROUTER_MODEL ?? "inclusionai/ling-3.0-flash-fin:free";

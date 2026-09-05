@@ -28,16 +28,25 @@ export function AiProviderSettings({
   const [testResult, setTestResult] = React.useState<{ ok: boolean; ms?: number; error?: string } | null>(null);
 
   const providerOpt = getProvider(provider as import("@/types/database").AiProviderId) ?? AI_PROVIDERS[0];
-  const models = providerOpt.models;
+  // Jika model dari DB/env tidak ada di daftar, tampilkan sebagai opsi custom agar tidak kosong
+  const models = React.useMemo(() => {
+    const base = providerOpt.models;
+    if (model && !base.some((m) => m.id === model)) {
+      return [{ id: model, label: `${model} (custom dari env/DB)`, description: "Model tidak di daftar — tetap dipakai" }, ...base];
+    }
+    return base;
+  }, [providerOpt.models, model]);
 
-  // when provider changes, reset model to recommended
+  // when provider changes, reset model to recommended only jika model saat ini bukan custom yang sengaja
   React.useEffect(() => {
     const p = getProvider(provider as import("@/types/database").AiProviderId);
     if (p && !p.models.some((m) => m.id === model)) {
+      // Jangan auto-reset jika model adalah custom (mis. dari env) — biarkan user lihat
+      if (models.some((m) => m.id === model && m.description.includes("custom"))) return;
       const rec = p.models.find((m) => m.recommended)?.id ?? p.models[0]?.id;
       if (rec) setModel(rec);
     }
-  }, [provider, model]);
+  }, [provider, model, models]);
 
   const envOk = providerOpt.envKey ? (envStatus[providerOpt.envKey] ?? false) : true;
   const isMock = provider === "mock";
