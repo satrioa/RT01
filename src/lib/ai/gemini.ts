@@ -31,12 +31,20 @@ export class GeminiProvider implements AiProvider {
       process.env.GOOGLE_API_KEY ??
       "";
 
-    const rawModel = model ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
-    // auto-migrate deprecated 2.0-flash-001 (404) → 2.5-flash / 3.6-flash
+    const rawModel = model ?? process.env.GEMINI_MODEL ?? "gemini-3.6-flash";
+    // auto-migrate deprecated models (404) → latest
     const deprecatedMap: Record<string, string> = {
-      "gemini-2.0-flash-001": "gemini-2.5-flash",
-      "gemini-2.0-flash": "gemini-2.5-flash",
-      "models/gemini-2.0-flash-001": "gemini-2.5-flash",
+      "gemini-2.5-flash": "gemini-3.6-flash",
+      "gemini-2.5-flash-lite": "gemini-3.6-flash",
+      "models/gemini-2.5-flash": "gemini-3.6-flash",
+      "google/gemini-2.5-flash": "gemini-3.6-flash",
+      "google/gemini-2.5-flash-lite": "gemini-3.6-flash",
+      "gemini-2.0-flash-001": "gemini-3.6-flash",
+      "gemini-2.0-flash": "gemini-3.6-flash",
+      "google/gemini-2.0-flash-001": "gemini-3.6-flash",
+      "google/gemini-2.0-flash": "gemini-3.6-flash",
+      "models/gemini-2.0-flash-001": "gemini-3.6-flash",
+      "models/gemini-2.0-flash": "gemini-3.6-flash",
     };
     this.model = deprecatedMap[rawModel] ?? rawModel;
   }

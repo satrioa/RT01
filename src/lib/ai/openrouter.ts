@@ -15,9 +15,12 @@ export class OpenRouterProvider implements AiProvider {
     this.apiKey = apiKey ?? process.env.OPENROUTER_API_KEY ?? "";
     const rawModel = model ?? process.env.OPENROUTER_MODEL ?? "inclusionai/ling-3.0-flash-fin:free";
     const deprecatedMap: Record<string, string> = {
-      "google/gemini-2.0-flash-001": "google/gemini-2.5-flash",
-      "google/gemini-2.0-flash": "google/gemini-2.5-flash",
-      "google/gemini-2.0-flash-exp": "google/gemini-2.5-flash",
+      "google/gemini-2.5-flash": "google/gemini-3.6-flash",
+      "google/gemini-2.5-flash-lite": "google/gemini-3.6-flash",
+      "google/gemini-2.0-flash-001": "google/gemini-3.6-flash",
+      "google/gemini-2.0-flash": "google/gemini-3.6-flash",
+      "google/gemini-2.0-flash-exp": "google/gemini-3.6-flash",
+      "models/gemini-2.5-flash": "google/gemini-3.6-flash",
     };
     this.model = deprecatedMap[rawModel] ?? rawModel;
   }
