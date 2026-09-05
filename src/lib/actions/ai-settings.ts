@@ -50,8 +50,12 @@ export async function saveAiSettingsAction(formData: FormData): Promise<{ ok: bo
 
   const providerOpt = AI_PROVIDERS.find((p) => p.id === parsed.data.provider);
   if (!providerOpt) return { ok: false, error: "Provider tidak dikenal" };
+  // Allow custom model IDs (e.g. gemini variants not yet in list) — jangan force ke openrouter
+  // Jika model tidak ada di daftar, tetap simpan; hanya beri warning di log
   const modelOk = providerOpt.models.some((m) => m.id === parsed.data.model);
-  if (!modelOk) return { ok: false, error: `Model ${parsed.data.model} tidak tersedia untuk ${parsed.data.provider}` };
+  if (!modelOk) {
+    console.warn(`[ai-settings] custom model "${parsed.data.model}" untuk ${parsed.data.provider} tidak ada di daftar — tetap disimpan`);
+  }
 
   const rtId = await getCurrentRtId();
   const supabase = createServiceClient(); // service to bypass RLS for upsert
