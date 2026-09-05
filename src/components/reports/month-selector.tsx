@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -90,13 +90,25 @@ export function MonthSelector({
     <Card className="overflow-hidden">
       <CardContent className="p-2">
         <div className="relative flex min-w-0 flex-1 items-center gap-1">
+          {/* caret kiri */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`absolute left-0 z-10 size-7 shrink-0 rounded-full bg-card/90 shadow-sm backdrop-blur-sm border ${canLeft ? "opacity-100" : "pointer-events-none opacity-0"}`}
+            onClick={() => scrollBy(-1)}
+            aria-label="Geser kiri"
+            type="button"
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+
           <div
             ref={scrollRef}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerLeave={onPointerUp}
-            className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth py-1 select-none touch-pan-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory cursor-grab active:cursor-grabbing"
+            className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth px-8 py-1 select-none touch-pan-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory cursor-grab active:cursor-grabbing"
           >
             {months.map(({ year, month }) => {
               const isSelected = year === selectedYear && month === selectedMonth;
@@ -112,18 +124,6 @@ export function MonthSelector({
               );
             })}
           </div>
-
-          {/* caret kanan */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`absolute right-0 z-10 size-7 shrink-0 rounded-full bg-card/90 shadow-sm backdrop-blur-sm border ${canRight ? "opacity-100" : "pointer-events-none opacity-0"}`}
-            onClick={() => scrollBy(1)}
-            aria-label="Geser kanan"
-            type="button"
-          >
-            <ChevronRight className="size-4" />
-          </Button>
         </div>
       </CardContent>
     </Card>
