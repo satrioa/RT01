@@ -31,6 +31,12 @@ export interface MonthlyReportRow {
   updated_at: string;
 }
 
+function isMissingTableError(error: unknown): boolean {
+  const msg = (error as { message?: string })?.message ?? String(error);
+  const code = (error as { code?: string })?.code;
+  return code === "42P01" || msg.includes("Could not find the table") || msg.includes("schema cache") || msg.includes("does not exist");
+}
+
 export async function getMonthlyReport(
   supabase: SupabaseClient,
   rtId: string,
@@ -46,7 +52,13 @@ export async function getMonthlyReport(
     .order("version", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isMissingTableError(error)) {
+      console.warn("[monthly_reports] table missing — run migration 007. Returning null.");
+      return null;
+    }
+    throw new Error(error.message);
+  }
   return (data as MonthlyReportRow | null) ?? null;
 }
 
@@ -63,7 +75,13 @@ export async function listMonthlyReports(
     .order("month", { ascending: false })
     .order("version", { ascending: false })
     .limit(limit);
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isMissingTableError(error)) {
+      console.warn("[monthly_reports] table missing — run migration 007. Returning []");
+      return [];
+    }
+    throw new Error(error.message);
+  }
   // Deduplicate to latest version per month
   const map = new Map<string, MonthlyReportRow>();
   for (const r of (data as MonthlyReportRow[] | null) ?? []) {
