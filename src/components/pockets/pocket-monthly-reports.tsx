@@ -20,11 +20,18 @@ export async function PocketMonthlyReports({ rtId, pocketId, pocketName }: { rtI
     );
   }
 
-  // For each report, fetch its pocket snapshot for this pocket
+  // For each report, fetch its pocket snapshot for this pocket (handle missing table)
   const snapshots = await Promise.all(
     reports.map(async (r) => {
-      const { data } = await supabase.from("monthly_report_pockets").select("*").eq("monthly_report_id", r.id).eq("pocket_id", pocketId).maybeSingle();
-      return { report: r, pocket: data as { closing_balance: string; opening_balance: string } | null };
+      try {
+        const { data, error } = await supabase.from("monthly_report_pockets").select("*").eq("monthly_report_id", r.id).eq("pocket_id", pocketId).maybeSingle();
+        if (error && (error.message.includes("Could not find the table") || (error as { code?: string }).code === "42P01")) {
+          return { report: r, pocket: null as unknown as { closing_balance: string; opening_balance: string } | null };
+        }
+        return { report: r, pocket: data as { closing_balance: string; opening_balance: string } | null };
+      } catch {
+        return { report: r, pocket: null as unknown as { closing_balance: string; opening_balance: string } | null };
+      }
     })
   );
 
