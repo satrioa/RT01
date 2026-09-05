@@ -40,7 +40,7 @@ export default async function Page() {
   return (
     <div className="min-h-dvh bg-background">
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-background">
-        <main className="flex flex-1 flex-col gap-6 p-5 pb-6">
+        <main className="flex flex-1 flex-col gap-6 px-5 pt-5">
           <GreetingHeader rtName={rtName} rtNumber={rtNumber} rwNumber={rwNumber} />
 
           {data.error && (
@@ -72,8 +72,8 @@ export default async function Page() {
 
           <Separator />
 
-          {/* Transaksi terbaru — background putih full viewport */}
-          <section className="relative left-1/2 w-screen -translate-x-1/2 bg-white dark:bg-zinc-900">
+          {/* Transaksi terbaru — background putih full viewport sampai bottom mentok */}
+          <section className="relative left-1/2 w-screen flex-1 -translate-x-1/2 bg-white dark:bg-zinc-900">
             <div className="mx-auto w-full max-w-[430px] space-y-3 px-5 py-6">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-sm font-semibold">Transaksi terbaru</h2>
@@ -81,10 +81,9 @@ export default async function Page() {
               </div>
               <RecentTransactions transactions={data.recentTransactions} transfers={data.recentTransfers} />
             </div>
+            <BottomNavSpacer />
           </section>
         </main>
-
-        <BottomNavSpacer />
       </div>
 
       <BottomNav />
