@@ -120,6 +120,8 @@ export function ExcelImportClient({
 
   const validCount = effectiveValidation.filter((v) => v.isValid).length;
   const invalidCount = effectiveValidation.filter((v) => !v.isValid).length;
+  const [showInvalidOnly, setShowInvalidOnly] = React.useState(false);
+  const [validationExpanded, setValidationExpanded] = React.useState(false);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -525,26 +527,50 @@ export function ExcelImportClient({
                 </div>
               </div>
 
-              <div className="max-h-[240px] space-y-1 overflow-auto rounded-xl border p-2">
-                {effectiveValidation.slice(0, 20).map((v) => (
-                  <div key={v.index} className={`flex items-start gap-2 rounded-xl px-2 py-1.5 ${v.isValid ? "bg-success/5" : "bg-destructive/5"}`}>
-                    <span className="mt-0.5">
-                      {v.isValid ? <CheckCircle2 className="size-3.5 text-success" /> : <XCircle className="size-3.5 text-destructive" />}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium">
-                        Baris {v.index + 2}: {v.parsed.description ?? "—"} — {v.parsed.date ?? "no date"} — {v.parsed.amount !== null ? formatRupiah(v.parsed.amount) : "no amount"} — {v.parsed.pocketName ?? "no pocket"} — {v.parsed.categoryName ?? "no cat"}
-                      </p>
-                      {v.errors.length > 0 && <p className="text-xs text-destructive">{v.errors.join(" • ")}</p>}
-                      {v.warnings.length > 0 && <p className="text-xs text-warning">{v.warnings.join(" • ")}</p>}
+              {(() => {
+                const filtered = showInvalidOnly ? effectiveValidation.filter((v) => !v.isValid) : effectiveValidation;
+                const sorted = showInvalidOnly ? filtered : [...filtered].sort((a, b) => Number(a.isValid) - Number(b.isValid));
+                const displayList = validationExpanded ? sorted : sorted.slice(0, 20);
+                return (
+                  <>
+                    {invalidCount > 0 && (
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-destructive">{invalidCount} baris invalid — perlu diperbaiki</p>
+                        <Button variant="outline" size="sm" className="h-7 rounded-full text-xs" onClick={() => setShowInvalidOnly((v) => !v)}>
+                          {showInvalidOnly ? "Tampilkan semua" : "Hanya invalid"}
+                        </Button>
+                      </div>
+                    )}
+                    <div className={`${validationExpanded ? "max-h-[480px]" : "max-h-[240px]"} space-y-1 overflow-auto rounded-xl border p-2`}>
+                      {displayList.map((v) => (
+                        <div key={v.index} className={`flex items-start gap-2 rounded-xl px-2 py-1.5 ${v.isValid ? "bg-success/5" : "bg-destructive/5"}`}>
+                          <span className="mt-0.5">
+                            {v.isValid ? <CheckCircle2 className="size-3.5 text-success" /> : <XCircle className="size-3.5 text-destructive" />}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-medium">
+                              Baris {v.index + 2}: {v.parsed.description ?? "—"} — {v.parsed.date ?? "no date"} — {v.parsed.amount !== null ? formatRupiah(v.parsed.amount) : "no amount"} — {v.parsed.pocketName ?? "no pocket"} — {v.parsed.categoryName ?? "no cat"}
+                            </p>
+                            {v.errors.length > 0 && <p className="text-xs text-destructive">{v.errors.join(" • ")}</p>}
+                            {v.warnings.length > 0 && <p className="text-xs text-warning">{v.warnings.join(" • ")}</p>}
+                          </div>
+                          <Badge variant={v.isValid ? "success" : "destructive"} className="shrink-0 rounded-full text-xs">
+                            {v.isValid ? "ok" : "err"}
+                          </Badge>
+                        </div>
+                      ))}
+                      {filtered.length === 0 && showInvalidOnly && (
+                        <p className="py-4 text-center text-xs text-muted-foreground">Tidak ada baris invalid pada filter ini.</p>
+                      )}
                     </div>
-                    <Badge variant={v.isValid ? "success" : "destructive"} className="shrink-0 rounded-full text-xs">
-                      {v.isValid ? "ok" : "err"}
-                    </Badge>
-                  </div>
-                ))}
-                {effectiveValidation.length > 20 && <p className="text-center text-xs text-muted-foreground">+ {effectiveValidation.length - 20} baris lagi</p>}
-              </div>
+                    {sorted.length > 20 && (
+                      <Button variant="ghost" size="sm" className="w-full rounded-xl text-xs" onClick={() => setValidationExpanded((v) => !v)}>
+                        {validationExpanded ? "Tampilkan lebih sedikit" : `+ ${sorted.length - 20} baris lagi — tampilkan semua`}
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
 
               <Button onClick={handleImport} disabled={!hasMapping || validCount === 0 || importing} className="w-full rounded-xl">
                 {importing ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
