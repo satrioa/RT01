@@ -69,7 +69,8 @@ function DrawerContent({
         <motion.div
           animate={{ height: bounds.height }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="overflow-hidden"
+          className="overflow-y-auto overscroll-contain"
+          style={{ maxHeight: "92dvh" }}
         >
           <div ref={elementRef} className="p-6">
             {children}

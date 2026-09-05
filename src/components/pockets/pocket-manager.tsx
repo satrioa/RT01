@@ -383,7 +383,7 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
               {sheetMode === "edit" ? "Ubah nama, deskripsi, warna atau urutan. Klik Simpan untuk menyimpan." : "Buat kantong baru untuk memisahkan dana. Nama harus unik."}
             </DrawerDescription>
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="px-4 pb-4">
             {sheetMode === "edit" && editing ? (
               <PocketForm
                 key={editing.id}
