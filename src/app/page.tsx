@@ -2,11 +2,15 @@ import { GreetingHeader } from "@/components/dashboard/greeting-header";
 import { PocketCarousel } from "@/components/dashboard/pocket-carousel";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { TotalBalanceCard } from "@/components/dashboard/total-balance-card";
+import { CashFlowGauge } from "@/components/dashboard/cash-flow-gauge";
+import { OverviewCards } from "@/components/reports/overview-cards";
 import { SmartInput } from "@/components/ai/smart-input";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getHomeData } from "@/lib/data/home";
+import { createServiceClient } from "@/lib/supabase/service";
+import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { AlertTriangle } from "lucide-react";
 
 // Force dynamic so greeting reflects server time and data is fresh
@@ -14,6 +18,21 @@ export const dynamic = "force-dynamic";
 
 export default async function Page() {
   const data = await getHomeData();
+
+  // Fetch income/expense for current month directly from DB
+  let totalIncome = 0;
+  let totalExpense = 0;
+  if (hasSupabaseEnv()) {
+    const supabase = createServiceClient();
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const [incRes, expRes] = await Promise.all([
+      supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "income").gte("transaction_date", start),
+      supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", start),
+    ]);
+    totalIncome = (incRes.data ?? []).reduce((s: number, r: { amount: string }) => s + Number(r.amount), 0);
+    totalExpense = (expRes.data ?? []).reduce((s: number, r: { amount: string }) => s + Number(r.amount), 0);
+  }
 
   const rtName = data.rt?.name ?? "RT 01";
   const rtNumber = data.rt?.rt_number ?? "01";
@@ -47,6 +66,16 @@ export default async function Page() {
             </div>
             <PocketCarousel pockets={data.pockets} />
           </section>
+
+          {/* KPI & Gauge */}
+          <div className="space-y-3">
+            <OverviewCards
+              totalIncome={totalIncome}
+              totalExpense={totalExpense}
+              netChange={totalIncome - totalExpense}
+            />
+            <CashFlowGauge totalIncome={totalIncome} totalExpense={totalExpense} />
+          </div>
 
           <SmartInput />
 
