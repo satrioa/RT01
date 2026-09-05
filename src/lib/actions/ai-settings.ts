@@ -9,7 +9,7 @@ import { AI_PROVIDERS, DEFAULT_MODEL, DEFAULT_PROVIDER } from "@/lib/ai/models";
 import type { AiProviderId, RtAiSettings } from "@/types/database";
 
 const saveSchema = z.object({
-  provider: z.enum(["openrouter", "openai", "anthropic", "mock"]),
+  provider: z.enum(["openrouter", "openai", "anthropic", "gemini", "mock"]),
   model: z.string().min(1).max(100),
   is_enabled: z.boolean().optional().default(true),
 });
@@ -81,6 +81,8 @@ export async function getEnvKeyStatus(): Promise<Record<string, boolean>> {
     OPENROUTER_API_KEY: !!process.env.OPENROUTER_API_KEY,
     OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
     ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
+    GEMINI_API_KEY: !!(process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY),
+    GOOGLE_API_KEY: !!(process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY),
   };
 }
 
@@ -96,13 +98,21 @@ export async function testAiConnectionAction(formData: FormData): Promise<{ ok: 
     openrouter: process.env.OPENROUTER_API_KEY,
     openai: process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_API_KEY,
     anthropic: process.env.ANTHROPIC_API_KEY ?? process.env.OPENROUTER_API_KEY,
+    gemini: process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY,
+    google: process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY,
   };
   const apiKey = envKeyMap[provider];
-  if (!apiKey) return { ok: false, error: `API key ${envKeyMap[provider] ? "" : "tidak"} ditemukan — set di .env` };
+  if (!apiKey) return { ok: false, error: `API key tidak ditemukan — set ${provider === "gemini" || provider === "google" ? "GEMINI_API_KEY" : provider === "openai" ? "OPENAI_API_KEY" : provider === "anthropic" ? "ANTHROPIC_API_KEY" : "OPENROUTER_API_KEY"} di .env` };
 
-  const { OpenRouterProvider } = await import("@/lib/ai/openrouter");
   const start = Date.now();
   try {
+    if (provider === "gemini" || provider === "google") {
+      const { GeminiProvider } = await import("@/lib/ai/gemini");
+      const prov = new GeminiProvider(apiKey, model);
+      await prov.parse("test", { pockets: ["Kas"], categories: [{ name: "Iuran Warga", type: "income" as const }], currentDate: new Date().toISOString().slice(0, 10) });
+      return { ok: true, ms: Date.now() - start };
+    }
+    const { OpenRouterProvider } = await import("@/lib/ai/openrouter");
     const prov = new OpenRouterProvider(apiKey, model);
     await prov.parse("test", { pockets: ["Kas"], categories: [{ name: "Iuran Warga", type: "income" as const }], currentDate: new Date().toISOString().slice(0, 10) });
     return { ok: true, ms: Date.now() - start };

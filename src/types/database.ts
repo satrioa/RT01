@@ -98,7 +98,7 @@ export interface TransactionAttachment {
   created_at: string;
 }
 
-export type AiProviderId = "openrouter" | "openai" | "anthropic" | "mock";
+export type AiProviderId = "openrouter" | "openai" | "anthropic" | "gemini" | "mock";
 
 export interface RtAiSettings {
   id: string;

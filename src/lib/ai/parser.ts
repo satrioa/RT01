@@ -103,17 +103,28 @@ export async function parseSmartInput(rawInput: string): Promise<SmartParseResul
 
   if (providerId === "mock") {
     provider = new MockProvider();
-  } else if (providerId === "gemini") {
-    const apiKey = process.env.GEMINI_API_KEY;
-    const model =
-      modelId ??
-      process.env.GEMINI_MODEL ??
-      "gemini-2.5-flash";
-  
+  } else if (providerId === "gemini" || providerId === "google") {
+    const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
+    const model = modelId ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
     if (!apiKey) {
       provider = new MockProvider();
     } else {
       provider = new GeminiProvider(apiKey, model);
+    }
+  } else if (providerId === "openrouter" || providerId === "openai" || providerId === "anthropic") {
+    // OpenRouter can proxy openai/anthropic/gemini; use OpenRouterProvider
+    const keyMap: Record<string, string | undefined> = {
+      openrouter: process.env.OPENROUTER_API_KEY,
+      openai: process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_API_KEY,
+      anthropic: process.env.ANTHROPIC_API_KEY ?? process.env.OPENROUTER_API_KEY,
+    };
+    const apiKey = keyMap[providerId] ?? process.env.OPENROUTER_API_KEY;
+    const { OpenRouterProvider } = await import("./openrouter");
+    const model = modelId ?? process.env.OPENROUTER_MODEL ?? "inclusionai/ling-3.0-flash-fin:free";
+    if (!apiKey) {
+      provider = new MockProvider();
+    } else {
+      provider = new OpenRouterProvider(apiKey, model);
     }
   } else {
     return {
@@ -127,8 +138,15 @@ export async function parseSmartInput(rawInput: string): Promise<SmartParseResul
     raw = await provider.parse(input, ctx);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Gagal parse AI";
-    // Fallback to Mock on auth errors — keep app usable with bad/missing key
-    const isAuthError = msg.includes("401") || msg.toLowerCase().includes("user not found") || msg.toLowerCase().includes("unauthorized");
+    // Fallback to Mock on auth/model errors — keep app usable with bad/missing key or deprecated model
+    const isAuthError =
+      msg.includes("401") ||
+      msg.includes("404") ||
+      msg.toLowerCase().includes("user not found") ||
+      msg.toLowerCase().includes("unauthorized") ||
+      msg.toLowerCase().includes("is no longer available") ||
+      msg.toLowerCase().includes("not_found") ||
+      msg.toLowerCase().includes("model");
     if (isAuthError && providerId !== "mock") {
       try {
         const fallback = new MockProvider();

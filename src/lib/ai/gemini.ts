@@ -28,12 +28,17 @@ export class GeminiProvider implements AiProvider {
     this.apiKey =
       apiKey ??
       process.env.GEMINI_API_KEY ??
+      process.env.GOOGLE_API_KEY ??
       "";
 
-    this.model =
-      model ??
-      process.env.GEMINI_MODEL ??
-      "gemini-2.5-flash";
+    const rawModel = model ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+    // auto-migrate deprecated 2.0-flash-001 (404) → 2.5-flash / 3.6-flash
+    const deprecatedMap: Record<string, string> = {
+      "gemini-2.0-flash-001": "gemini-2.5-flash",
+      "gemini-2.0-flash": "gemini-2.5-flash",
+      "models/gemini-2.0-flash-001": "gemini-2.5-flash",
+    };
+    this.model = deprecatedMap[rawModel] ?? rawModel;
   }
 
   async parse(
