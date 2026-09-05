@@ -9,55 +9,55 @@ import { useToast } from "@/components/ui/toaster";
 import { saveAppearanceAction } from "@/lib/actions/appearance";
 import type { RtAppearanceSettings } from "@/types/database";
 import { GRADIENT_PRESETS } from "@/lib/gradients";
+import { ANIMATED_GRADIENT_PRESETS, type AnimatedGradientPreset } from "@/lib/gradients";
+import AnimatedGradient from "@/components/animated-gradient";
 import { Palette, Sparkles, Loader2 } from "lucide-react";
 
-const STYLE_OPTIONS = [
-  { id: "auto", label: "Otomatis kantong" },
-  { id: "sunset", label: "Sunset (default Semua)" },
-  { id: "pastel", label: "Pastel" },
-  { id: "blue_ocean", label: "Blue Ocean" },
-  { id: "red_bloom", label: "Red Bloom" },
-  { id: "purple_dream", label: "Purple Dream" },
-  { id: "forest", label: "Forest" },
-  { id: "mint", label: "Mint" },
-  { id: "peach", label: "Peach" },
-  { id: "lavender", label: "Lavender" },
-  { id: "rose", label: "Rose" },
-  { id: "sky", label: "Sky" },
-  { id: "aurora", label: "Aurora" },
-  { id: "cyber", label: "Cyber" },
-  { id: "midnight", label: "Midnight" },
-  { id: "obsidian", label: "Obsidian" },
-  { id: "coffee", label: "Coffee" },
-  { id: "candy", label: "Candy" },
-  { id: "lime", label: "Lime" },
-  { id: "coral", label: "Coral" },
-  { id: "ice", label: "Ice" },
-  { id: "biru_rt", label: "Biru RT (legacy)" },
+const ANIMATED_PRESET_OPTIONS: { id: AnimatedGradientPreset; label: string }[] = [
+  { id: "custom", label: "Custom (kombinasi bebas)" },
+  { id: "Prism", label: "Prism" },
+  { id: "Lava", label: "Lava" },
+  { id: "Plasma", label: "Plasma" },
+  { id: "Pulse", label: "Pulse" },
+  { id: "Vortex", label: "Vortex" },
+  { id: "Mist", label: "Mist" },
 ];
 
 export function AppearanceSettings({ initial }: { initial: RtAppearanceSettings | null }) {
   const { toast } = useToast();
   const [style, setStyle] = React.useState(initial?.style ?? "sunset");
+  const legacyPreset = GRADIENT_PRESETS.find((p) => p.id === (initial?.style ?? "sunset")) ?? GRADIENT_PRESETS.find((p) => p.id === "sunset")!;
+  const [gradientPreset, setGradientPreset] = React.useState<AnimatedGradientPreset>(initial?.gradient_preset ?? "custom");
+  const [colors, setColors] = React.useState({
+    c1: initial?.gradient_color1 ?? legacyPreset.c1,
+    c2: initial?.gradient_color2 ?? legacyPreset.c2,
+    c3: initial?.gradient_color3 ?? legacyPreset.c3,
+  });
   const [saturation, setSaturation] = React.useState(String(initial?.saturation ?? 1.1));
   const [contrast, setContrast] = React.useState(String(initial?.contrast ?? 1.6));
   const [animation, setAnimation] = React.useState(String(initial?.animation_enabled ?? true));
   const [saving, setSaving] = React.useState(false);
 
-  const preset = GRADIENT_PRESETS.find((p) => p.id === style);
-  const previewStyle = preset
-    ? { background: `linear-gradient(135deg, ${preset.c1}, ${preset.c2}, ${preset.c3})` }
-    : style === "auto"
-      ? { background: "linear-gradient(135deg, #f9f9ff, #5697ff, #d2e3ff)" }
-      : style === "biru_rt"
-        ? { background: "linear-gradient(135deg, #f9f9ff, #5697ff, #d2e3ff)" }
-        : {};
+  const previewColors = gradientPreset === "custom" ? colors : ANIMATED_GRADIENT_PRESETS[gradientPreset];
+
+  function handleGradientPresetChange(value: string) {
+    const next = value as AnimatedGradientPreset;
+    setGradientPreset(next);
+    if (next !== "custom") {
+      const preset = ANIMATED_GRADIENT_PRESETS[next];
+      setColors({ c1: preset.c1, c2: preset.c2, c3: preset.c3 });
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     const fd = new FormData();
     fd.set("style", style);
+    fd.set("gradient_preset", gradientPreset);
+    fd.set("gradient_color1", colors.c1);
+    fd.set("gradient_color2", colors.c2);
+    fd.set("gradient_color3", colors.c3);
     fd.set("saturation", saturation);
     fd.set("contrast", contrast);
     fd.set("animation_enabled", animation);
@@ -76,23 +76,50 @@ export function AppearanceSettings({ initial }: { initial: RtAppearanceSettings 
           <span className="ml-auto text-[11px] text-muted-foreground">Hero + Detail</span>
         </div>
 
-        <div className="h-16 w-full overflow-hidden rounded-xl border" style={previewStyle as React.CSSProperties} />
+        <div className="relative isolate h-24 w-full overflow-hidden rounded-xl border bg-muted">
+          <AnimatedGradient
+            config={gradientPreset === "custom"
+              ? { preset: "custom", color1: previewColors.c1, color2: previewColors.c2, color3: previewColors.c3, speed: 18 }
+              : { preset: gradientPreset, speed: 18 }}
+            noise={{ opacity: 0.04 }}
+            style={{ zIndex: 0 }}
+          />
+        </div>
         <p className="text-[11px] text-muted-foreground flex items-center gap-1">
           <Sparkles className="size-3" /> Preview gaya Semua — hero & detail kantong
         </p>
 
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-2">
-            <Label>Gaya Semua</Label>
-            <Select value={style} onValueChange={setStyle}>
+            <Label>Preset Gradient</Label>
+            <Select value={gradientPreset} onValueChange={handleGradientPresetChange}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {STYLE_OPTIONS.map((o) => (
+                {ANIMATED_PRESET_OPTIONS.map((o) => (
                   <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-[11px] text-muted-foreground">Auto = ikut warna kantong, preset = paksa 3 warna preset untuk Semua.</p>
+            <p className="text-[11px] text-muted-foreground">Pilih preset atau Custom untuk menggabungkan tiga warna sendiri.</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {(["c1", "c2", "c3"] as const).map((key, index) => (
+              <label key={key} className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                Color {index + 1}
+                <input
+                  type="color"
+                  value={colors[key]}
+                  onChange={(e) => {
+                    setGradientPreset("custom");
+                    setColors((current) => ({ ...current, [key]: e.target.value }));
+                  }}
+                  className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background p-1"
+                  aria-label={`Gradient color ${index + 1}`}
+                />
+                <span className="font-mono text-[10px] uppercase">{colors[key]}</span>
+              </label>
+            ))}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

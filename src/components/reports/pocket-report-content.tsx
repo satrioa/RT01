@@ -121,8 +121,7 @@ export function PocketReportContent({
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <div
-                className="bg-gradient-to-br from-primary to-primary/80 p-5 text-primary-foreground"
-                style={pocket?.color ? { background: `linear-gradient(135deg, ${pocket.color}, ${pocket.color}CC)` } : undefined}
+                className="bg-[#2b2b2b] p-5 text-white"
               >
                 <div className="flex items-start justify-between">
                   <div>

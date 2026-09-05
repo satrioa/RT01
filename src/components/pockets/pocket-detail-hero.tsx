@@ -21,6 +21,9 @@ export function PocketDetailHero({
   const reduceMotion = useReducedMotion();
 
   const colors = (() => {
+    if (appearance?.gradient_color1 && appearance.gradient_color2 && appearance.gradient_color3) {
+      return { c1: appearance.gradient_color1, c2: appearance.gradient_color2, c3: appearance.gradient_color3 };
+    }
     const base = pocket?.color ?? "#111827";
     const c1 = pocket?.gradient_c1 ?? null;
     const c3 = pocket?.gradient_c3 ?? null;
@@ -29,6 +32,9 @@ export function PocketDetailHero({
   })();
 
   const timeSpeed = appearance?.animation_enabled === false || reduceMotion ? 0 : 0.18;
+  const gradientPreset = appearance?.gradient_preset && appearance.gradient_preset !== "custom"
+    ? appearance.gradient_preset
+    : undefined;
 
   return (
     <div className="relative w-full overflow-hidden rounded-4xl border border-border p-6">
@@ -45,11 +51,12 @@ export function PocketDetailHero({
           grainAnimated={false}
           contrast={appearance?.contrast ?? 1.6}
           saturation={appearance?.saturation ?? 1.1}
-          zoom={0.85}
-          lightMode
-          className="opacity-70"
+           zoom={0.85}
+           lightMode
+           preset={gradientPreset}
+           className="opacity-90"
         />
-        <div className="absolute inset-0 bg-white/55 backdrop-blur-[0.5px] dark:bg-zinc-900/40" />
+         <div className="absolute inset-0 bg-white/15 backdrop-blur-[0.5px] dark:bg-zinc-900/25" />
       </div>
 
       <div className="relative z-10">

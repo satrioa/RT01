@@ -100,8 +100,11 @@ export function HomeWalletCard({
 
   const reduceMotion = useReducedMotion();
   const grainColors = (() => {
-    // Semua: pakai appearance.style (preset global), default sunset
+    // Semua kartu mengikuti pengaturan Tampilan global.
     if (activeId === "semua") {
+      if (appearance?.gradient_color1 && appearance.gradient_color2 && appearance.gradient_color3) {
+        return { c1: appearance.gradient_color1, c2: appearance.gradient_color2, c3: appearance.gradient_color3 };
+      }
       const styleId = appearance?.style ?? "sunset";
       if (styleId !== "auto") {
         const preset = GRADIENT_PRESET_MAP.get(styleId);
@@ -120,6 +123,9 @@ export function HomeWalletCard({
   const grainTimeSpeed = appearance?.animation_enabled === false || reduceMotion ? 0 : 0.18;
   const grainSaturation = appearance?.saturation ?? 1.1;
   const grainContrast = appearance?.contrast ?? 1.6;
+  const gradientPreset = activeId === "semua" && appearance?.gradient_preset && appearance.gradient_preset !== "custom"
+    ? appearance.gradient_preset
+    : undefined;
 
   // For delta, use 0 as defaultChange
   return (
@@ -139,11 +145,12 @@ export function HomeWalletCard({
           contrast={grainContrast}
           saturation={grainSaturation}
           zoom={0.85}
-          lightMode
-          className="opacity-70"
+           lightMode
+           preset={gradientPreset}
+           className="opacity-90"
         />
         {/* Soft overlay for readability */}
-        <div className="absolute inset-0 bg-white/55 backdrop-blur-[0.5px] dark:bg-zinc-900/40" />
+         <div className="absolute inset-0 bg-white/15 backdrop-blur-[0.5px] dark:bg-zinc-900/25" />
       </div>
 
       {/* Content above grainient */}

@@ -56,6 +56,10 @@ export interface Pocket {
 export interface RtAppearanceSettings {
   rt_id: string;
   style: string; // auto | biru_rt | 20 preset ids
+  gradient_preset?: "custom" | "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist" | null;
+  gradient_color1?: string | null;
+  gradient_color2?: string | null;
+  gradient_color3?: string | null;
   saturation: number;
   contrast: number;
   animation_enabled: boolean;

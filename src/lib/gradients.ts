@@ -34,6 +34,17 @@ export const GRADIENT_PRESETS: GradientPreset[] = [
 
 export const GRADIENT_PRESET_MAP = new Map(GRADIENT_PRESETS.map((p) => [p.id, p]));
 
+export type AnimatedGradientPreset = "custom" | "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
+
+export const ANIMATED_GRADIENT_PRESETS: Record<Exclude<AnimatedGradientPreset, "custom">, GradientTriplet> = {
+  Prism: { c1: "#FAFAFA", c2: "#66B3FF", c3: "#050505" },
+  Lava: { c1: "#FF9F21", c2: "#FF0303", c3: "#FAFAFA" },
+  Plasma: { c1: "#B566FF", c2: "#FAFAFA", c3: "#FAFAFA" },
+  Pulse: { c1: "#66FF85", c2: "#FAFAFA", c3: "#FAFAFA" },
+  Vortex: { c1: "#FAFAFA", c2: "#000000", c3: "#FAFAFA" },
+  Mist: { c1: "#FAFAFA", c2: "#FF66B8", c3: "#FAFAFA" },
+};
+
 export const DEFAULT_PRESET_ID = "sunset";
 export const DEFAULT_PRESET = GRADIENT_PRESET_MAP.get(DEFAULT_PRESET_ID)!;
 

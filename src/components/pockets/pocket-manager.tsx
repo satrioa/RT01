@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/drawer";
 import { createPocketAction, updatePocketAction, deletePocketAction, archivePocketAction } from "@/lib/actions/pockets";
 import type { Pocket } from "@/types/database";
-import { Pencil, Trash2, Plus, Wallet, Archive, Loader2 } from "lucide-react";
-import { applyPresetToPocket, GRADIENT_PRESET_MAP } from "@/lib/gradients";
+import { Pencil, Trash2, Plus, Wallet, Archive, Loader2, Palette } from "lucide-react";
+import { ANIMATED_GRADIENT_PRESETS, applyPresetToPocket, GRADIENT_PRESET_MAP } from "@/lib/gradients";
 import { deriveGradient } from "@/lib/color";
 import { GradientPickerPopover } from "./gradient-picker";
 
@@ -72,6 +72,14 @@ function PocketForm({
   }, [color, gradientC1, gradientC3, customGradient]);
 
   function handlePresetClick(presetId: string) {
+    const animatedPreset = ANIMATED_GRADIENT_PRESETS[presetId as keyof typeof ANIMATED_GRADIENT_PRESETS];
+    if (animatedPreset) {
+      setColor(animatedPreset.c2.toLowerCase());
+      setGradientC1(animatedPreset.c1.toLowerCase());
+      setGradientC3(animatedPreset.c3.toLowerCase());
+      setCustomGradient(true);
+      return;
+    }
     const preset = GRADIENT_PRESET_MAP.get(presetId);
     if (!preset) return;
     const applied = applyPresetToPocket(preset);
@@ -127,28 +135,17 @@ function PocketForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label>Warna (tengah)</Label>
-          {/* Inline tanpa portal: Popover di dalam Drawer modal tidak bisa diklik */}
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={/^#[0-9a-fA-F]{6}$/.test(color) ? color : "#111827"}
-              onChange={(e) => setColor(e.target.value)}
-              className="h-10 w-12 shrink-0 cursor-pointer rounded-xl border bg-transparent p-1"
-              aria-label="Pilih warna"
-            />
-            <Input value={color} onChange={(e) => setColor(e.target.value)} maxLength={7} className="h-10 font-mono text-xs" placeholder="#111827" />
-          </div>
-          <input type="hidden" name="color" value={color} />
-        </div>
-        <div className="space-y-1.5">
           <Label htmlFor="pocket-order">Urutan</Label>
           <Input name="sort_order" id="pocket-order" type="number" min={0} defaultValue={String(initial?.sort_order ?? 0)} />
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label>Tema Gradien</Label>
+      <div className="flex flex-col gap-3 rounded-2xl border bg-muted/20 p-3">
+        <div className="flex items-center gap-1.5">
+          <Palette className="size-3.5 text-muted-foreground" />
+          <Label className="text-sm">Tampilan Kantong</Label>
+        </div>
+        <p className="text-[11px] text-muted-foreground">Atur tiga warna gradient secara bebas atau pilih tema preset.</p>
         <GradientPickerPopover
           color={color}
           gradientC1={gradientC1}
@@ -157,6 +154,29 @@ function PocketForm({
           preview={preview}
           onPresetClick={handlePresetClick}
         />
+        <div className="grid grid-cols-3 gap-2">
+          {([
+            { label: "Color 1", value: preview.c1, onChange: setGradientC1 },
+            { label: "Color 2", value: color, onChange: setColor },
+            { label: "Color 3", value: preview.c3, onChange: setGradientC3 },
+          ] as const).map((item) => (
+            <label key={item.label} className="flex min-w-0 flex-col gap-1 text-[11px] text-muted-foreground">
+              {item.label}
+              <input
+                type="color"
+                value={/^#[0-9a-fA-F]{6}$/.test(item.value) ? item.value : "#111827"}
+                onChange={(e) => {
+                  setCustomGradient(true);
+                  item.onChange(e.target.value);
+                }}
+                className="h-10 w-full cursor-pointer rounded-lg border bg-background p-1"
+                aria-label={item.label}
+              />
+              <span className="truncate font-mono text-[10px] uppercase">{item.value}</span>
+            </label>
+          ))}
+        </div>
+        <input type="hidden" name="color" value={color} />
         {customGradient ? (
           <>
             <input type="hidden" name="gradient_c1" value={gradientC1 ?? ""} />
@@ -191,7 +211,7 @@ function PocketForm({
         </div>
       </div>
 
-      <div className="flex gap-2 pt-1">
+      <div className="sticky bottom-0 z-10 -mx-1 flex gap-2 border-t bg-white/95 pt-3 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur dark:bg-neutral-900/95">
         <Button type="button" variant="outline" onClick={onClose} className="flex-1">Batal</Button>
         <Button type="submit" disabled={submitting} className="flex-1">
           {submitting ? <Loader2 className="size-4 animate-spin" /> : null}

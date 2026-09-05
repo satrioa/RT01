@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { BorderBeam } from "border-beam";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -155,28 +156,37 @@ export function SmartInput() {
   return (
     <div className="space-y-2">
       {/* Minimalis Prompt Input */}
-      <PromptInput value={input} onValueChange={setInput} isLoading={parsing} onSubmit={handleSubmit} className="bg-card">
-        <div className="flex items-center gap-1.5 px-1 pb-1">
-          <Sparkles className="size-3.5 text-primary/60" />
-          <span className="text-xs font-medium text-muted-foreground">Smart Input</span>
-          <span className="ml-auto text-[10px] text-muted-foreground">{input.length}/500</span>
-        </div>
-        <PromptInputTextarea
-          placeholder={typedPlaceholder}
-          className="min-h-[48px] text-sm placeholder:text-muted-foreground/60"
-        />
-        <PromptInputActions className="justify-end px-1 pt-1">
-          <Button
-            size="icon"
-            onClick={handleSubmit}
-            disabled={parsing || !input.trim()}
-            className="size-8 shrink-0 rounded-full"
-            aria-label="Kirim"
-          >
-            {parsing ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-          </Button>
-        </PromptInputActions>
-      </PromptInput>
+      <BorderBeam
+        size="line"
+        colorVariant="sunset"
+        theme="light"
+        strength={0.55}
+        duration={3.1}
+        staticColors
+      >
+        <PromptInput value={input} onValueChange={setInput} isLoading={parsing} onSubmit={handleSubmit} className="bg-card">
+          <div className="flex items-center gap-1.5 px-1 pb-1">
+            <Sparkles className="size-3.5 text-primary/60" />
+            <span className="text-xs font-medium text-muted-foreground">Smart Input</span>
+            <span className="ml-auto text-[10px] text-muted-foreground">{input.length}/500</span>
+          </div>
+          <PromptInputTextarea
+            placeholder={typedPlaceholder}
+            className="min-h-[48px] text-sm placeholder:text-muted-foreground/60"
+          />
+          <PromptInputActions className="justify-end px-1 pt-1">
+            <Button
+              size="icon"
+              onClick={handleSubmit}
+              disabled={parsing || !input.trim()}
+              className="size-8 shrink-0 rounded-full"
+              aria-label="Kirim"
+            >
+              {parsing ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+            </Button>
+          </PromptInputActions>
+        </PromptInput>
+      </BorderBeam>
 
       {/* Confirmation overlay */}
       {result && (result.type === "deterministic" || result.type === "needs_confirmation" || result.type === "transaction" || result.type === "transfer" || result.type === "error") && (

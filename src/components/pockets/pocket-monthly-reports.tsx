@@ -32,29 +32,29 @@ export async function PocketMonthlyReports({ rtId, pocketId, pocketName }: { rtI
         const statusLabel = report.status === "READY" ? "Laporan tersedia" : report.status;
         const closing = Number(report.closing_balance);
         return (
-          <Card key={report.id} className="overflow-hidden">
+          <Card key={report.id} className="overflow-hidden border-[#3a3a3a] bg-[#2b2b2b] text-white">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">{monthLabel}</CardTitle>
+                <CardTitle className="text-sm text-white">{monthLabel}</CardTitle>
                 <Badge variant={report.status === "READY" ? "success" : "outline"} className="rounded-full text-xs">
                   ✓ {statusLabel}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">Saldo Akhir {formatRupiah(closing)}</p>
+              <p className="text-xs text-zinc-400">Saldo Akhir {formatRupiah(closing)}</p>
             </CardHeader>
             <CardContent className="flex gap-2">
               <Link href={`/reports/${report.year}/${String(report.month).padStart(2, "0")}?pocket=${pocketId}`} className="flex-1">
-                <Button variant="outline" size="sm" className="w-full rounded-xl">
+                <Button variant="outline" size="sm" className="w-full rounded-xl border-zinc-700 bg-transparent text-white hover:bg-zinc-800 hover:text-white">
                   Lihat
                 </Button>
               </Link>
               <Link href={`/api/reports/${report.year}/${String(report.month).padStart(2, "0")}/pdf?pocket=${pocketId}`} className="flex-1">
-                <Button variant="outline" size="sm" className="w-full rounded-xl">
+                <Button variant="outline" size="sm" className="w-full rounded-xl border-zinc-700 bg-transparent text-white hover:bg-zinc-800 hover:text-white">
                   <FileText className="size-3" /> PDF
                 </Button>
               </Link>
               <Link href={`/api/reports/${report.year}/${String(report.month).padStart(2, "0")}/excel?pocket=${pocketId}`} className="flex-1">
-                <Button variant="outline" size="sm" className="w-full rounded-xl">
+                <Button variant="outline" size="sm" className="w-full rounded-xl border-zinc-700 bg-transparent text-white hover:bg-zinc-800 hover:text-white">
                   <Download className="size-3" /> Excel
                 </Button>
               </Link>

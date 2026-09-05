@@ -25,6 +25,7 @@
     "@bklit": "https://ui.bklit.com/r/{name}.json",
     "@magicui": "https://magicui.design/r/{name}",
     "@intentui": "https://intentui.com/r/{name}",
-    "@glasscn": "https://glasscn-components.vercel.app/r/{name}.json"
+    "@glasscn": "https://glasscn-components.vercel.app/r/{name}.json",
+    "@spell": "https://spell.sh/r/{name}.json"
   }
 }
