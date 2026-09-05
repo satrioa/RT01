@@ -6,6 +6,7 @@ import { Home, Receipt, BarChart3, Settings, Plus } from "lucide-react";
 import { motion, type Transition } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 
 const NAV = [
   { href: "/", label: "Home", icon: Home },
@@ -40,10 +41,13 @@ export function BottomNav() {
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 z-30 flex w-full justify-center bg-transparent px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2"
     >
+      {/* Progressive blur dibelakang dock */}
+      <ProgressiveBlur position="bottom" height="96px" className="z-0 opacity-90" />
+
       <motion.div
         layout
         transition={dockSpring}
-        className="relative flex items-end gap-3.5 rounded-3xl border-[1.5px] border-[#E5E5E9] bg-white px-3 py-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+        className="relative z-10 flex items-end gap-3.5 rounded-3xl border-[1.5px] border-[#E5E5E9] bg-white px-3 py-2 shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
       >
         {NAV.slice(0, 2).map((item) => {
           const active = isActive(pathname, item.href);

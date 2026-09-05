@@ -29,7 +29,7 @@ import { useIcon } from "@/lib/icon-context";
 import { useProximityHover } from "@/hooks/use-proximity-hover";
 import { Elevated } from "@/lib/elevated";
 import { Slider } from "@/components/ui/slider";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1937,9 +1937,14 @@ function ColorInputsRow({
 
 function ChannelTooltip({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <Tooltip content={label} delayDuration={300}>
-      <div>{children}</div>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>{children}</div>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

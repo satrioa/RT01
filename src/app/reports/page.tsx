@@ -7,7 +7,9 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { getMonthlyReport, listMonthlyReports } from "@/lib/reports/monthly-report-service";
 import { formatRupiah } from "@/lib/format";
-import { BarChart3, FileText, Download, Eye, Calendar, AlertTriangle } from "lucide-react";
+import { BarChart3, FileText, Download, Eye, AlertTriangle } from "lucide-react";
+import { MonthSelector } from "@/components/reports/month-selector";
+import { Tab, TabList, Tabs } from "@/components/ui/tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -87,8 +89,8 @@ export default async function ReportsPage({
   return (
     <div className="min-h-dvh bg-background">
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-background">
-        <header className="sticky top-0 z-10 border-b bg-card px-5 py-4">
-          <div className="flex items-center gap-2">
+        <header className="sticky top-0 z-20 border-b bg-card">
+          <div className="flex items-center gap-2 px-5 py-4">
             <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <BarChart3 className="size-4" />
             </span>
@@ -99,53 +101,28 @@ export default async function ReportsPage({
               </p>
             </div>
           </div>
+          {/* Tabs kantong — IntentUI Tabs, dibawah topbar, background sama dengan topbar */}
+          <div className="border-t bg-card">
+            <Tabs selectedKey={pocketParam} className="w-full">
+              <div className="overflow-x-auto px-2 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <TabList className="w-max gap-1">
+                  {pockets.map((p) => (
+                    <Tab key={p.id} id={p.id} href={tabHref(p.id)}>
+                      {p.name}
+                    </Tab>
+                  ))}
+                  <Tab id="rekap" href={tabHref(null)}>
+                    Rekap RT
+                  </Tab>
+                </TabList>
+              </div>
+            </Tabs>
+          </div>
         </header>
 
         <main className="flex flex-1 flex-col gap-6 p-5 pb-6">
-          {/* Pocket tabs — dinamis */}
-          <div className="flex gap-1 overflow-x-auto pb-1">
-            {pockets.map((p) => {
-              const isActive = p.id === pocketParam;
-              return (
-                <Link
-                  key={p.id}
-                  href={tabHref(p.id)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}
-                  style={isActive && p.color ? { backgroundColor: p.color, color: "#fff" } : undefined}
-                >
-                  {p.name}
-                </Link>
-              );
-            })}
-            <Link
-              href={tabHref(null)}
-              className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${isRekap ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}
-            >
-              Rekap RT
-            </Link>
-          </div>
-
-          {/* Month selector */}
-          <Card>
-            <CardContent className="flex items-center gap-2 p-3">
-              <Calendar className="size-4 text-muted-foreground" />
-              <span className="text-xs font-medium">Pilih Bulan</span>
-              <div className="ml-auto flex gap-1">
-                {getLastNMonths(6).map(({ year, month }) => {
-                  const isSelected = year === selectedYear && month === selectedMonth;
-                  return (
-                    <Link
-                      key={`${year}-${month}`}
-                      href={`/reports?year=${year}&month=${month}&pocket=${pocketParam}`}
-                      className={`rounded-full px-3 py-1.5 text-xs font-medium ${isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}
-                    >
-                      {new Date(year, month - 1, 1).toLocaleDateString("id-ID", { month: "short", year: "2-digit" })}
-                    </Link>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Month selector — slide horizontal + caret + drag */}
+          <MonthSelector selectedYear={selectedYear} selectedMonth={selectedMonth} pocketParam={pocketParam} count={12} />
 
           {showFailsafeBanner && (
             <Card className="border-warning/30 bg-warning/5">

@@ -1,12 +1,16 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { PocketManager } from "@/components/pockets/pocket-manager";
 import { AiProviderSettings } from "@/components/ai/ai-provider-settings";
 import { LinkTelegramCard } from "@/components/telegram/link-telegram";
 import type { Pocket, RtAiSettings } from "@/types/database";
-import { Database, Plug, FileSpreadsheet } from "lucide-react";
+import { Database, Plug, FileSpreadsheet, Wallet, Bot, Send, ChevronRight, ArrowLeft } from "lucide-react";
+
+type Section = "kantong" | "ai" | "telegram" | null;
 
 export function SettingsCompact({
   pockets,
@@ -19,41 +23,109 @@ export function SettingsCompact({
   aiSettings: RtAiSettings | null;
   envStatus: Record<string, boolean>;
 }) {
+  const [section, setSection] = React.useState<Section>(null);
+
+  if (section) {
+    return (
+      <div className="space-y-3">
+        <Button variant="ghost" size="sm" className="h-8 gap-1.5 rounded-full px-3 -ml-1" onClick={() => setSection(null)}>
+          <ArrowLeft className="size-4" /> Kembali ke menu
+        </Button>
+
+        {section === "kantong" && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <Wallet className="size-3.5 text-muted-foreground" />
+              <p className="text-xs font-semibold tracking-wide text-muted-foreground">KANTONG</p>
+              <span className="ml-auto text-[11px] text-muted-foreground">{pockets.length} kantong</span>
+            </div>
+            {loadError ? (
+              <Card className="border-destructive/30 bg-destructive/5">
+                <CardContent className="p-3 text-xs leading-relaxed text-muted-foreground">
+                  <p className="font-semibold text-destructive">Gagal memuat kantong:</p>
+                  <p className="mt-1 font-mono text-[11px] break-all">{loadError}</p>
+                </CardContent>
+              </Card>
+            ) : null}
+            <PocketManager pockets={pockets} />
+          </div>
+        )}
+
+        {section === "ai" && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <Bot className="size-3.5 text-muted-foreground" />
+              <p className="text-xs font-semibold tracking-wide text-muted-foreground">AI PROVIDER</p>
+            </div>
+            {aiSettings ? (
+              <AiProviderSettings initial={aiSettings} envStatus={envStatus} />
+            ) : (
+              <Card><CardContent className="p-4 text-center text-xs text-muted-foreground">AI settings tidak tersedia — jalankan migrasi 005.</CardContent></Card>
+            )}
+          </div>
+        )}
+
+        {section === "telegram" && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <Send className="size-3.5 text-muted-foreground" />
+              <p className="text-xs font-semibold tracking-wide text-muted-foreground">TELEGRAM</p>
+            </div>
+            <LinkTelegramCard />
+            <Card className="border-dashed bg-muted/20">
+              <CardContent className="p-3 text-[11px] leading-relaxed text-muted-foreground">
+                Hubungkan Telegram untuk catat transaksi tanpa buka web — bot pakai parser & deterministik yang sama seperti Smart Input.
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {/* Menu list kebawah — compact grouped */}
+      {/* DATA */}
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-1">
           <Database className="size-3.5 text-muted-foreground" />
           <p className="text-xs font-semibold tracking-wide text-muted-foreground">DATA</p>
         </div>
 
-        <Card>
-          <CardContent className="p-3">
-            <Link href="/import" className="flex items-center gap-3">
-              <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <div className="grid gap-2">
+          <Card className="overflow-hidden transition hover:bg-accent/50">
+            <Link href="/import" className="flex w-full items-center gap-3 p-3 text-left">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                 <FileSpreadsheet className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">Import Excel</p>
                 <p className="text-xs text-muted-foreground">Migrasi historis → ledger</p>
               </div>
-              <span className="text-xs font-medium text-primary">Buka →</span>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </Link>
-          </CardContent>
-        </Card>
-
-        {loadError ? (
-          <Card className="border-destructive/30 bg-destructive/5">
-            <CardContent className="p-3 text-xs leading-relaxed text-muted-foreground">
-              <p className="font-semibold text-destructive">Gagal memuat kantong:</p>
-              <p className="mt-1 font-mono text-[11px] break-all">{loadError}</p>
-            </CardContent>
           </Card>
-        ) : null}
-        <PocketManager pockets={pockets} />
+
+          <Card className="overflow-hidden transition hover:bg-accent/50">
+            <button type="button" onClick={() => setSection("kantong")} className="flex w-full items-center gap-3 p-3 text-left">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-muted text-foreground border">
+                <Wallet className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Kantong</p>
+                <p className="text-xs text-muted-foreground">{pockets.length} kantong • kelola saldo awal & warna</p>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </button>
+          </Card>
+          {loadError ? (
+            <p className="px-1 text-[11px] text-destructive">Gagal memuat kantong — buka menu Kantong untuk detail.</p>
+          ) : null}
+        </div>
       </div>
 
+      {/* INTEGRASI */}
       <div className="space-y-3 pt-1">
         <div className="flex items-center gap-2 px-1">
           <Plug className="size-3.5 text-muted-foreground" />
@@ -61,27 +133,37 @@ export function SettingsCompact({
           <span className="ml-auto text-[11px] text-muted-foreground">AI & Telegram</span>
         </div>
 
-        {/* Grouped Integration — AI Provider & Telegram dalam 1 grup */}
-        <Card className="overflow-hidden p-0">
-          <div className="divide-y">
-            <div className="bg-muted/10">
-              {aiSettings ? (
-                <div className="p-0">
-                  <AiProviderSettings initial={aiSettings} envStatus={envStatus} />
-                </div>
-              ) : (
-                <div className="p-4 text-center text-xs text-muted-foreground">AI settings tidak tersedia — jalankan migrasi 005.</div>
-              )}
-            </div>
-            <div className="bg-card">
-              <LinkTelegramCard />
-            </div>
-          </div>
-        </Card>
+        <div className="grid gap-2">
+          <Card className="overflow-hidden transition hover:bg-accent/50">
+            <button type="button" onClick={() => setSection("ai")} className="flex w-full items-center gap-3 p-3 text-left">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-muted text-foreground border">
+                <Bot className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">AI Provider</p>
+                <p className="text-xs text-muted-foreground">{aiSettings ? `${aiSettings.provider} • ${aiSettings.model}` : "Belum dikonfigurasi"}</p>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </button>
+          </Card>
+
+          <Card className="overflow-hidden transition hover:bg-accent/50">
+            <button type="button" onClick={() => setSection("telegram")} className="flex w-full items-center gap-3 p-3 text-left">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-[#229ED9] text-white">
+                <Send className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Telegram Bot</p>
+                <p className="text-xs text-muted-foreground">Hubungkan akun untuk catat via chat</p>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </button>
+          </Card>
+        </div>
 
         <Card className="border-dashed bg-muted/20">
           <CardContent className="p-3 text-[11px] leading-relaxed text-muted-foreground">
-            Integrasi terpisah dari data — AI untuk Smart Input & Telegram parser, Telegram untuk catat transaksi tanpa buka web.
+            Pilih menu di atas untuk mengatur. Data & Integrasi terpisah — AI untuk Smart Input & parser Telegram.
           </CardContent>
         </Card>
       </div>
