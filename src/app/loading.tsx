@@ -1,31 +1,38 @@
 import { GreetingHeaderSkeleton } from "@/components/dashboard/greeting-header";
-import { PocketCarouselSkeleton } from "@/components/dashboard/pocket-carousel";
 import { RecentTransactionsSkeleton } from "@/components/dashboard/recent-transactions";
-import { TotalBalanceCardSkeleton } from "@/components/dashboard/total-balance-card";
-import { BottomNavSpacer } from "@/components/layout/bottom-nav";
+import {
+  ExpenseCategoryPieSkeleton,
+  HomeWalletCardSkeleton,
+  OverviewCardsSkeleton,
+  SmartInputSkeleton,
+} from "@/components/dashboard/home-skeletons";
+import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Separator } from "@/components/ui/separator";
 
 export default function Loading() {
   return (
     <div className="min-h-dvh bg-background">
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-background">
-        <div className="flex flex-1 flex-col gap-6 p-5 pb-24">
+        <main className="flex flex-1 flex-col gap-6 px-5 pt-5">
           <GreetingHeaderSkeleton />
-          <TotalBalanceCardSkeleton />
-          <section className="space-y-3">
-            <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-            <PocketCarouselSkeleton />
-          </section>
-          <div className="grid grid-cols-3 gap-3">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-[88px] animate-pulse rounded-[20px] border bg-card" />
-            ))}
-          </div>
+          <HomeWalletCardSkeleton />
+          <OverviewCardsSkeleton />
+          <ExpenseCategoryPieSkeleton />
+          <SmartInputSkeleton />
           <Separator />
-          <RecentTransactionsSkeleton />
-        </div>
-        <BottomNavSpacer />
+          <section className="relative left-1/2 w-screen flex-1 -translate-x-1/2 bg-white dark:bg-zinc-900">
+            <div className="mx-auto w-full max-w-[430px] space-y-3 px-5 py-6">
+              <div className="flex items-center justify-between px-1">
+                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+              </div>
+              <RecentTransactionsSkeleton />
+            </div>
+            <BottomNavSpacer />
+          </section>
+        </main>
       </div>
+      <BottomNav />
     </div>
   );
 }
