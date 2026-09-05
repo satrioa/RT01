@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownToLine, ArrowUp, Eye, EyeOff } from "lucide-react";
+import { ArrowDownToLine, ArrowUp, Eye, EyeOff, Receipt } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,19 +11,24 @@ import type { WalletAccount } from "@/components/motion/wallet-card/types";
 import Grainient from "@/components/motion/grainient";
 import { SPRING_PRESS } from "@/lib/ease";
 import { formatRupiah } from "@/lib/format";
-import type { PocketBalance } from "@/types/database";
+import type { PocketBalance, RtAppearanceSettings } from "@/types/database";
+import { deriveGradient } from "@/lib/color";
+import { GRADIENT_PRESET_MAP, DEFAULT_PRESET } from "@/lib/gradients";
 
 function RtWalletActions({
   onPemasukan,
   onPengeluaran,
+  onTransaksi,
 }: {
   onPemasukan?: () => void;
   onPengeluaran?: () => void;
+  onTransaksi?: () => void;
 }) {
   const reduce = useReducedMotion();
   const actions = [
     { key: "pemasukan", label: "Pemasukan", icon: ArrowDownToLine, onClick: onPemasukan },
     { key: "pengeluaran", label: "Pengeluaran", icon: ArrowUp, onClick: onPengeluaran },
+    { key: "transaksi", label: "Transaksi", icon: Receipt, onClick: onTransaksi },
   ] as const;
   return (
     <div className="flex items-center justify-center gap-4">
@@ -49,9 +54,11 @@ function RtWalletActions({
 export function HomeWalletCard({
   pockets,
   totalBalance,
+  appearance,
 }: {
   pockets: PocketBalance[];
   totalBalance: number;
+  appearance?: RtAppearanceSettings | null;
 }) {
   const router = useRouter();
   // Build accounts: Semua + dynamic pockets
@@ -82,16 +89,33 @@ export function HomeWalletCard({
     const qs = activeId === "semua" ? "type=expense" : `type=expense&pocket_id=${activeId}`;
     router.push(`/transactions/new?${qs}`);
   };
+  const handleTransaksi = () => {
+    if (activeId === "semua") router.push("/transactions");
+    else router.push(`/pockets/${activeId}`);
+  };
 
+  const reduceMotion = useReducedMotion();
   const grainColors = (() => {
-    const pocketColor = activePocket?.color;
-    if (activeId !== "semua" && pocketColor) {
-      // Use pocket color as accent, with light neutrals
-      return { c1: "#f9f9ff", c2: pocketColor, c3: "#d2e3ff" };
+    // Semua: pakai appearance.style (preset global), default sunset
+    if (activeId === "semua") {
+      const styleId = appearance?.style ?? "sunset";
+      if (styleId !== "auto") {
+        const preset = GRADIENT_PRESET_MAP.get(styleId);
+        if (preset) return { c1: preset.c1, c2: preset.c2, c3: preset.c3 };
+        if (styleId === "biru_rt") return { c1: "#f9f9ff", c2: "#5697ff", c3: "#d2e3ff" };
+      }
+      return { c1: DEFAULT_PRESET.c1, c2: DEFAULT_PRESET.c2, c3: DEFAULT_PRESET.c3 };
     }
-    // Default RTFinance gradient — soft blue
-    return { c1: "#d2e3ff", c2: "#5697ff", c3: "#f9f9ff" };
+    // Per kantong: c2 = color, c1/c3 = custom atau derive
+    const base = activePocket?.color ?? "#111827";
+    const c1 = (activePocket as unknown as { gradient_c1?: string | null })?.gradient_c1 ?? null;
+    const c3 = (activePocket as unknown as { gradient_c3?: string | null })?.gradient_c3 ?? null;
+    if (c1 && c3) return { c1, c2: base, c3 };
+    return deriveGradient(base);
   })();
+  const grainTimeSpeed = appearance?.animation_enabled === false || reduceMotion ? 0 : 0.18;
+  const grainSaturation = appearance?.saturation ?? 1.1;
+  const grainContrast = appearance?.contrast ?? 1.6;
 
   // For delta, use 0 as defaultChange
   return (
@@ -102,14 +126,14 @@ export function HomeWalletCard({
           color1={grainColors.c1}
           color2={grainColors.c2}
           color3={grainColors.c3}
-          timeSpeed={0.18}
+          timeSpeed={grainTimeSpeed}
           warpStrength={0.7}
           warpFrequency={4.5}
           warpSpeed={1.6}
           grainAmount={0.04}
           grainAnimated={false}
-          contrast={1.6}
-          saturation={1.1}
+          contrast={grainContrast}
+          saturation={grainSaturation}
           zoom={0.85}
           lightMode
           className="opacity-70"
@@ -158,7 +182,7 @@ export function HomeWalletCard({
         </div>
 
         <div className="mt-8">
-          <RtWalletActions onPemasukan={handlePemasukan} onPengeluaran={handlePengeluaran} />
+          <RtWalletActions onPemasukan={handlePemasukan} onPengeluaran={handlePengeluaran} onTransaksi={handleTransaksi} />
         </div>
       </div>
     </div>
