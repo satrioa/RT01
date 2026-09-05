@@ -73,6 +73,7 @@ export function validateRows(
     const expenseVal = parseExcelAmount(expenseRaw);
     const amountVal = parseExcelAmount(amountRaw);
 
+    // Kosong = 0 (tidak dianggap mengisi). 0 tidak error, hanya diabaikan.
     const hasIncome = incomeVal !== null && incomeVal !== 0;
     const hasExpense = expenseVal !== null && expenseVal !== 0;
     const hasAmount = amountVal !== null && amountVal !== 0;
@@ -80,19 +81,19 @@ export function validateRows(
     if (hasIncome && hasExpense) {
       errors.push("Isi Pemasukan atau Pengeluaran saja, tidak keduanya");
     } else if (hasIncome) {
-      if (incomeVal! <= 0) errors.push("Nominal pemasukan harus > 0");
+      if (incomeVal! < 0) errors.push("Nominal pemasukan tidak boleh negatif");
       else {
         amount = Math.abs(incomeVal!);
         type = "income";
       }
     } else if (hasExpense) {
-      if (expenseVal! <= 0) errors.push("Nominal pengeluaran harus > 0");
+      if (expenseVal! < 0) errors.push("Nominal pengeluaran tidak boleh negatif");
       else {
         amount = Math.abs(expenseVal!);
         type = "expense";
       }
     } else if (hasAmount) {
-      if (amountVal! <= 0) errors.push("Nominal harus > 0");
+      if (amountVal! < 0) errors.push("Nominal tidak boleh negatif");
       else {
         amount = Math.abs(amountVal!);
         // Infer type from sign or category? If amount column has negative for expense? For now require explicit? Treat positive as income? But need mapping — if amount column exists, we need to infer from separate? Simpler: if amount column used, treat as expense if description contains 'keluar', else income? But spec says Income/Expense columns separate — so amount fallback is ambiguous. Mark warning.
@@ -101,10 +102,13 @@ export function validateRows(
         warnings.push("Kolom Amount dipakai — diasumsikan pengeluaran, periksa tipe");
       }
     } else {
-      errors.push("Nominal kosong (isi Pemasukan atau Pengeluaran)");
+      // Kosong = 0 — baris tanpa nominal dianggap 0, tidak error
+      warnings.push("Nominal kosong — dianggap 0");
+      amount = 0;
+      type = "expense";
     }
 
-    if (amount !== null && (!Number.isFinite(amount) || amount <= 0)) {
+    if (amount !== null && (!Number.isFinite(amount) || amount < 0)) {
       errors.push("Nominal tidak valid");
       amount = null;
       type = null;
@@ -209,7 +213,7 @@ export function validateRows(
 export const importRowSchema = z.object({
   transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   description: z.string().trim().min(1).max(500),
-  amount: z.number().int().positive(),
+  amount: z.number().int().min(0),
   type: z.enum(["income", "expense"]),
   pocket_id: z.string().uuid(),
   category_id: z.string().uuid().nullable().optional(),
