@@ -76,6 +76,8 @@ export function ExpenseCategoryPie({
             <PieCenter
               defaultLabel="Keluar"
               formatOptions={{ style: "currency", currency: "IDR", maximumFractionDigits: 0 }}
+              valueClassName="max-w-full truncate px-1 text-center font-bold tabular-nums leading-none text-[clamp(0.6rem,13cqw,0.9rem)]"
+              labelClassName="max-w-full truncate leading-tight text-[clamp(0.55rem,8cqw,0.65rem)]"
             />
           </PieChart>
           <ul className="mt-1 w-full space-y-1.5">
