@@ -24,6 +24,7 @@
     "@spectrumui": "https://ui.spectrumhq.in/r/{name}.json",
     "@bklit": "https://ui.bklit.com/r/{name}.json",
     "@magicui": "https://magicui.design/r/{name}",
-    "@intentui": "https://intentui.com/r/{name}"
+    "@intentui": "https://intentui.com/r/{name}",
+    "@glasscn": "https://glasscn-components.vercel.app/r/{name}.json"
   }
 }

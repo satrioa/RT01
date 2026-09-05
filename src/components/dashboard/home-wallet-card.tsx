@@ -4,6 +4,7 @@ import { ArrowDownToLine, ArrowUp, Eye, EyeOff, Receipt } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { GlassButton } from "@/components/glass-button";
 import { ActionSwapText } from "@/components/motion/action-swap";
 import { AccountSwitcher } from "@/components/motion/wallet-card/account-switcher";
 import { BalanceDelta } from "@/components/motion/wallet-card/balance-delta";
@@ -31,21 +32,24 @@ function RtWalletActions({
     { key: "transaksi", label: "Transaksi", icon: Receipt, onClick: onTransaksi },
   ] as const;
   return (
-    <div className="flex items-center justify-center gap-4">
+    <div className="flex items-start justify-center gap-4">
       {actions.map(({ key, label, icon: Icon, onClick }) => (
-        <motion.button
+        <motion.div
           key={key}
-          type="button"
-          onClick={onClick}
           whileTap={reduce ? undefined : { scale: 0.94 }}
           transition={SPRING_PRESS}
-          className="flex flex-1 flex-col items-center gap-2 outline-none"
+          className="flex flex-1 flex-col items-center gap-2"
         >
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-foreground">
+          <GlassButton
+            size="icon"
+            onClick={onClick}
+            aria-label={label}
+            className="size-12 rounded-full"
+          >
             <Icon className="h-5 w-5" />
-          </span>
+          </GlassButton>
           <span className="text-xs font-medium text-muted-foreground">{label}</span>
-        </motion.button>
+        </motion.div>
       ))}
     </div>
   );
