@@ -13,13 +13,29 @@ import { formatRupiah } from "@/lib/format";
 import { Loader2, Send, Check, X, AlertTriangle, Wallet, Sparkles } from "lucide-react";
 import type { SmartParseResult } from "@/lib/ai/parser";
 
+const PLACEHOLDER_EXAMPLES = [
+  "Beli konsumsi 75 ribu dari kas",
+  "Terima iuran warga 500 ribu ke kas",
+  "Pindah 200 ribu dari kas ke BOP",
+  "Bayar listrik 150 ribu BOP",
+  "Saldo kas berapa?",
+  "Jual kaos 1 juta masuk kas",
+];
+
 export function SmartInput() {
   const [input, setInput] = React.useState("");
   const [parsing, setParsing] = React.useState(false);
   const [result, setResult] = React.useState<SmartParseResult | null>(null);
   const [saving, setSaving] = React.useState(false);
+  const [placeholderIdx, setPlaceholderIdx] = React.useState(0);
   const { toast } = useToast();
   const router = useRouter();
+
+  React.useEffect(() => {
+    if (input) return;
+    const id = setInterval(() => setPlaceholderIdx((i) => (i + 1) % PLACEHOLDER_EXAMPLES.length), 3000);
+    return () => clearInterval(id);
+  }, [input]);
 
   async function handleSubmit() {
     if (!input.trim() || parsing) return;
@@ -97,12 +113,10 @@ export function SmartInput() {
           <span className="ml-auto text-[10px] text-muted-foreground">{input.length}/500</span>
         </div>
         <PromptInputTextarea
-          placeholder="Tulis transaksi... contoh: Beli konsumsi 75 ribu dari kas"
+          placeholder={PLACEHOLDER_EXAMPLES[placeholderIdx]}
           className="min-h-[48px] text-sm placeholder:text-muted-foreground/60"
         />
-        <PromptInputActions className="justify-between px-1 pt-1">
-          <span className="text-[10px] leading-none text-muted-foreground hidden sm:inline">Enter untuk kirim • Shift+Enter baris baru</span>
-          <span className="text-[10px] leading-none text-muted-foreground sm:hidden">AI perlu konfirmasi</span>
+        <PromptInputActions className="justify-end px-1 pt-1">
           <Button
             size="icon"
             onClick={handleSubmit}
@@ -114,7 +128,6 @@ export function SmartInput() {
           </Button>
         </PromptInputActions>
       </PromptInput>
-      <p className="px-1 text-center text-[10px] leading-none text-muted-foreground">“saldo kas” dijawab tanpa AI • tidak langsung menulis ke DB</p>
 
       {/* Confirmation overlay */}
       {result && (result.type === "deterministic" || result.type === "needs_confirmation" || result.type === "transaction" || result.type === "transfer" || result.type === "error") && (
