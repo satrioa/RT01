@@ -104,14 +104,20 @@ export default async function ReportsPage({
           {/* Tabs kantong — IntentUI Tabs, dibawah topbar, background sama dengan topbar */}
           <div className="border-t bg-card">
             <Tabs selectedKey={pocketParam} className="w-full">
-              <div className="overflow-x-auto px-2 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <TabList className="w-max gap-1">
+              <div className="overflow-x-auto pl-5 pr-2 py-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <TabList selectionIndicator={false} className="w-max gap-1.5 border-0">
                   {pockets.map((p) => (
-                    <Tab key={p.id} id={p.id} href={tabHref(p.id)}>
+                    <Tab
+                      key={p.id}
+                      id={p.id}
+                      href={tabHref(p.id)}
+                      className="rounded-full border border-border bg-card text-muted-foreground hover:bg-accent data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[selected]:border-primary data-[selected]:shadow-sm"
+                      style={pocketParam === p.id && p.color ? { backgroundColor: p.color, color: "#fff", borderColor: p.color } : undefined}
+                    >
                       {p.name}
                     </Tab>
                   ))}
-                  <Tab id="rekap" href={tabHref(null)}>
+                  <Tab id="rekap" href={tabHref(null)} className="rounded-full border border-border bg-card text-muted-foreground hover:bg-accent data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[selected]:border-primary data-[selected]:shadow-sm">
                     Rekap RT
                   </Tab>
                 </TabList>
