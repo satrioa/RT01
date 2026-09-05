@@ -7,7 +7,7 @@ import { getCurrentRtId } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ year: string; month: string }> }
 ) {
   const { year: yStr, month: mStr } = await params;
@@ -16,11 +16,12 @@ export async function GET(
   if (!Number.isFinite(year) || !Number.isFinite(month)) {
     return NextResponse.json({ error: "Invalid month" }, { status: 400 });
   }
+  const pocket = req.nextUrl.searchParams.get("pocket");
 
   try {
     const rtId = await getCurrentRtId();
     const supabase = createServiceClient();
-    const report = await getMonthlyReport(supabase, rtId, year, month);
+    const report = await getMonthlyReport(supabase, rtId, year, month, pocket ?? null);
     if (!report || !report.excel_url) {
       return NextResponse.json({ error: "Laporan belum tersedia" }, { status: 404 });
     }
@@ -28,10 +29,11 @@ export async function GET(
     const buf = await getReportFileBuffer(report.excel_url);
     if (!buf) return NextResponse.json({ error: "File tidak ditemukan" }, { status: 404 });
 
+    const slug = pocket && pocket !== "rekap" ? pocket.slice(0, 8) : "rekap";
     return new NextResponse(buf as unknown as BodyInit, {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="laporan-keuangan-${year}-${String(month).padStart(2, "0")}.xlsx"`,
+        "Content-Disposition": `attachment; filename="laporan-${slug}-${year}-${String(month).padStart(2, "0")}.xlsx"`,
         "Cache-Control": "private, max-age=60",
       },
     });

@@ -4,6 +4,8 @@ export async function generateMonthlyExcel(opts: {
   rtName: string;
   rtNumber: string;
   rwNumber: string;
+  pocketName?: string | null;
+  isRekap?: boolean;
   snapshot: {
     year: number;
     month: number;
@@ -19,20 +21,26 @@ export async function generateMonthlyExcel(opts: {
   transactions: { id: string; date: string; pocket: string; category: string; description: string; type: "income" | "expense"; amount: string }[];
   transfers: { id: string; date: string; from: string; to: string; amount: string; description: string | null }[];
 }): Promise<Buffer> {
-  const { rtName, rtNumber, rwNumber, snapshot, transactions, transfers } = opts;
+  const { rtName, rtNumber, rwNumber, pocketName, isRekap, snapshot, transactions, transfers } = opts;
+  const isRekapMode = !!isRekap;
   const monthLabel = new Date(snapshot.year, snapshot.month - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 
   const wb = XLSX.utils.book_new();
 
-  // Sheet 1: Laporan (visual)
+  // Sheet 1: Laporan (visual) — header per-kantong vs rekap
   const laporanData: (string | number)[][] = [];
-  laporanData.push([`LAPORAN KEUANGAN ${rtName.toUpperCase()}`]);
-  laporanData.push([`RT ${rtNumber} / RW ${rwNumber}`]);
+  const title = pocketName ? `LAPORAN KEUANGAN ${pocketName.toUpperCase()} — ${rtName.toUpperCase()}` : `LAPORAN KEUANGAN ${rtName.toUpperCase()} — REKAP`;
+  laporanData.push([title]);
+  laporanData.push([`RT ${rtNumber} / RW ${rwNumber}${pocketName ? ` • Kantong: ${pocketName}` : " • Semua Kantong"}`]);
   laporanData.push([`Periode: ${snapshot.period_start} – ${snapshot.period_end} (${monthLabel})`]);
   laporanData.push([]);
   laporanData.push(["Saldo Awal", snapshot.opening_balance]);
   laporanData.push([]);
-  laporanData.push(["#", "Tanggal", "Uraian", "Pemasukan (Rp)", "Pengeluaran (Rp)", "Saldo (Rp)"]);
+  if (isRekapMode) {
+    laporanData.push(["#", "Tanggal", "Kantong", "Uraian", "Pemasukan (Rp)", "Pengeluaran (Rp)", "Saldo (Rp)"]);
+  } else {
+    laporanData.push(["#", "Tanggal", "Uraian", "Kategori", "Pemasukan (Rp)", "Pengeluaran (Rp)", "Saldo (Rp)"]);
+  }
   let running = snapshot.opening_balance;
   transactions
     .slice()
@@ -41,17 +49,15 @@ export async function generateMonthlyExcel(opts: {
       const amt = Number(t.amount);
       if (t.type === "income") running += amt;
       else running -= amt;
-      laporanData.push([
-        idx + 1,
-        t.date,
-        t.description,
-        t.type === "income" ? amt : "",
-        t.type === "expense" ? amt : "",
-        running,
-      ]);
+      if (isRekapMode) {
+        laporanData.push([idx + 1, t.date, t.pocket, t.description, t.type === "income" ? amt : "", t.type === "expense" ? amt : "", running]);
+      } else {
+        laporanData.push([idx + 1, t.date, t.description, t.category, t.type === "income" ? amt : "", t.type === "expense" ? amt : "", running]);
+      }
     });
   if (transactions.length === 0) {
-    laporanData.push(["-", "-", "Tidak ada transaksi", "", "", running]);
+    if (isRekapMode) laporanData.push(["-", "-", "-", "Tidak ada transaksi", "", "", running]);
+    else laporanData.push(["-", "-", "Tidak ada transaksi", "-", "", "", running]);
   }
   laporanData.push([]);
   laporanData.push(["Total Pemasukan", snapshot.total_income]);
@@ -65,12 +71,14 @@ export async function generateMonthlyExcel(opts: {
   laporanData.push(["(tanda tangan & cap)", "", "(tanda tangan)"]);
 
   const wsLaporan = XLSX.utils.aoa_to_sheet(laporanData);
-  wsLaporan["!cols"] = [{ wch: 6 }, { wch: 14 }, { wch: 36 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
-  // Bold header rows
-  // Currency format for columns D,E,F and summary
+  wsLaporan["!cols"] = isRekapMode
+    ? [{ wch: 6 }, { wch: 12 }, { wch: 14 }, { wch: 30 }, { wch: 16 }, { wch: 16 }, { wch: 16 }]
+    : [{ wch: 6 }, { wch: 12 }, { wch: 30 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
+  // Currency format — last 3 columns are currency
   const range = XLSX.utils.decode_range(wsLaporan["!ref"] ?? "A1");
+  const currencyCols = isRekapMode ? [4, 5, 6] : [4, 5, 6];
   for (let R = 7; R <= range.e.r; R++) {
-    for (const C of [3, 4, 5]) {
+    for (const C of currencyCols) {
       const addr = XLSX.utils.encode_cell({ r: R, c: C });
       const cell = wsLaporan[addr] as XLSX.CellObject | undefined;
       if (cell && typeof cell.v === "number") {

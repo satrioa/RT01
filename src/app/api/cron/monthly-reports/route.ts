@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { generateMonthlyReport } from "@/lib/reports/monthly-report-service";
+import { generateAllPocketReports } from "@/lib/reports/monthly-report-service";
 
 export const dynamic = "force-dynamic";
 
@@ -42,13 +42,13 @@ export async function GET(req: NextRequest) {
 
   for (const rt of rtList) {
     try {
-      const report = await generateMonthlyReport({ rtId: rt.id, year, month });
-      results.push({ rt_id: rt.id, status: report.status });
+      const reports = await generateAllPocketReports({ rtId: rt.id, year, month });
+      for (const r of reports) results.push({ rt_id: rt.id, status: `${r.pocket_id ?? "rekap"}:${r.status}` });
+      if (reports.length === 0) results.push({ rt_id: rt.id, status: "NO_POCKETS" });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error(`[cron] RT ${rt.id} failed`, msg);
       results.push({ rt_id: rt.id, status: "FAILED", error: msg });
-      // continue other RTs
     }
   }
 

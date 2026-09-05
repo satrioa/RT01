@@ -11,10 +11,12 @@ export function ReportActions({
   year,
   month,
   status,
+  pocketId,
 }: {
   year: number;
   month: number;
   status: string;
+  pocketId?: string | null;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -23,7 +25,7 @@ export function ReportActions({
   async function handleGenerate(force = false) {
     setLoading("generate");
     try {
-      const res = await generateReportAction(year, month, force);
+      const res = await generateReportAction(year, month, pocketId ?? null, force);
       if ((res as { ok: boolean }).ok) {
         toast({ title: force ? "Laporan diregenerasi" : "Laporan dibuat" });
         router.refresh();
@@ -38,10 +40,10 @@ export function ReportActions({
   }
 
   async function handleClose() {
-    if (!confirm(`Tutup bulan ${month}/${year}? Setelah ditutup, transaksi bulan ini tidak bisa diubah tanpa buka kembali.`)) return;
+    if (!confirm(`Tutup bulan ${month}/${year}${pocketId ? ` kantong?` : " (Rekap)?"} Setelah ditutup, transaksi bulan ini tidak bisa diubah tanpa buka kembali.`)) return;
     setLoading("close");
     try {
-      await closeReportAction(year, month);
+      await closeReportAction(year, month, pocketId ?? null);
       toast({ title: "Bulan ditutup" });
       router.refresh();
     } catch (e) {
@@ -55,7 +57,7 @@ export function ReportActions({
     if (!confirm(`Buka kembali ${month}/${year}? Perubahan transaksi dapat menyebabkan laporan perlu dibuat ulang.`)) return;
     setLoading("reopen");
     try {
-      await reopenReportAction(year, month);
+      await reopenReportAction(year, month, pocketId ?? null);
       toast({ title: "Bulan dibuka kembali", description: "Laporan perlu diregenerasi setelah perubahan." });
       router.refresh();
     } catch (e) {

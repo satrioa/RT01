@@ -56,6 +56,64 @@ export interface MonthlySnapshot {
   pockets: PocketMonthlySnapshot[];
 }
 
+/**
+ * Calculate snapshot for a single pocket (per-kantong). Used by per-pocket reports.
+ * pocket_id = specific pocket; null is not allowed here — use calculateMonthlySnapshot for Rekap.
+ */
+export async function calculatePocketMonthlySnapshot(
+  supabase: SupabaseClient,
+  rtId: string,
+  pocketId: string,
+  year: number,
+  month: number
+): Promise<PocketMonthlySnapshot & { rt_id: string; year: number; month: number; period_start: string; period_end: string }> {
+  const { period_start, period_end } = getMonthPeriod(year, month);
+
+  const { data: pocket, error: pErr } = await supabase
+    .from("pockets")
+    .select("id, name, opening_balance")
+    .eq("id", pocketId)
+    .eq("rt_id", rtId)
+    .single();
+  if (pErr || !pocket) throw new Error(`Pocket not found: ${pocketId}`);
+  const p = pocket as Pocket & { opening_balance: string };
+
+  const [beforeTxRes, periodTxRes, beforeTrRes, periodTrRes] = await Promise.all([
+    supabase.from("transactions").select("type, amount").eq("rt_id", rtId).eq("pocket_id", pocketId).lt("transaction_date", period_start),
+    supabase.from("transactions").select("type, amount, id").eq("rt_id", rtId).eq("pocket_id", pocketId).gte("transaction_date", period_start).lte("transaction_date", period_end),
+    supabase.from("transfers").select("from_pocket_id, to_pocket_id, amount").eq("rt_id", rtId).or(`from_pocket_id.eq.${pocketId},to_pocket_id.eq.${pocketId}`).lt("transaction_date", period_start),
+    supabase.from("transfers").select("from_pocket_id, to_pocket_id, amount, id").eq("rt_id", rtId).or(`from_pocket_id.eq.${pocketId},to_pocket_id.eq.${pocketId}`).gte("transaction_date", period_start).lte("transaction_date", period_end),
+  ]);
+  if (beforeTxRes.error) throw new Error(beforeTxRes.error.message);
+  if (periodTxRes.error) throw new Error(periodTxRes.error.message);
+  if (beforeTrRes.error) throw new Error(beforeTrRes.error.message);
+  if (periodTrRes.error) throw new Error(periodTrRes.error.message);
+
+  const beforeTx = (beforeTxRes.data as { type: string; amount: string }[] | null) ?? [];
+  const periodTx = (periodTxRes.data as { type: string; amount: string; id: string }[] | null) ?? [];
+  const beforeTr = (beforeTrRes.data as { from_pocket_id: string; to_pocket_id: string; amount: string }[] | null) ?? [];
+  const periodTr = (periodTrRes.data as { from_pocket_id: string; to_pocket_id: string; amount: string; id: string }[] | null) ?? [];
+
+  let beforeInc = 0, beforeExp = 0, beforeIn = 0, beforeOut = 0;
+  for (const r of beforeTx) { if (r.type === "income") beforeInc += Number(r.amount); else beforeExp += Number(r.amount); }
+  for (const r of beforeTr) { if (r.to_pocket_id === pocketId) beforeIn += Number(r.amount); if (r.from_pocket_id === pocketId) beforeOut += Number(r.amount); }
+  const opening = Number(p.opening_balance ?? 0) + beforeInc - beforeExp + beforeIn - beforeOut;
+
+  let income = 0, expense = 0, tIn = 0, tOut = 0;
+  for (const r of periodTx) { if (r.type === "income") income += Number(r.amount); else expense += Number(r.amount); }
+  for (const r of periodTr) { if (r.to_pocket_id === pocketId) tIn += Number(r.amount); if (r.from_pocket_id === pocketId) tOut += Number(r.amount); }
+  const closing = opening + income - expense + tIn - tOut;
+
+  return {
+    pocket_id: pocketId,
+    pocket_name: p.name,
+    rt_id: rtId, year, month, period_start, period_end,
+    opening_balance: opening, total_income: income, total_expense: expense,
+    total_transfer_in: tIn, total_transfer_out: tOut,
+    closing_balance: closing, transaction_count: periodTx.length,
+  };
+}
+
 export async function calculateMonthlySnapshot(
   supabase: SupabaseClient,
   rtId: string,
@@ -64,7 +122,7 @@ export async function calculateMonthlySnapshot(
 ): Promise<MonthlySnapshot> {
   const { period_start, period_end } = getMonthPeriod(year, month);
 
-  // Fetch pockets (including opening_balance)
+  // Fetch pockets (including opening_balance) — for Rekap (all active pockets)
   const { data: pocketsRaw, error: pErr } = await supabase
     .from("pockets")
     .select("id, name, opening_balance, is_active")
@@ -77,7 +135,7 @@ export async function calculateMonthlySnapshot(
   // But to preserve history, include active at calculation time
   const activePockets = pockets.filter((p) => p.is_active);
 
-  // --- Transactions: before period, in period ---
+  // --- Transactions: before period, in period (for Rekap = all pockets) ---
   const [beforeTxRes, periodTxRes, beforeTrRes, periodTrRes] = await Promise.all([
     supabase
       .from("transactions")

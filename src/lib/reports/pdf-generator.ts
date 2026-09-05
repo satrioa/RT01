@@ -40,6 +40,8 @@ export async function generateMonthlyPdf(opts: {
   rtName: string;
   rtNumber: string;
   rwNumber: string;
+  pocketName?: string | null;
+  isRekap?: boolean;
   snapshot: {
     year: number;
     month: number;
@@ -57,7 +59,7 @@ export async function generateMonthlyPdf(opts: {
   transactions: PdfTx[];
   transfers: PdfTransfer[];
 }): Promise<Buffer> {
-  const { rtName, rtNumber, rwNumber, snapshot, transactions, transfers } = opts;
+  const { rtName, rtNumber, rwNumber, pocketName, isRekap, snapshot, transactions, transfers } = opts;
   const monthLabel = format(new Date(snapshot.year, snapshot.month - 1, 1), "MMMM yyyy", { locale: id });
   const periodLabel = `${formatDateLong(snapshot.period_start)} – ${formatDateLong(snapshot.period_end)}`;
 
@@ -67,14 +69,15 @@ export async function generateMonthlyPdf(opts: {
   const margin = 14;
   let cursorY = 14;
 
-  // Header
+  // Header — per-kantong vs rekap
+  const headerTitle = pocketName ? `LAPORAN KEUANGAN ${pocketName.toUpperCase()} — ${rtName.toUpperCase()}` : `LAPORAN KEUANGAN ${rtName.toUpperCase()} — REKAP`;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text(`LAPORAN KEUANGAN ${rtName.toUpperCase()}`, pageWidth / 2, cursorY, { align: "center" });
+  doc.setFontSize(pocketName ? 11 : 13);
+  doc.text(headerTitle, pageWidth / 2, cursorY, { align: "center" });
   cursorY += 6;
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(`RT ${rtNumber} / RW ${rwNumber}`, pageWidth / 2, cursorY, { align: "center" });
+  doc.text(`RT ${rtNumber} / RW ${rwNumber}${pocketName ? ` • Kantong: ${pocketName}` : " • Semua Kantong"}`, pageWidth / 2, cursorY, { align: "center" });
   cursorY += 5;
   doc.setFontSize(9);
   doc.text(`Periode: ${periodLabel}`, pageWidth / 2, cursorY, { align: "center" });
@@ -91,50 +94,81 @@ export async function generateMonthlyPdf(opts: {
   doc.text(formatRupiah(snapshot.opening_balance), pageWidth - margin, cursorY, { align: "right" });
   cursorY += 8;
 
-  // Build table rows with running saldo
+  // Build table rows with running saldo — columns depend on isRekap
   let running = snapshot.opening_balance;
   const body: (string | number)[][] = [];
+  const isRekapMode = !!isRekap;
   // sort transactions by date asc already
   transactions.forEach((t, idx) => {
     const amt = Number(t.amount);
     if (t.type === "income") running += amt;
     else running -= amt;
-    body.push([
-      String(idx + 1),
-      formatDateLong(t.date),
-      t.description,
-      t.type === "income" ? formatRupiah(amt) : "-",
-      t.type === "expense" ? formatRupiah(amt) : "-",
-      formatRupiah(running),
-    ]);
+    if (isRekapMode) {
+      // Rekap: Kantong column wajib
+      body.push([
+        String(idx + 1),
+        formatDateLong(t.date),
+        t.pocket,
+        t.description,
+        t.type === "income" ? formatRupiah(amt) : "-",
+        t.type === "expense" ? formatRupiah(amt) : "-",
+        formatRupiah(running),
+      ]);
+    } else {
+      // Per-kantong: Kategori column (Kantong redundan)
+      body.push([
+        String(idx + 1),
+        formatDateLong(t.date),
+        t.description,
+        t.category,
+        t.type === "income" ? formatRupiah(amt) : "-",
+        t.type === "expense" ? formatRupiah(amt) : "-",
+        formatRupiah(running),
+      ]);
+    }
   });
 
   // If no transactions, add empty row
   if (body.length === 0) {
-    body.push(["-", "-", "Tidak ada transaksi", "-", "-", formatRupiah(running)]);
+    if (isRekapMode) body.push(["-", "-", "-", "Tidak ada transaksi", "-", "-", formatRupiah(running)]);
+    else body.push(["-", "-", "Tidak ada transaksi", "-", "-", "-", formatRupiah(running)]);
   }
 
+  const headRekap = [["#", "Tanggal", "Kantong", "Uraian", "Pemasukan (Rp)", "Pengeluaran (Rp)", "Saldo (Rp)"]];
+  const headPocket = [["#", "Tanggal", "Uraian", "Kategori", "Pemasukan (Rp)", "Pengeluaran (Rp)", "Saldo (Rp)"]];
   autoTable(doc, {
     startY: cursorY,
-    head: [["#", "Tanggal", "Uraian", "Pemasukan (Rp)", "Pengeluaran (Rp)", "Saldo (Rp)"]],
+    head: isRekapMode ? headRekap : headPocket,
     body,
     theme: "grid",
-    styles: { fontSize: 7, cellPadding: 2, lineColor: [200, 200, 200], textColor: [30, 30, 30] },
+    styles: { fontSize: 6, cellPadding: 1.5, lineColor: [200, 200, 200], textColor: [30, 30, 30] },
     headStyles: { fillColor: [17, 24, 39], textColor: 255, fontStyle: "bold", halign: "center" },
-    columnStyles: {
-      0: { halign: "center", cellWidth: 8 },
-      1: { cellWidth: 24 },
-      2: { cellWidth: 64 },
-      3: { halign: "right", cellWidth: 32 },
-      4: { halign: "right", cellWidth: 32 },
-      5: { halign: "right", cellWidth: 32 },
-    },
+    columnStyles: isRekapMode
+      ? {
+          0: { halign: "center", cellWidth: 7 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 18 },
+          3: { cellWidth: 52 },
+          4: { halign: "right", cellWidth: 26 },
+          5: { halign: "right", cellWidth: 26 },
+          6: { halign: "right", cellWidth: 26 },
+        }
+      : {
+          0: { halign: "center", cellWidth: 7 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 52 },
+          3: { cellWidth: 18 },
+          4: { halign: "right", cellWidth: 26 },
+          5: { halign: "right", cellWidth: 26 },
+          6: { halign: "right", cellWidth: 26 },
+        },
     margin: { left: margin, right: margin },
     didDrawPage: (data: { pageNumber: number }) => {
       const pageNum = doc.getNumberOfPages();
       doc.setFontSize(7);
       doc.setTextColor(100);
-      doc.text(`Laporan Keuangan ${rtName} — ${monthLabel} — Halaman ${data.pageNumber} dari ${pageNum}`, pageWidth / 2, pageHeight - 6, { align: "center" });
+      const label = pocketName ? `${pocketName} — ${monthLabel}` : `Rekap — ${monthLabel}`;
+      doc.text(`Laporan Keuangan ${rtName} — ${label} — Halaman ${data.pageNumber} dari ${pageNum}`, pageWidth / 2, pageHeight - 6, { align: "center" });
     },
   });
 
@@ -170,8 +204,8 @@ export async function generateMonthlyPdf(opts: {
   });
   afterTableY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4;
 
-  // Pocket summaries if multiple
-  if (snapshot.pockets.length > 1) {
+  // Pocket summaries — only for rekap (multiple pockets)
+  if (isRekap && snapshot.pockets.length > 1) {
     if (afterTableY > pageHeight - 40) {
       doc.addPage();
       afterTableY = margin;

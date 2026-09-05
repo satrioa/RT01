@@ -115,6 +115,8 @@ export type MonthlyReportStatus = "OPEN" | "GENERATING" | "READY" | "CLOSED" | "
 export interface MonthlyReport {
   id: string;
   rt_id: string;
+  /** null = Rekap RT gabungan (kolom Kantong wajib), not null = laporan 1 kantong */
+  pocket_id: string | null;
   year: number;
   month: number;
   period_start: string;

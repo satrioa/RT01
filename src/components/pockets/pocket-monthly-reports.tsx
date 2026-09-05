@@ -9,7 +9,8 @@ import { FileText, Download, Calendar } from "lucide-react";
 
 export async function PocketMonthlyReports({ rtId, pocketId, pocketName }: { rtId: string; pocketId: string; pocketName: string }) {
   const supabase = createServiceClient();
-  const reports = await listMonthlyReports(supabase, rtId, 6).catch(() => []);
+  // Per-kantong: filter by pocket_id; fallback to legacy if column missing handled in service
+  const reports = await listMonthlyReports(supabase, rtId, { pocketId, limit: 6 }).catch(() => []);
   if (reports.length === 0) {
     return (
       <Card className="border-dashed">
@@ -20,31 +21,16 @@ export async function PocketMonthlyReports({ rtId, pocketId, pocketName }: { rtI
     );
   }
 
-  // For each report, fetch its pocket snapshot for this pocket (handle missing table)
-  const snapshots = await Promise.all(
-    reports.map(async (r) => {
-      try {
-        const { data, error } = await supabase.from("monthly_report_pockets").select("*").eq("monthly_report_id", r.id).eq("pocket_id", pocketId).maybeSingle();
-        if (error && (error.message.includes("Could not find the table") || (error as { code?: string }).code === "42P01")) {
-          return { report: r, pocket: null as unknown as { closing_balance: string; opening_balance: string } | null };
-        }
-        return { report: r, pocket: data as { closing_balance: string; opening_balance: string } | null };
-      } catch {
-        return { report: r, pocket: null as unknown as { closing_balance: string; opening_balance: string } | null };
-      }
-    })
-  );
-
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 px-1">
         <Calendar className="size-4 text-muted-foreground" />
         <h3 className="text-sm font-semibold">Laporan Bulanan — {pocketName}</h3>
       </div>
-      {snapshots.map(({ report, pocket }) => {
+      {reports.map((report) => {
         const monthLabel = new Date(report.year, report.month - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
         const statusLabel = report.status === "READY" ? "Laporan tersedia" : report.status;
-        const closing = pocket ? Number(pocket.closing_balance) : Number(report.closing_balance);
+        const closing = Number(report.closing_balance);
         return (
           <Card key={report.id} className="overflow-hidden">
             <CardHeader className="pb-2">
@@ -57,17 +43,17 @@ export async function PocketMonthlyReports({ rtId, pocketId, pocketName }: { rtI
               <p className="text-xs text-muted-foreground">Saldo Akhir {formatRupiah(closing)}</p>
             </CardHeader>
             <CardContent className="flex gap-2">
-              <Link href={`/reports/${report.year}/${String(report.month).padStart(2, "0")}`} className="flex-1">
+              <Link href={`/reports/${report.year}/${String(report.month).padStart(2, "0")}?pocket=${pocketId}`} className="flex-1">
                 <Button variant="outline" size="sm" className="w-full rounded-xl">
                   Lihat
                 </Button>
               </Link>
-              <Link href={`/api/reports/${report.year}/${String(report.month).padStart(2, "0")}/pdf`} className="flex-1">
+              <Link href={`/api/reports/${report.year}/${String(report.month).padStart(2, "0")}/pdf?pocket=${pocketId}`} className="flex-1">
                 <Button variant="outline" size="sm" className="w-full rounded-xl">
                   <FileText className="size-3" /> PDF
                 </Button>
               </Link>
-              <Link href={`/api/reports/${report.year}/${String(report.month).padStart(2, "0")}/excel`} className="flex-1">
+              <Link href={`/api/reports/${report.year}/${String(report.month).padStart(2, "0")}/excel?pocket=${pocketId}`} className="flex-1">
                 <Button variant="outline" size="sm" className="w-full rounded-xl">
                   <Download className="size-3" /> Excel
                 </Button>
