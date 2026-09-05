@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -125,7 +126,7 @@ export function AiProviderSettings({
 
           <div className="space-y-2">
             <Label>Model</Label>
-            <Select value={model} onValueChange={setModel}>
+            <Select value={models.some((m) => m.id === model) ? model : "__custom__"} onValueChange={(v) => { if (v !== "__custom__") setModel(v); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih model" />
               </SelectTrigger>
@@ -135,9 +136,15 @@ export function AiProviderSettings({
                     {m.label} {m.recommended ? "★" : ""} — {m.description}
                   </SelectItem>
                 ))}
+                <SelectItem value="__custom__">Custom — ketik manual di bawah</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">Model akan dipakai untuk parsing: &ldquo;Beli konsumsi 75 ribu dari kas&rdquo; → expense</p>
+            <div className="space-y-1">
+              <Label className="text-xs">Atau ketik model ID custom (OpenRouter)</Label>
+              <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="mis. google/gemini-2.0-flash-001 atau google/gemini-1.5-flash" className="font-mono text-xs" />
+              <p className="text-[11px] text-muted-foreground">Jika model Gemini Anda tidak ada di daftar, ketik langsung ID-nya di sini. Nilai <code>OPENROUTER_MODEL</code> dari <code>.env</code> akan muncul sebagai opsi custom di atas.</p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 rounded-xl border bg-muted/20 px-3 py-2">
