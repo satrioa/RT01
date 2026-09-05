@@ -10,12 +10,13 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { AlertTriangle } from "lucide-react";
 import { HomeWalletCard } from "@/components/dashboard/home-wallet-card";
+import { getAppearanceSettings } from "@/lib/actions/appearance";
 
 // Force dynamic so greeting reflects server time and data is fresh
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const data = await getHomeData();
+  const [data, appearance] = await Promise.all([getHomeData(), getAppearanceSettings().catch(() => null)]);
 
   // Fetch income/expense for current month directly from DB
   let totalIncome = 0;
@@ -56,7 +57,7 @@ export default async function Page() {
           )}
 
           {/* Wallet — ganti pilihan kantong: Semua / Kas / BOP */}
-          <HomeWalletCard pockets={data.pockets} totalBalance={data.totalBalance} />
+          <HomeWalletCard pockets={data.pockets} totalBalance={data.totalBalance} appearance={appearance} />
 
           {/* KPI */}
           <div className="space-y-3">
@@ -71,12 +72,15 @@ export default async function Page() {
 
           <Separator />
 
-          <section className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-sm font-semibold">Transaksi terbaru</h2>
-              <span className="text-xs text-muted-foreground">5 terbaru</span>
+          {/* Transaksi terbaru — background putih full viewport */}
+          <section className="relative left-1/2 w-screen -translate-x-1/2 bg-white dark:bg-zinc-900">
+            <div className="mx-auto w-full max-w-[430px] space-y-3 px-5 py-6">
+              <div className="flex items-center justify-between px-1">
+                <h2 className="text-sm font-semibold">Transaksi terbaru</h2>
+                <span className="text-xs text-muted-foreground">5 terbaru</span>
+              </div>
+              <RecentTransactions transactions={data.recentTransactions} transfers={data.recentTransfers} />
             </div>
-            <RecentTransactions transactions={data.recentTransactions} transfers={data.recentTransfers} />
           </section>
         </main>
 
