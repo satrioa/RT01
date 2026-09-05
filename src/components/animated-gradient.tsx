@@ -184,6 +184,9 @@ interface CustomConfig {
 interface PresetConfig {
   preset: PresetName;
   speed?: number;
+  color1?: string;
+  color2?: string;
+  color3?: string;
 }
 
 type GradientConfig = CustomConfig | PresetConfig;
@@ -245,6 +248,9 @@ export default function AnimatedGradient({
     return {
       ...preset,
       ...(useLight ? preset.lightColors : null),
+      ...(config.color1 ? { color1: config.color1 } : null),
+      ...(config.color2 ? { color2: config.color2 } : null),
+      ...(config.color3 ? { color3: config.color3 } : null),
       speed: config.speed ?? preset.speed,
     };
   }, [config, isMounted, resolvedTheme]);

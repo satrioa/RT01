@@ -242,10 +242,10 @@ export async function generateMonthlyReport(opts: {
     const rwNumber = (rtProfile as { rw_number?: string } | null)?.rw_number ?? "";
 
     // Fetch transactions for PDF table — filter by pocket if per-kantong
-    let txQuery = supabase.from("transactions").select("id, transaction_date, description, type, amount, pocket:pockets(name), category:categories(name)").eq("rt_id", rtId).gte("transaction_date", period_start).lte("transaction_date", period_end).order("transaction_date", { ascending: true }).order("created_at", { ascending: true });
+    let txQuery = supabase.from("transactions").select("id, transaction_date, description, type, amount, source, pocket:pockets(name), category:categories(name)").eq("rt_id", rtId).gte("transaction_date", period_start).lte("transaction_date", period_end).order("transaction_date", { ascending: true }).order("created_at", { ascending: true });
     if (pocketId) txQuery = txQuery.eq("pocket_id", pocketId) as unknown as typeof txQuery;
     const { data: txs } = await txQuery;
-    const txRows = (txs as unknown as { id: string; transaction_date: string; description: string | null; type: string; amount: string; pocket: { name: string } | null; category: { name: string } | null }[] | null) ?? [];
+    const txRows = (txs as unknown as { id: string; transaction_date: string; description: string | null; type: string; amount: string; source: string | null; pocket: { name: string } | null; category: { name: string } | null }[] | null) ?? [];
 
     // Fetch transfers — filter to those touching the pocket if per-kantong
     const trQuery = supabase.from("transfers").select("id, transaction_date, description, amount, from_pocket:pockets!transfers_from_pocket_id_fkey(name), to_pocket:pockets!transfers_to_pocket_id_fkey(name), from_pocket_id, to_pocket_id").eq("rt_id", rtId).gte("transaction_date", period_start).lte("transaction_date", period_end).order("transaction_date", { ascending: true });
@@ -281,12 +281,13 @@ export async function generateMonthlyReport(opts: {
       isRekap: pocketId === null,
       snapshot: {
         year: snapshot.year, month: snapshot.month, period_start: snapshot.period_start, period_end: snapshot.period_end,
-        opening_balance: snapshot.opening_balance, total_income: snapshot.total_income, total_expense: snapshot.total_expense,
-        closing_balance: snapshot.closing_balance, transaction_count: snapshot.transaction_count,
+         opening_balance: snapshot.opening_balance, total_income: snapshot.total_income, total_expense: snapshot.total_expense,
+         total_transfer_in: snapshot.total_transfer_in, total_transfer_out: snapshot.total_transfer_out,
+         closing_balance: snapshot.closing_balance, transaction_count: snapshot.transaction_count,
         pockets: snapshot.pockets.map((p) => ({ pocket_name: p.pocket_name, opening_balance: p.opening_balance, total_income: p.total_income, total_expense: p.total_expense, total_transfer_in: p.total_transfer_in, total_transfer_out: p.total_transfer_out, closing_balance: p.closing_balance, transaction_count: p.transaction_count })),
       },
       transactions: txRows.map((t) => ({
-        id: t.id, date: t.transaction_date, pocket: t.pocket?.name ?? "-", category: t.category?.name ?? "-", description: t.description ?? "-", type: t.type as "income" | "expense", amount: t.amount,
+        id: t.id, date: t.transaction_date, pocket: t.pocket?.name ?? "-", category: t.category?.name ?? "-", description: t.description ?? "-", type: t.type as "income" | "expense", amount: t.amount, source: t.source ?? "web",
       })),
       transfers: trRowsRaw.map((tr) => ({
         id: tr.id, date: tr.transaction_date, from: tr.from_pocket?.name ?? "-", to: tr.to_pocket?.name ?? "-", amount: tr.amount, description: tr.description,

@@ -36,7 +36,13 @@ const Grainient = ({ className = "", ...options }: GrainientProps) => {
     <AnimatedGradient
       config={
         options.preset
-          ? { preset: options.preset, speed: options.timeSpeed ? options.timeSpeed * 100 : 0 }
+          ? {
+              preset: options.preset,
+              color1: options.color1,
+              color2: options.color2,
+              color3: options.color3,
+              speed: options.timeSpeed ? options.timeSpeed * 100 : 0,
+            }
           : {
               preset: "custom",
               color1: options.color1 ?? "#FF9FFC",

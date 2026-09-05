@@ -80,7 +80,7 @@ export function AppearanceSettings({ initial }: { initial: RtAppearanceSettings 
           <AnimatedGradient
             config={gradientPreset === "custom"
               ? { preset: "custom", color1: previewColors.c1, color2: previewColors.c2, color3: previewColors.c3, speed: 18 }
-              : { preset: gradientPreset, speed: 18 }}
+              : { preset: gradientPreset, color1: colors.c1, color2: colors.c2, color3: colors.c3, speed: 18 }}
             noise={{ opacity: 0.04 }}
             style={{ zIndex: 0 }}
           />
@@ -109,9 +109,8 @@ export function AppearanceSettings({ initial }: { initial: RtAppearanceSettings 
                 Color {index + 1}
                 <input
                   type="color"
-                  value={colors[key]}
-                  onChange={(e) => {
-                    setGradientPreset("custom");
+                   value={colors[key]}
+                   onChange={(e) => {
                     setColors((current) => ({ ...current, [key]: e.target.value }));
                   }}
                   className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background p-1"

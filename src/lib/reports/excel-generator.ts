@@ -14,11 +14,13 @@ export async function generateMonthlyExcel(opts: {
     opening_balance: number;
     total_income: number;
     total_expense: number;
+    total_transfer_in: number;
+    total_transfer_out: number;
     closing_balance: number;
     transaction_count: number;
     pockets: { pocket_name: string; opening_balance: number; total_income: number; total_expense: number; total_transfer_in: number; total_transfer_out: number; closing_balance: number; transaction_count: number }[];
   };
-  transactions: { id: string; date: string; pocket: string; category: string; description: string; type: "income" | "expense"; amount: string }[];
+  transactions: { id: string; date: string; pocket: string; category: string; description: string; type: "income" | "expense"; amount: string; source?: string }[];
   transfers: { id: string; date: string; from: string; to: string; amount: string; description: string | null }[];
 }): Promise<Buffer> {
   const { rtName, rtNumber, rwNumber, pocketName, isRekap, snapshot, transactions, transfers } = opts;
@@ -62,6 +64,8 @@ export async function generateMonthlyExcel(opts: {
   laporanData.push([]);
   laporanData.push(["Total Pemasukan", snapshot.total_income]);
   laporanData.push(["Total Pengeluaran", snapshot.total_expense]);
+  laporanData.push(["Total Transfer Masuk", snapshot.total_transfer_in]);
+  laporanData.push(["Total Transfer Keluar", snapshot.total_transfer_out]);
   laporanData.push(["Surplus / Defisit", snapshot.total_income - snapshot.total_expense]);
   laporanData.push(["Saldo Akhir", snapshot.closing_balance]);
   laporanData.push([]);
@@ -102,7 +106,7 @@ export async function generateMonthlyExcel(opts: {
 
   // Sheet 2: Transaksi
   const txHeader = ["ID", "Tanggal", "Kantong", "Kategori", "Uraian", "Tipe", "Nominal", "Sumber"];
-  const txRows = transactions.map((t) => [t.id, t.date, t.pocket, t.category, t.description, t.type, Number(t.amount), "web"]);
+  const txRows = transactions.map((t) => [t.id, t.date, t.pocket, t.category, t.description, t.type, Number(t.amount), t.source ?? "web"]);
   const wsTx = XLSX.utils.aoa_to_sheet([txHeader, ...txRows]);
   wsTx["!cols"] = [{ wch: 38 }, { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 30 }, { wch: 10 }, { wch: 16 }, { wch: 10 }];
   // Format nominal column G (index 6)
