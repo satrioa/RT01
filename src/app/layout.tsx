@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/ui/toaster";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -18,6 +18,24 @@ export const metadata: Metadata = {
   title: "RT Finance — Pembukuan RT Modern",
   description:
     "Aplikasi pembukuan keuangan RT yang simpel, modern, dan intuitif. Kelola Kantong, transaksi, dan laporan tanpa Excel yang rumit.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "RTFinance",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  // Samakan status bar / toolbar Safari dengan background webapp
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf9f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#232323" },
+  ],
 };
 
 export default function RootLayout({
