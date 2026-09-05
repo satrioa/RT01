@@ -12,7 +12,8 @@ export interface SheetData {
 }
 
 export function parseWorkbook(buffer: ArrayBuffer): { workbook: XLSX.WorkBook; info: WorkbookInfo } {
-  const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+  // cellNF:true agar format sel (.z) ikut terparse bila dibutuhkan
+  const workbook = XLSX.read(buffer, { type: "array", cellDates: true, cellNF: true });
   return {
     workbook,
     info: { sheetNames: workbook.SheetNames },

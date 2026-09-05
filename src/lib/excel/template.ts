@@ -3,28 +3,34 @@ import * as XLSX from "xlsx";
 export function buildImportTemplate(): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
 
-  // Sheet 1: Template — tanggal sebagai Date asli + format sel DD/MM/YYYY
-  // agar Excel (locale Indonesia) selalu menampilkan & menyimpan tanggal benar
+  // Sheet 1: Template — kolom Tanggal dipaksa TEXT agar Excel TIDAK PERNAH
+  // auto-konversi ketikan menjadi serial date mengikuti locale (mis. Excel
+  // US membaca "12/2/2026" sebagai 2 Des, padahal maksudnya 12 Feb).
+  // Parser aplikasi membaca teks DD/MM/YYYY secara eksplisit (Indonesia).
   const headers = ["Tanggal", "Keterangan", "Pemasukan", "Pengeluaran", "Kantong", "Kategori"];
-  const d = (y: number, m: number, day: number) => new Date(y, m - 1, day, 12, 0, 0);
-  const examples: (string | number | Date)[][] = [
-    [d(2024, 1, 5), "Iuran warga Januari", 500000, "", "Kas", "Iuran Warga"],
-    [d(2024, 1, 6), "Beli konsumsi kerja bakti", "", 75000, "Kas", "Konsumsi"],
-    [d(2024, 1, 7), "Retribusi sampah", 100000, "", "Kas", "Retribusi"],
-    [d(2024, 1, 8), "Sumbangan warga", 200000, "", "Sosial", "Sumbangan"],
-    [d(2024, 1, 10), "Bayar kebersihan", "", 300000, "Kas", "Kebersihan"],
+  const examples: (string | number)[][] = [
+    ["05/01/2024", "Iuran warga Januari", 500000, "", "Kas", "Iuran Warga"],
+    ["06/01/2024", "Beli konsumsi kerja bakti", "", 75000, "Kas", "Konsumsi"],
+    ["07/01/2024", "Retribusi sampah", 100000, "", "Kas", "Retribusi"],
+    ["08/01/2024", "Sumbangan warga", 200000, "", "Sosial", "Sumbangan"],
+    ["10/01/2024", "Bayar kebersihan", "", 300000, "Kas", "Kebersihan"],
+    ["12/02/2026", "Contoh: 12 Februari 2026 (bukan 2 Des)", 100000, "", "Kas", "Lain-lain"],
   ];
 
   const wsData = [headers, ...examples];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  // Paksa format tampilan kolom Tanggal ke DD/MM/YYYY (baris contoh 2-6)
-  for (let r = 2; r <= examples.length + 1; r++) {
+  // Format TEXT untuk seluruh kolom Tanggal (header + contoh + 5000 baris kosong)
+  // agar ketikan pengguna tetap teks DD/MM/YYYY apa pun locale Excel-nya
+  const lastRow = Math.max(examples.length + 1, 5000);
+  for (let r = 2; r <= lastRow; r++) {
     const addr = `A${r}`;
     const cell = ws[addr] as XLSX.CellObject | undefined;
     if (cell) {
-      cell.z = "DD/MM/YYYY";
-      if (cell.t !== "d") cell.t = "d";
+      cell.t = "s";
+      cell.z = "@";
+    } else {
+      ws[addr] = { t: "s", v: "", z: "@" } as unknown as XLSX.CellObject;
     }
   }
 
@@ -45,7 +51,8 @@ export function buildImportTemplate(): XLSX.WorkBook {
     ["Petunjuk Import Excel RT Finance"],
     [""],
     ["Kolom wajib:"],
-    ["- Tanggal: format DD/MM/YYYY (contoh: 05/01/2024 = 5 Januari 2024). Kolom Tanggal di template sudah diformat DD/MM/YYYY — cukup ketik seperti contoh."],
+    ["- Tanggal: format DD/MM/YYYY (contoh: 05/01/2024 = 5 Januari 2024, 12/02/2026 = 12 Februari 2026)."],
+    ["- PENTING: kolom Tanggal di template dikunci sebagai TEKS agar Excel tidak mengubah sendiri (mis. Excel US membaca 12/2/2026 sebagai 2 Des). Ketik persis DD/MM/YYYY, jangan ubah format kolom."],
     ["- Tanggal tidak valid (mis. bulan 13, 30 Februari) akan ditolak saat validasi, bukan ditebak."],
     ["- Keterangan: deskripsi transaksi, tidak boleh kosong"],
     ["- Pemasukan ATAU Pengeluaran: isi salah satu, nominal >0, contoh: 75000 atau 500000"],
@@ -75,5 +82,6 @@ export function buildImportTemplate(): XLSX.WorkBook {
 }
 
 export function templateToBuffer(wb: XLSX.WorkBook): Buffer {
-  return Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer);
+  // cellStyles:true agar format sel (z:'@' TEXT kolom Tanggal, bold header) ikut tertulis
+  return Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx", cellStyles: true }) as Buffer);
 }
