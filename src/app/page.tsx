@@ -2,7 +2,6 @@ import { GreetingHeader } from "@/components/dashboard/greeting-header";
 import { PocketCarousel } from "@/components/dashboard/pocket-carousel";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { TotalBalanceCard } from "@/components/dashboard/total-balance-card";
-import { CashFlowGauge } from "@/components/dashboard/cash-flow-gauge";
 import { OverviewCards } from "@/components/reports/overview-cards";
 import { SmartInput } from "@/components/ai/smart-input";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
@@ -68,14 +67,13 @@ export default async function Page() {
             <PocketCarousel pockets={data.pockets} />
           </section>
 
-          {/* KPI & Gauge */}
+          {/* KPI */}
           <div className="space-y-3">
             <OverviewCards
               totalIncome={totalIncome}
               totalExpense={totalExpense}
               netChange={totalIncome - totalExpense}
             />
-            <CashFlowGauge totalIncome={totalIncome} totalExpense={totalExpense} />
           </div>
 
           <SmartInput />
