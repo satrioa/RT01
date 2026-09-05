@@ -37,12 +37,18 @@ export function BottomNav() {
   };
 
   return (
-    <nav
-      aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-30 flex w-full justify-center bg-transparent px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2"
-    >
-      {/* Progressive blur dibelakang dock */}
-      <ProgressiveBlur position="bottom" height="96px" className="z-0 opacity-90" />
+    <>
+      {/* Progressive blur dibawah dock — fixed di viewport bottom */}
+      <ProgressiveBlur
+        position="bottom"
+        height="140px"
+        className="fixed inset-x-0 bottom-0 z-20 pointer-events-none"
+        blurLevels={[0, 1, 2, 6, 12, 24, 40]}
+      />
+      <nav
+        aria-label="Primary"
+        className="fixed inset-x-0 bottom-0 z-30 flex w-full justify-center bg-transparent px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2"
+      >
 
       <motion.div
         layout
@@ -141,7 +147,8 @@ export function BottomNav() {
           );
         })}
       </motion.div>
-    </nav>
+      </nav>
+    </>
   );
 }
 

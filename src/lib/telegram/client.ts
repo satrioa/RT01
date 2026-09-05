@@ -69,15 +69,54 @@ export async function answerCallbackQuery(
 export async function editMessageText(
   chatId: number,
   messageId: number,
-  text: string
+  text: string,
+  replyMarkup?: unknown
 ): Promise<void> {
   const token = getBotToken();
   const url = `${TELEGRAM_API}/bot${token}/editMessageText`;
+  const body: Record<string, unknown> = { chat_id: chatId, message_id: messageId, text };
+  if (replyMarkup) body.reply_markup = replyMarkup;
   await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, message_id: messageId, text }),
+    body: JSON.stringify(body),
   }).catch(() => {});
+}
+
+export async function editMessageReplyMarkup(
+  chatId: number,
+  messageId: number,
+  replyMarkup: unknown
+): Promise<void> {
+  const token = getBotToken();
+  const url = `${TELEGRAM_API}/bot${token}/editMessageReplyMarkup`;
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, message_id: messageId, reply_markup: replyMarkup }),
+  }).catch(() => {});
+}
+
+export async function sendDocument(
+  chatId: number,
+  fileBuffer: Buffer,
+  filename: string,
+  caption?: string
+): Promise<void> {
+  const token = getBotToken();
+  const url = `${TELEGRAM_API}/bot${token}/sendDocument`;
+  const form = new FormData();
+  form.append("chat_id", String(chatId));
+  // Node 18+ FormData with Blob
+  const blob = new Blob([new Uint8Array(fileBuffer)], { type: "application/pdf" } as BlobPropertyBag);
+  form.append("document", blob, filename);
+  if (caption) form.append("caption", caption);
+  const res = await fetch(url, { method: "POST", body: form as unknown as BodyInit });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    console.error("[telegram] sendDocument failed", res.status, t.slice(0, 800));
+    throw new Error(`Gagal kirim dokumen: ${res.status} ${t.slice(0, 200)}`);
+  }
 }
 
 export function formatTransactionConfirmation(

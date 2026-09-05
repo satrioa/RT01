@@ -21,7 +21,6 @@ export function GreetingHeader({
         <h1 className="truncate text-[15px] font-semibold tracking-tight">
           {rtName} <span className="text-muted-foreground">/ RW {rwNumber}</span>
         </h1>
-        <p className="text-xs text-muted-foreground">RT {rtNumber} • Warga terdata</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Link

@@ -48,6 +48,32 @@ export async function getTransaksiSummary(rtId: string, limit = 5): Promise<stri
     .join("\n");
 }
 
+export async function getRecentTransactionsWithId(
+  rtId: string,
+  limit = 5
+): Promise<
+  { id: string; amount: string; type: string; description: string | null; transaction_date: string; pocket_name: string | null; category_name: string | null }[]
+> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("transactions")
+    .select("id, amount, type, description, transaction_date, pocket:pockets(name), category:categories(name)")
+    .eq("rt_id", rtId)
+    .order("transaction_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  const rows = (data as unknown as { id: string; amount: string; type: string; description: string | null; transaction_date: string; pocket: { name: string } | null; category: { name: string } | null }[] | null) ?? [];
+  return rows.map((r) => ({
+    id: r.id,
+    amount: r.amount,
+    type: r.type,
+    description: r.description,
+    transaction_date: r.transaction_date,
+    pocket_name: r.pocket?.name ?? null,
+    category_name: r.category?.name ?? null,
+  }));
+}
+
 export async function getLaporanSummary(rtId: string): Promise<string> {
   const supabase = createServiceClient();
   const now = new Date();

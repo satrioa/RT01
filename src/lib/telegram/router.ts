@@ -1,7 +1,7 @@
 /**
  * Intent router — separates webhook plumbing from business logic.
  */
-import { createPending } from "./pending";
+import { createPending, getActiveEditPending, setPendingStatus } from "./pending";
 import { handleDeterministic } from "@/lib/ai/deterministic";
 import {
   sendMessage,
@@ -9,8 +9,10 @@ import {
   formatTransactionConfirmation,
   formatTransferConfirmation,
 } from "./client";
-import { getSaldoForPocket, getTransaksiSummary, getLaporanSummary } from "./service";
+import { getSaldoForPocket, getTransaksiSummary } from "./service";
 import type { TelegramAccount } from "./types";
+import { handleEditInput } from "./edit";
+import { buildReportTypeKeyboard } from "./report";
 
 export async function routeMessage(
   chatId: number,
@@ -54,6 +56,26 @@ export async function routeMessage(
   }
 
   const rtId = account.rt_id;
+
+  // --- Edit transaksi: if user has active edit session, treat next text as field input ---
+  // Check pending edit before any other handling (except /cancel)
+  const activeEdit = await getActiveEditPending(telegramUserId, chatId);
+  if (activeEdit) {
+    if (trimmed.toLowerCase() === "/cancel") {
+      await setPendingStatus(activeEdit.id, "cancelled");
+      await sendMessage(chatId, "Edit dibatalkan.");
+      return;
+    }
+    // If message is a slash command, cancel edit and continue to command handling
+    if (trimmed.startsWith("/")) {
+      // let command handling below; but keep edit pending? we cancel it
+      await setPendingStatus(activeEdit.id, "cancelled");
+      // proceed to command handling below
+    } else {
+      const handled = await handleEditInput(chatId, telegramUserId, trimmed, rtId);
+      if (handled) return;
+    }
+  }
 
   // Commands
   if (trimmed === "/start") {
@@ -111,13 +133,18 @@ export async function routeMessage(
 
   if (trimmed.startsWith("/transaksi")) {
     const summary = await getTransaksiSummary(rtId, 5);
-    await sendMessage(chatId, summary);
+    const hasTx = summary !== "Belum ada transaksi.";
+    const replyMarkup = hasTx
+      ? { inline_keyboard: [[{ text: "✏️ Edit Transaksi", callback_data: "rt:tx:edit:menu" }]] }
+      : undefined;
+    await sendMessage(chatId, summary, replyMarkup ? { replyMarkup } : undefined);
     return;
   }
 
   if (trimmed.startsWith("/laporan")) {
-    const summary = await getLaporanSummary(rtId);
-    await sendMessage(chatId, summary);
+    await sendMessage(chatId, ["📊 Laporan RTFinance", "", "Pilih jenis laporan:"].join("\n"), {
+      replyMarkup: buildReportTypeKeyboard(),
+    });
     return;
   }
 

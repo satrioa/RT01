@@ -214,13 +214,11 @@ export async function generateMonthlyReport(opts: {
       pocket_name?: string; pocket_id?: string | null;
     };
     let pocketName: string | null = null;
-    let pocketColor: string | null = null;
     if (pocketId) {
       const pSnap = await calculatePocketMonthlySnapshot(supabase, rtId, pocketId, year, month);
       // Fetch pocket meta for name/color
       const { data: pMeta } = await supabase.from("pockets").select("name, color").eq("id", pocketId).maybeSingle();
       pocketName = (pMeta as { name?: string } | null)?.name ?? pSnap.pocket_name;
-      pocketColor = (pMeta as { color?: string } | null)?.color ?? null;
       snapshot = {
         rt_id: rtId, year, month, period_start, period_end,
         opening_balance: pSnap.opening_balance, total_income: pSnap.total_income, total_expense: pSnap.total_expense,
@@ -250,7 +248,7 @@ export async function generateMonthlyReport(opts: {
     const txRows = (txs as unknown as { id: string; transaction_date: string; description: string | null; type: string; amount: string; pocket: { name: string } | null; category: { name: string } | null }[] | null) ?? [];
 
     // Fetch transfers — filter to those touching the pocket if per-kantong
-    let trQuery = supabase.from("transfers").select("id, transaction_date, description, amount, from_pocket:pockets!transfers_from_pocket_id_fkey(name), to_pocket:pockets!transfers_to_pocket_id_fkey(name), from_pocket_id, to_pocket_id").eq("rt_id", rtId).gte("transaction_date", period_start).lte("transaction_date", period_end).order("transaction_date", { ascending: true });
+    const trQuery = supabase.from("transfers").select("id, transaction_date, description, amount, from_pocket:pockets!transfers_from_pocket_id_fkey(name), to_pocket:pockets!transfers_to_pocket_id_fkey(name), from_pocket_id, to_pocket_id").eq("rt_id", rtId).gte("transaction_date", period_start).lte("transaction_date", period_end).order("transaction_date", { ascending: true });
     const { data: allTrs } = await trQuery;
     let trRowsRaw = (allTrs as unknown as { id: string; transaction_date: string; description: string | null; amount: string; from_pocket: { name: string } | null; to_pocket: { name: string } | null; from_pocket_id: string; to_pocket_id: string }[] | null) ?? [];
     if (pocketId) {

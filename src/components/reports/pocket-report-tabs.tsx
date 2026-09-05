@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import * as React from "react";
@@ -35,6 +36,8 @@ export function PocketReportTabs({
   const [activeKey, setActiveKey] = React.useState(initialKey);
   const [dir, setDir] = React.useState(0);
 
+  // sync from server when year/month/pocket in URL changes (e.g. MonthSelector navigation)
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => {
     setActiveKey(initialKey);
   }, [initialKey]);
