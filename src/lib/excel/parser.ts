@@ -52,47 +52,75 @@ export function extractSheet(workbook: XLSX.WorkBook, sheetName: string, headerR
   return { sheetName, headers, rows, rawRows };
 }
 
+function toLocalISODate(d: Date): string | null {
+  // Local getters (bukan toISOString/UTC) agar tanggal WIB tidak mundur 1 hari
+  if (isNaN(d.getTime())) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function isValidCalendarDate(year: number, month: number, day: number): boolean {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return false;
+  if (year < 1900 || year > 2100) return false;
+  if (month < 1 || month > 12) return false;
+  const dim = new Date(year, month, 0).getDate(); // hari terakhir bulan (kabisat-aware)
+  if (day < 1 || day > dim) return false;
+  return true;
+}
+
 export function parseExcelDate(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null;
   if (value instanceof Date) {
-    if (isNaN(value.getTime())) return null;
-    return value.toISOString().slice(0, 10);
+    return toLocalISODate(value);
   }
   if (typeof value === "number") {
     // Excel serial date
+    if (!isFinite(value)) return null;
     const parsed = XLSX.SSF.parse_date_code(value);
     if (!parsed) return null;
-    const d = new Date(parsed.y, parsed.m - 1, parsed.d);
-    if (isNaN(d.getTime())) return null;
-    return d.toISOString().slice(0, 10);
+    if (!isValidCalendarDate(parsed.y, parsed.m, parsed.d)) return null;
+    return toLocalISODate(new Date(parsed.y, parsed.m - 1, parsed.d));
   }
   if (typeof value === "string") {
-    const s = value.trim();
+    const s = value.trim().replace(/\s+/g, " ");
     if (!s) return null;
-    // Try common Indonesian formats: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD
-    // Normalize
+
+    // 1) YYYY-MM-DD (strict, ISO)
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (m) {
+      const year = Number(m[1]);
+      const month = Number(m[2]);
+      const day = Number(m[3]);
+      if (!isValidCalendarDate(year, month, day)) return null;
+      return toLocalISODate(new Date(year, month - 1, day));
+    }
+
+    // 2) DD/MM/YYYY — juga DD-MM-YYYY & DD.MM.YYYY (format template Indonesia).
+    //    WAJIB didahulukan sebelum new Date() karena "05/01/2024" akan
+    //    disalahartikan sebagai MM/DD/YYYY (1 Mei, bukan 5 Jan).
+    m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+    if (m) {
+      const day = Number(m[1]);
+      const month = Number(m[2]);
+      const year = Number(m[3]);
+      if (!isValidCalendarDate(year, month, day)) return null;
+      return toLocalISODate(new Date(year, month - 1, day));
+    }
+
+    // 3) DD/MM/YY → 20YY
+    m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2})$/);
+    if (m) {
+      const day = Number(m[1]);
+      const month = Number(m[2]);
+      const year = 2000 + Number(m[3]);
+      if (!isValidCalendarDate(year, month, day)) return null;
+      return toLocalISODate(new Date(year, month - 1, day));
+    }
+
+    // 4) Fallback: format teks lain (mis. "5 Jan 2024"). Sengaja terakhir
+    //    agar pola ambigu angka tidak pernah lewat sini.
     const d = new Date(s);
-    if (!isNaN(d.getTime())) {
-      // Avoid mis-parse of DD/MM/YYYY as MM/DD — try manual
-      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-      if (m) {
-        const day = Number(m[1]);
-        const month = Number(m[2]);
-        const year = Number(m[3]);
-        const manual = new Date(year, month - 1, day);
-        if (!isNaN(manual.getTime())) return manual.toISOString().slice(0, 10);
-      }
-      return d.toISOString().slice(0, 10);
-    }
-    // Try DD/MM/YYYY manual only
-    const dm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-    if (dm) {
-      const day = Number(dm[1]);
-      const month = Number(dm[2]);
-      const year = Number(dm[3]);
-      const dd = new Date(year, month - 1, day);
-      if (!isNaN(dd.getTime())) return dd.toISOString().slice(0, 10);
-    }
+    if (!isNaN(d.getTime())) return toLocalISODate(d);
   }
   return null;
 }

@@ -59,7 +59,7 @@ export function validateRows(
     // Date
     const dateRaw = mapping.date ? row[mapping.date] : null;
     const date = parseExcelDate(dateRaw);
-    if (!date) errors.push("Tanggal tidak valid");
+    if (!date) errors.push("Tanggal tidak valid (gunakan DD/MM/YYYY, contoh 05/01/2024)");
 
     // Amount logic: income, expense, or amount column
     let amount: number | null = null;

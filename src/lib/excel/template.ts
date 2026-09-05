@@ -3,18 +3,30 @@ import * as XLSX from "xlsx";
 export function buildImportTemplate(): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
 
-  // Sheet 1: Template
+  // Sheet 1: Template — tanggal sebagai Date asli + format sel DD/MM/YYYY
+  // agar Excel (locale Indonesia) selalu menampilkan & menyimpan tanggal benar
   const headers = ["Tanggal", "Keterangan", "Pemasukan", "Pengeluaran", "Kantong", "Kategori"];
-  const examples = [
-    ["2024-01-05", "Iuran warga Januari", 500000, "", "Kas", "Iuran Warga"],
-    ["2024-01-06", "Beli konsumsi kerja bakti", "", 75000, "Kas", "Konsumsi"],
-    ["2024-01-07", "Retribusi sampah", 100000, "", "Kas", "Retribusi"],
-    ["2024-01-08", "Sumbangan warga", 200000, "", "Sosial", "Sumbangan"],
-    ["2024-01-10", "Bayar kebersihan", "", 300000, "Kas", "Kebersihan"],
+  const d = (y: number, m: number, day: number) => new Date(y, m - 1, day, 12, 0, 0);
+  const examples: (string | number | Date)[][] = [
+    [d(2024, 1, 5), "Iuran warga Januari", 500000, "", "Kas", "Iuran Warga"],
+    [d(2024, 1, 6), "Beli konsumsi kerja bakti", "", 75000, "Kas", "Konsumsi"],
+    [d(2024, 1, 7), "Retribusi sampah", 100000, "", "Kas", "Retribusi"],
+    [d(2024, 1, 8), "Sumbangan warga", 200000, "", "Sosial", "Sumbangan"],
+    [d(2024, 1, 10), "Bayar kebersihan", "", 300000, "Kas", "Kebersihan"],
   ];
 
   const wsData = [headers, ...examples];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Paksa format tampilan kolom Tanggal ke DD/MM/YYYY (baris contoh 2-6)
+  for (let r = 2; r <= examples.length + 1; r++) {
+    const addr = `A${r}`;
+    const cell = ws[addr] as XLSX.CellObject | undefined;
+    if (cell) {
+      cell.z = "DD/MM/YYYY";
+      if (cell.t !== "d") cell.t = "d";
+    }
+  }
 
   // Column widths
   ws["!cols"] = [{ wch: 12 }, { wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 16 }];
@@ -33,7 +45,8 @@ export function buildImportTemplate(): XLSX.WorkBook {
     ["Petunjuk Import Excel RT Finance"],
     [""],
     ["Kolom wajib:"],
-    ["- Tanggal: format YYYY-MM-DD atau DD/MM/YYYY (contoh: 2024-01-05 atau 05/01/2024)"],
+    ["- Tanggal: format DD/MM/YYYY (contoh: 05/01/2024 = 5 Januari 2024). Kolom Tanggal di template sudah diformat DD/MM/YYYY — cukup ketik seperti contoh."],
+    ["- Tanggal tidak valid (mis. bulan 13, 30 Februari) akan ditolak saat validasi, bukan ditebak."],
     ["- Keterangan: deskripsi transaksi, tidak boleh kosong"],
     ["- Pemasukan ATAU Pengeluaran: isi salah satu, nominal >0, contoh: 75000 atau 500000"],
     ["- Kantong: harus sesuai nama kantong di aplikasi (Kas, BOP, Sosial, Kegiatan) atau mapping manual"],
