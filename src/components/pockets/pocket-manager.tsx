@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AmountInput } from "@/components/transactions/amount-input";
 import { useToast } from "@/components/ui/toaster";
 import { formatRupiah } from "@/lib/format";
@@ -19,7 +18,6 @@ import {
   DrawerDescription,
   DrawerFooter,
 } from "@/components/ui/drawer";
-import { ColorPickerPopover } from "@/components/ui/color-picker";
 import { createPocketAction, updatePocketAction, deletePocketAction, archivePocketAction } from "@/lib/actions/pockets";
 import type { Pocket } from "@/types/database";
 import { Pencil, Trash2, Plus, Wallet, Archive, Loader2 } from "lucide-react";
@@ -109,44 +107,47 @@ function PocketForm({
   }
 
   return (
-    <form key={initial?.id ?? "new"} onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <form key={initial?.id ?? "new"} onSubmit={handleSubmit} className="space-y-3">
+      <div className="space-y-1.5">
         <Label htmlFor="pocket-name">Nama *</Label>
         <Input name="name" id="pocket-name" required maxLength={50} defaultValue={initial?.name ?? ""} placeholder="Contoh: Kas, BOP, Sosial" />
       </div>
 
-      <div className="rounded-2xl border border-[#d5efd6] bg-[#f0faf0] p-3 space-y-2">
+      <div className="rounded-2xl border border-[#d5efd6] bg-[#f0faf0] p-3 space-y-1.5">
         <Label htmlFor="pocket-saldo" className="flex items-center gap-1.5 text-foreground">
           <Wallet className="size-3.5 text-[#0d9488]" /> Saldo Awal
         </Label>
         <AmountInput name="opening_balance" defaultValue={initial?.opening_balance ?? "0"} placeholder="Rp 0" />
-        <p className="text-[11px] leading-relaxed text-muted-foreground">Nilai awal kantong saat dibuat — langsung ikut hitung <span className="font-medium text-foreground">saldo akhir</span> di dashboard & laporan.</p>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="pocket-desc">Deskripsi</Label>
-        <Textarea name="description" id="pocket-desc" rows={2} maxLength={200} defaultValue={initial?.description ?? ""} placeholder="Deskripsi singkat (opsional)" />
+        <Textarea name="description" id="pocket-desc" rows={1} maxLength={200} defaultValue={initial?.description ?? ""} placeholder="Deskripsi singkat (opsional)" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label>Warna (tengah)</Label>
-          <ColorPickerPopover
-            value={color}
-            onValueChange={setColor}
-            swatches={["#111827", "#374151", "#0d9488", "#0ea5e9", "#e11d48", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#6366f1"]}
-            triggerShowValue
-            triggerLabel="Pilih warna"
-          />
+          {/* Inline tanpa portal: Popover di dalam Drawer modal tidak bisa diklik */}
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={/^#[0-9a-fA-F]{6}$/.test(color) ? color : "#111827"}
+              onChange={(e) => setColor(e.target.value)}
+              className="h-10 w-12 shrink-0 cursor-pointer rounded-xl border bg-transparent p-1"
+              aria-label="Pilih warna"
+            />
+            <Input value={color} onChange={(e) => setColor(e.target.value)} maxLength={7} className="h-10 font-mono text-xs" placeholder="#111827" />
+          </div>
           <input type="hidden" name="color" value={color} />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="pocket-order">Urutan</Label>
           <Input name="sort_order" id="pocket-order" type="number" min={0} defaultValue={String(initial?.sort_order ?? 0)} />
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label>Tema Gradien</Label>
         <GradientPickerPopover
           color={color}
@@ -155,9 +156,6 @@ function PocketForm({
           customGradient={customGradient}
           preview={preview}
           onPresetClick={handlePresetClick}
-          onCustomChange={setCustomGradient}
-          onC1Change={setGradientC1}
-          onC3Change={setGradientC3}
         />
         {customGradient ? (
           <>
@@ -173,35 +171,33 @@ function PocketForm({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="pocket-icon">Icon</Label>
           <Input name="icon" id="pocket-icon" maxLength={50} defaultValue={initial?.icon ?? ""} placeholder="wallet / building / heart" />
         </div>
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <Select value={isActive} onValueChange={setIsActive}>
-            <SelectTrigger>
-              <SelectValue placeholder="Pilih status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="true">Aktif</SelectItem>
-              <SelectItem value="false">Arsip (nonaktif)</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="space-y-1.5">
+          <Label htmlFor="pocket-status">Status</Label>
+          {/* Native select tanpa portal: dropdown portal di dalam Drawer modal tidak bisa diklik */}
+          <select
+            id="pocket-status"
+            value={isActive}
+            onChange={(e) => setIsActive(e.target.value)}
+            className="h-10 w-full rounded-xl border border-input bg-card px-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-primary"
+          >
+            <option value="true">Aktif</option>
+            <option value="false">Arsip (nonaktif)</option>
+          </select>
           <input type="hidden" name="is_active" value={isActive} />
         </div>
       </div>
 
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-2 pt-1">
         <Button type="button" variant="outline" onClick={onClose} className="flex-1">Batal</Button>
         <Button type="submit" disabled={submitting} className="flex-1">
           {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
           {isEdit ? "Simpan" : "Buat Kantong"}
         </Button>
       </div>
-      <p className="text-[11px] leading-relaxed text-muted-foreground">
-        Nama harus unik per RT. Urutan menentukan posisi di dashboard & form transaksi.
-      </p>
     </form>
   );
 }
@@ -355,7 +351,7 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
               {sheetMode === "edit" ? "Ubah nama, deskripsi, warna atau urutan. Klik Simpan untuk menyimpan." : "Buat kantong baru untuk memisahkan dana. Nama harus unik."}
             </DrawerDescription>
           </DrawerHeader>
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-4 [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]">
             {sheetMode === "edit" && editing ? (
               <PocketForm
                 key={editing.id}
