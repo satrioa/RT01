@@ -2,9 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 export function MonthSelector({
   selectedYear,
@@ -18,8 +16,6 @@ export function MonthSelector({
   count?: number;
 }) {
   const scrollRef = React.useRef<HTMLDivElement>(null);
-  const [canLeft, setCanLeft] = React.useState(false);
-  const [canRight, setCanRight] = React.useState(false);
 
   const months = React.useMemo(() => {
     const out: { year: number; month: number }[] = [];
@@ -31,26 +27,6 @@ export function MonthSelector({
     return out;
   }, [count]);
 
-  const updateArrows = React.useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanLeft(el.scrollLeft > 2);
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
-  }, []);
-
-  React.useEffect(() => {
-    updateArrows();
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", updateArrows, { passive: true });
-    const ro = new ResizeObserver(updateArrows);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", updateArrows);
-      ro.disconnect();
-    };
-  }, [updateArrows]);
-
   // auto scroll selected into view
   React.useEffect(() => {
     const el = scrollRef.current;
@@ -61,10 +37,6 @@ export function MonthSelector({
       child?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     }
   }, [months, selectedYear, selectedMonth]);
-
-  function scrollBy(dir: 1 | -1) {
-    scrollRef.current?.scrollBy({ left: dir * 160, behavior: "smooth" });
-  }
 
   // drag handling
   const drag = React.useRef<{ down: boolean; x: number; left: number }>({ down: false, x: 0, left: 0 });
@@ -90,25 +62,13 @@ export function MonthSelector({
     <Card className="overflow-hidden">
       <CardContent className="p-2">
         <div className="relative flex min-w-0 flex-1 items-center gap-1">
-          {/* caret kiri */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`absolute left-0 z-10 size-7 shrink-0 rounded-full bg-card/90 shadow-sm backdrop-blur-sm border ${canLeft ? "opacity-100" : "pointer-events-none opacity-0"}`}
-            onClick={() => scrollBy(-1)}
-            aria-label="Geser kiri"
-            type="button"
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-
           <div
             ref={scrollRef}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerLeave={onPointerUp}
-            className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth px-8 py-1 select-none touch-pan-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory cursor-grab active:cursor-grabbing"
+            className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth py-1 select-none touch-pan-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory cursor-grab active:cursor-grabbing"
           >
             {months.map(({ year, month }) => {
               const isSelected = year === selectedYear && month === selectedMonth;
