@@ -27,14 +27,33 @@ export function SmartInput() {
   const [parsing, setParsing] = React.useState(false);
   const [result, setResult] = React.useState<SmartParseResult | null>(null);
   const [saving, setSaving] = React.useState(false);
-  const [placeholderIdx, setPlaceholderIdx] = React.useState(0);
+  const [typedPlaceholder, setTypedPlaceholder] = React.useState("");
+  const [exampleIdx, setExampleIdx] = React.useState(0);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
+  // Typewriter untuk placeholder
   React.useEffect(() => {
-    if (input) return;
-    const id = setInterval(() => setPlaceholderIdx((i) => (i + 1) % PLACEHOLDER_EXAMPLES.length), 3000);
-    return () => clearInterval(id);
+    if (input) return; // pause saat user mengetik
+    const full = PLACEHOLDER_EXAMPLES[exampleIdx];
+    let timeout: ReturnType<typeof setTimeout>;
+    if (!isDeleting && typedPlaceholder === full) {
+      timeout = setTimeout(() => setIsDeleting(true), 1800);
+    } else if (isDeleting && typedPlaceholder === "") {
+      timeout = setTimeout(() => {
+        setIsDeleting(false);
+        setExampleIdx((i) => (i + 1) % PLACEHOLDER_EXAMPLES.length);
+      }, 400);
+    } else {
+      const next = isDeleting ? full.slice(0, typedPlaceholder.length - 1) : full.slice(0, typedPlaceholder.length + 1);
+      timeout = setTimeout(() => setTypedPlaceholder(next), isDeleting ? 28 : 48);
+    }
+    return () => clearTimeout(timeout);
+  }, [typedPlaceholder, exampleIdx, isDeleting, input]);
+
+  React.useEffect(() => {
+    if (input) setTypedPlaceholder("");
   }, [input]);
 
   async function handleSubmit() {
@@ -113,7 +132,7 @@ export function SmartInput() {
           <span className="ml-auto text-[10px] text-muted-foreground">{input.length}/500</span>
         </div>
         <PromptInputTextarea
-          placeholder={PLACEHOLDER_EXAMPLES[placeholderIdx]}
+          placeholder={typedPlaceholder}
           className="min-h-[48px] text-sm placeholder:text-muted-foreground/60"
         />
         <PromptInputActions className="justify-end px-1 pt-1">
