@@ -110,9 +110,18 @@ function StatCard({
   const shown = hover != null && series ? series[hover] : headline;
 
   const base = card.previous ?? series?.[0] ?? 0;
-  const delta = card.previous != null || series ? (base ? ((headline - base) / base) * 100 : 0) : null;
+  let delta = card.previous != null || series ? (base ? ((headline - base) / base) * 100 : 0) : null;
+  // Fix for negative base (e.g. Net deficit): use absolute base for delta direction
+  // Without this, headline -500 vs base -300 gives +66% (green) padahal masih defisit & memburuk
+  if (base < 0 && delta != null) {
+    delta = ((headline - base) / Math.abs(base)) * 100;
+  }
   const rising = (delta ?? 0) >= 0;
-  const good = goodWhen === 'up' ? rising : !rising;
+  let good = goodWhen === 'up' ? rising : !rising;
+  // Net: absolut negatif = defisit → selalu merah, jangan hijau karena delta naik
+  if (card.label === 'Net' && headline < 0) {
+    good = false;
+  }
   const color = good ? UP : DOWN;
 
   const displayValue = useTweenNumber(shown, {

@@ -7,6 +7,7 @@ import { OverviewCards } from "@/components/reports/overview-cards";
 import { SmartInput } from "@/components/ai/smart-input";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getHomeData } from "@/lib/data/home";
 import { createServiceClient } from "@/lib/supabase/service";
