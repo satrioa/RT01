@@ -1,4 +1,4 @@
-import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
+import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -50,7 +50,6 @@ export default function Loading() {
         </main>
         <BottomNavSpacer />
       </div>
-      <BottomNav />
     </div>
   );
 }

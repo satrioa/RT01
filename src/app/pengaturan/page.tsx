@@ -1,4 +1,4 @@
-import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
+import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { createServerClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { SettingsCompact } from "@/components/settings/settings-compact";
@@ -45,7 +45,6 @@ export default async function PengaturanPage() {
         </main>
         <BottomNavSpacer />
       </div>
-      <BottomNav />
     </div>
   );
 }

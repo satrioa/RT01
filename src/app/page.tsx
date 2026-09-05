@@ -2,7 +2,7 @@ import { GreetingHeader } from "@/components/dashboard/greeting-header";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { OverviewCards } from "@/components/reports/overview-cards";
 import { SmartInput } from "@/components/ai/smart-input";
-import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
+import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getHomeData } from "@/lib/data/home";
@@ -51,7 +51,7 @@ export default async function Page() {
   const rwNumber = data.rt?.rw_number ?? "07";
 
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="min-h-dvh overflow-x-clip bg-background">
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-background">
         <main className="flex flex-1 flex-col gap-6 px-5 pt-5">
           <GreetingHeader rtName={rtName} rtNumber={rtNumber} rwNumber={rwNumber} />
@@ -100,8 +100,6 @@ export default async function Page() {
           </section>
         </main>
       </div>
-
-      <BottomNav />
     </div>
   );
 }

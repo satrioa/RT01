@@ -1,4 +1,4 @@
-import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
+import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { createServiceClient } from "@/lib/supabase/service";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { getMonthlyReport, listMonthlyReports } from "@/lib/reports/monthly-report-service";
@@ -68,7 +68,6 @@ export default async function ReportsPage({
         />
         <BottomNavSpacer />
       </div>
-      <BottomNav />
     </div>
   );
 }

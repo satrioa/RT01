@@ -4,9 +4,11 @@ import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { getPocketSummary } from "@/lib/data/transactions";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PocketPeriodFilter } from "@/components/pockets/pocket-period-filter";
 import { PocketMonthlyReports } from "@/components/pockets/pocket-monthly-reports";
+import { PocketDetailHero } from "@/components/pockets/pocket-detail-hero";
+import { getAppearanceSettings } from "@/lib/actions/appearance";
 import { ArrowLeft, Wallet, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -60,13 +62,15 @@ export default async function PocketDetailPage({
           </main>
           <BottomNavSpacer />
         </div>
-        <BottomNav />
       </div>
     );
   }
 
   const supabase = createServerClient();
-  const summary = await getPocketSummary(id);
+  const [summary, appearance] = await Promise.all([
+    getPocketSummary(id),
+    getAppearanceSettings().catch(() => null),
+  ]);
 
   // Fetch filtered transactions for list (periode filter ganti Tambah Transaksi)
   const txQuery = supabase
@@ -100,20 +104,7 @@ export default async function PocketDetailPage({
         </header>
 
         <main className="flex flex-1 flex-col gap-6 p-5 pb-6">
-          <Card className="border-0 bg-primary text-primary-foreground">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Wallet className="size-5" /> {pocket?.name ?? id.slice(0, 8)}
-              </CardTitle>
-              <p className="text-xs text-primary-foreground/70">{pocket?.description ?? "Kantong RT"}</p>
-            </CardHeader>
-            <CardContent>
-              <p className="text-[11px] tracking-widest text-primary-foreground/60">SALDO SAAT INI</p>
-              <p className="text-3xl font-bold tracking-tight">{formatRupiah(Number(pocket?.balance ?? 0))}</p>
-              <p className="mt-1 text-xs text-primary-foreground/60">Saldo awal: {formatRupiah(Number((pocket as unknown as { opening_balance?: string | number })?.opening_balance ?? 0))}</p>
-              <Link href="/transactions/new?type=transfer" className="mt-3 inline-flex text-xs font-medium text-primary-foreground/80 underline">Pindah Kantong →</Link>
-            </CardContent>
-          </Card>
+          <PocketDetailHero pocket={pocket} pocketId={id} appearance={appearance} />
 
           {/* Summary grid */}
           <div className="grid grid-cols-2 gap-3">
@@ -193,7 +184,6 @@ export default async function PocketDetailPage({
 
         <BottomNavSpacer />
       </div>
-      <BottomNav />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
+import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TransactionFilters } from "@/components/transactions/filters";
@@ -74,7 +74,6 @@ export default async function TransactionsPage({
 
         <BottomNavSpacer />
       </div>
-      <BottomNav />
     </div>
   );
 }

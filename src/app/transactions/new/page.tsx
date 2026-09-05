@@ -4,6 +4,7 @@ import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransferForm } from "@/components/transactions/transfer-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -94,6 +95,7 @@ export default async function NewTransactionPage({
             </CardContent>
           </Card>
         </main>
+        <BottomNavSpacer />
       </div>
     </div>
   );

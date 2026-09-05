@@ -7,7 +7,7 @@ import { formatRupiah } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
+import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { ArrowLeft, Download, FileText, Wallet } from "lucide-react";
 import { ReportActions } from "@/components/reports/report-actions";
 import { format } from "date-fns";
@@ -193,7 +193,6 @@ export default async function MonthlyReportDetailPage({
 
         <BottomNavSpacer />
       </div>
-      <BottomNav />
     </div>
   );
 }

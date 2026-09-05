@@ -6,7 +6,7 @@ import {
   OverviewCardsSkeleton,
   SmartInputSkeleton,
 } from "@/components/dashboard/home-skeletons";
-import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
+import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Separator } from "@/components/ui/separator";
 
 export default function Loading() {
@@ -32,7 +32,6 @@ export default function Loading() {
           </section>
         </main>
       </div>
-      <BottomNav />
     </div>
   );
 }
