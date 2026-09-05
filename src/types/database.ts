@@ -110,6 +110,47 @@ export interface RtAiSettings {
   updated_at: string;
 }
 
+export type MonthlyReportStatus = "OPEN" | "GENERATING" | "READY" | "CLOSED" | "REOPENED" | "FAILED";
+
+export interface MonthlyReport {
+  id: string;
+  rt_id: string;
+  year: number;
+  month: number;
+  period_start: string;
+  period_end: string;
+  status: MonthlyReportStatus;
+  opening_balance: string;
+  total_income: string;
+  total_expense: string;
+  total_transfer_in: string;
+  total_transfer_out: string;
+  closing_balance: string;
+  transaction_count: number;
+  pdf_url: string | null;
+  excel_url: string | null;
+  generated_at: string | null;
+  generated_by: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MonthlyReportPocket {
+  id: string;
+  monthly_report_id: string;
+  pocket_id: string;
+  pocket_name: string;
+  opening_balance: string;
+  total_income: string;
+  total_expense: string;
+  total_transfer_in: string;
+  total_transfer_out: string;
+  closing_balance: string;
+  transaction_count: number;
+  created_at: string;
+}
+
 // ---------------------------------------------------------------------------
 // Views / derived
 // ---------------------------------------------------------------------------

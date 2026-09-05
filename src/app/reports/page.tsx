@@ -1,163 +1,260 @@
 import Link from "next/link";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { DetailKpiCards } from "@/components/reports/detail-kpi-cards";
-import { Gauge } from "@/components/charts/gauge";
-import { CategoryBreakdown } from "@/components/reports/category-breakdown";
-import { PocketBreakdown } from "@/components/reports/pocket-breakdown";
-import { TransactionRow } from "@/components/transactions/transaction-row";
-import { ReportsFilter } from "@/components/reports/reports-filter";
-import { getReportsData, type DateRange } from "@/lib/data/reports";
-import { AlertTriangle, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { createServiceClient } from "@/lib/supabase/service";
+import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
+import { getMonthlyReport, listMonthlyReports } from "@/lib/reports/monthly-report-service";
+import { getMonthPeriod } from "@/lib/reports/monthly-report-calculator";
+import { formatRupiah } from "@/lib/format";
+import { BarChart3, FileText, Download, Eye, Calendar, AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+function monthLabel(year: number, month: number): string {
+  return new Date(year, month - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+}
+
+function getLastNMonths(n: number): { year: number; month: number }[] {
+  const out: { year: number; month: number }[] = [];
+  const now = new Date();
+  for (let i = 0; i < n; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push({ year: d.getFullYear(), month: d.getMonth() + 1 });
+  }
+  return out;
+}
 
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ range?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const sp = await searchParams;
-  const range = (["this_month", "last_month", "this_year", "custom"].includes(sp.range ?? "") ? (sp.range as DateRange) : "this_month") as DateRange;
+  const now = new Date();
+  const selectedYear = sp.year ? Number(sp.year) : now.getFullYear();
+  const selectedMonth = sp.month ? Number(sp.month) : now.getMonth() + 1;
 
-  const data = await getReportsData({ range, customFrom: sp.from, customTo: sp.to });
+  if (!hasSupabaseEnv()) {
+    return <div className="mx-auto max-w-[430px] p-5 text-sm text-muted-foreground">Supabase belum dikonfigurasi.</div>;
+  }
 
-  const hasTx = data.transactions.length > 0;
-  const total = data.totalIncome + data.totalExpense;
-  const incomePercent = total > 0 ? Math.round((data.totalIncome / total) * 100) : 0;
+  const rtId = DEV_RT_ID;
+  const supabase = createServiceClient();
+  const { data: rtProfile } = await supabase.from("rt_profiles").select("name, rt_number, rw_number").eq("id", rtId).maybeSingle();
+  const rtName = (rtProfile as { name?: string } | null)?.name ?? "RT 01";
+  const rtNumber = (rtProfile as { rt_number?: string } | null)?.rt_number ?? "01";
+  const rwNumber = (rtProfile as { rw_number?: string } | null)?.rw_number ?? "07";
+
+  // Fetch selected month report
+  const selectedReport = await getMonthlyReport(supabase, rtId, selectedYear, selectedMonth).catch(() => null);
+  const allReports = await listMonthlyReports(supabase, rtId, 12).catch(() => []);
+
+  // Failsafe: if previous completed month has no report, show banner
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevYear = prev.getFullYear();
+  const prevMonth = prev.getMonth() + 1;
+  const prevReport = await getMonthlyReport(supabase, rtId, prevYear, prevMonth).catch(() => null);
+  const showFailsafeBanner = !prevReport && selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1;
+
+  const statusLabel = (s: string) => {
+    switch (s) {
+      case "READY":
+        return "Laporan tersedia";
+      case "GENERATING":
+        return "Sedang membuat laporan";
+      case "FAILED":
+        return "Gagal membuat laporan";
+      case "CLOSED":
+        return "Bulan ditutup";
+      case "REOPENED":
+        return "Dibuka kembali";
+      case "OPEN":
+        return "Laporan belum dibuat";
+      default:
+        return s;
+    }
+  };
+
+  const statusVariant = (s: string) => {
+    if (s === "READY" || s === "CLOSED") return "success" as const;
+    if (s === "GENERATING") return "secondary" as const;
+    if (s === "FAILED") return "destructive" as const;
+    return "outline" as const;
+  };
 
   return (
     <div className="min-h-dvh bg-background">
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-background">
-        <header className="sticky top-0 z-10 border-b bg-card px-5 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <BarChart3 className="size-4" />
-              </span>
-              <div className="min-w-0">
-                <h1 className="truncate text-sm font-semibold">Laporan</h1>
-                <p className="truncate text-xs text-muted-foreground">{data.rangeLabel}</p>
-              </div>
+        <header className="sticky top-0 z-10 border-b bg-card px-5 py-4">
+          <div className="flex items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <BarChart3 className="size-4" />
+            </span>
+            <div>
+              <h1 className="text-sm font-semibold">Laporan Bulanan</h1>
+              <p className="text-xs text-muted-foreground">
+                {rtName} / RW {rwNumber} • {monthLabel(selectedYear, selectedMonth)}
+              </p>
             </div>
-            <ReportsFilter initialRange={range} initialFrom={data.from} initialTo={data.to} />
           </div>
         </header>
 
         <main className="flex flex-1 flex-col gap-6 p-5 pb-6">
+          {/* Month selector */}
+          <Card>
+            <CardContent className="flex items-center gap-2 p-3">
+              <Calendar className="size-4 text-muted-foreground" />
+              <span className="text-xs font-medium">Pilih Bulan</span>
+              <div className="ml-auto flex gap-1">
+                {getLastNMonths(6).map(({ year, month }) => {
+                  const isSelected = year === selectedYear && month === selectedMonth;
+                  return (
+                    <Link
+                      key={`${year}-${month}`}
+                      href={`/reports?year=${year}&month=${month}`}
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium ${isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}
+                    >
+                      {new Date(year, month - 1, 1).toLocaleDateString("id-ID", { month: "short", year: "2-digit" })}
+                    </Link>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
 
-          {data.error && (
+          {showFailsafeBanner && (
             <Card className="border-warning/30 bg-warning/5">
               <CardContent className="flex gap-3 p-4">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-warning/15 text-warning">
-                  <AlertTriangle className="size-4" />
-                </span>
-                <p className="text-xs leading-relaxed text-muted-foreground">{data.error}</p>
+                <AlertTriangle className="size-4 shrink-0 text-warning" />
+                <div>
+                  <p className="text-xs font-semibold">Laporan {monthLabel(prevYear, prevMonth)} belum tersedia</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Bulan lalu telah berakhir. Laporan akan dibuat otomatis. Jika belum muncul, hubungi bendahara.</p>
+                </div>
               </CardContent>
             </Card>
           )}
 
-          {/* KPI — Ringkasan utama (samakan value: Pemasukan/Pengeluaran/Nett/Saldo) */}
+          {/* Featured report for selected month */}
           <section className="space-y-3">
-            <h2 className="px-1 text-sm font-semibold">Ringkasan</h2>
-            <DetailKpiCards
-              totalIncome={data.totalIncome}
-              totalExpense={data.totalExpense}
-              netChange={data.netChange}
-              currentBalance={data.currentBalance}
-            />
+            <h2 className="px-1 text-sm font-semibold">Laporan {monthLabel(selectedYear, selectedMonth)}</h2>
+            {selectedReport ? (
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="bg-gradient-to-br from-primary to-primary/80 p-5 text-primary-foreground">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xs opacity-70">Saldo Akhir</p>
+                        <p className="mt-1 text-2xl font-bold">{formatRupiah(Number(selectedReport.closing_balance))}</p>
+                      </div>
+                      <Badge variant="secondary" className="rounded-full bg-white/20 text-white border-0">
+                        {statusLabel(selectedReport.status)}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                      <div className="rounded-xl bg-white/10 p-3">
+                        <p className="opacity-70">Pemasukan</p>
+                        <p className="mt-1 font-semibold">{formatRupiah(Number(selectedReport.total_income))}</p>
+                      </div>
+                      <div className="rounded-xl bg-white/10 p-3">
+                        <p className="opacity-70">Pengeluaran</p>
+                        <p className="mt-1 font-semibold">{formatRupiah(Number(selectedReport.total_expense))}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <div>Saldo Awal: <span className="font-medium text-foreground">{formatRupiah(Number(selectedReport.opening_balance))}</span></div>
+                      <div>Transaksi: <span className="font-medium text-foreground">{selectedReport.transaction_count}</span></div>
+                      <div>Periode: <span className="font-medium text-foreground">{selectedReport.period_start} → {selectedReport.period_end}</span></div>
+                      <div>Versi: <span className="font-medium text-foreground">v{selectedReport.version}</span></div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Link href={`/reports/${selectedReport.year}/${String(selectedReport.month).padStart(2, "0")}`} className="flex-1">
+                        <Button className="w-full rounded-xl">
+                          <Eye className="size-4" /> Lihat Laporan
+                        </Button>
+                      </Link>
+                      <Link href={`/api/reports/${selectedReport.year}/${String(selectedReport.month).padStart(2, "0")}/pdf`} className="flex-1">
+                        <Button variant="outline" className="w-full rounded-xl">
+                          <FileText className="size-4" /> PDF
+                        </Button>
+                      </Link>
+                      <Link href={`/api/reports/${selectedReport.year}/${String(selectedReport.month).padStart(2, "0")}/excel`} className="flex-1">
+                        <Button variant="outline" className="w-full rounded-xl">
+                          <Download className="size-4" /> Excel
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm font-semibold">Laporan belum dibuat</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Bulan {monthLabel(selectedYear, selectedMonth)} belum memiliki laporan resmi.</p>
+                  <form action={async () => {
+                    "use server";
+                    const { generateReportAction } = await import("@/lib/actions/monthly-reports");
+                    await generateReportAction(selectedYear, selectedMonth);
+                  }}>
+                    <Button className="mt-4 w-full rounded-xl">Buat Laporan</Button>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
           </section>
 
-          {/* Perbandingan — gauge */}
+          {/* Previous reports */}
           <section className="space-y-3">
-            <h2 className="px-1 text-sm font-semibold">Perbandingan</h2>
-            <Card>
-              <CardContent className="p-4">
-                <Gauge
-                  centerValue={data.totalIncome}
-                  defaultLabel="Pemasukan"
-                  endAngle={360}
-                  formatOptions={{ style: "currency", currency: "IDR", maximumFractionDigits: 0 } as unknown as Record<string, unknown> & { maximumFractionDigits: number }}
-                  inactiveFillOpacity={0.4}
-                  spacing={60}
-                  startAngle={180}
-                  totalNotches={33}
-                  value={incomePercent}
-                />
-                <div className="mt-3 grid grid-cols-2 gap-2 text-center text-xs">
-                  <div className="rounded-xl bg-success/10 p-2">
-                    <p className="text-muted-foreground">Pemasukan</p>
-                    <p className="font-semibold text-success">{incomePercent}%</p>
-                  </div>
-                  <div className="rounded-xl bg-destructive/10 p-2">
-                    <p className="text-muted-foreground">Pengeluaran</p>
-                    <p className="font-semibold text-destructive">{total > 0 ? 100 - incomePercent : 0}%</p>
-                  </div>
-                </div>
-                <p className="mt-2 text-center text-[11px] text-muted-foreground">{data.rangeLabel} • Total {total.toLocaleString("id-ID")}</p>
-              </CardContent>
-            </Card>
+            <h2 className="px-1 text-sm font-semibold">Laporan Sebelumnya</h2>
+            {allReports.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="p-6 text-center text-xs text-muted-foreground">Belum ada laporan bulanan.</CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {allReports.map((r) => (
+                  <Card key={r.id} className="overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold">{monthLabel(r.year, r.month)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Saldo Akhir {formatRupiah(Number(r.closing_balance))} • {r.transaction_count} trx
+                          </p>
+                        </div>
+                        <Badge variant={statusVariant(r.status)} className="shrink-0 rounded-full text-xs">
+                          {statusLabel(r.status)}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <Link href={`/reports/${r.year}/${String(r.month).padStart(2, "0")}`} className="flex-1">
+                          <Button variant="outline" size="sm" className="w-full rounded-xl">
+                            <Eye className="size-3" /> Lihat
+                          </Button>
+                        </Link>
+                        <Link href={`/api/reports/${r.year}/${String(r.month).padStart(2, "0")}/pdf`} className="flex-1">
+                          <Button variant="outline" size="sm" className="w-full rounded-xl">
+                            PDF
+                          </Button>
+                        </Link>
+                        <Link href={`/api/reports/${r.year}/${String(r.month).padStart(2, "0")}/excel`} className="flex-1">
+                          <Button variant="outline" size="sm" className="w-full rounded-xl">
+                            Excel
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </section>
 
-          {/* Expense by category */}
-          <CategoryBreakdown
-            title="Pengeluaran per kategori"
-            items={data.expenseByCategory}
-            emptyText="Belum ada pengeluaran di periode ini."
-            accent="destructive"
-          />
-
-          {/* Expandable: Income by category */}
-          <details className="group rounded-[20px] border bg-card" open={data.incomeByCategory.length > 0 && data.expenseByCategory.length === 0}>
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
-              <span className="text-sm font-semibold">Pemasukan per kategori</span>
-              <span className="text-xs text-muted-foreground group-open:hidden">Buka</span>
-              <span className="hidden text-xs text-muted-foreground group-open:inline">Tutup</span>
-            </summary>
-            <div className="px-4 pb-4">
-              <Separator className="mb-4" />
-              <CategoryBreakdown
-                title=""
-                items={data.incomeByCategory}
-                emptyText="Belum ada pemasukan di periode ini."
-                accent="success"
-              />
-            </div>
-          </details>
-
-          {/* Pocket breakdown — current balances (not period filtered) */}
-          <PocketBreakdown pockets={data.pocketBalances} />
-
-          {/* Transaction history — expandable, inspect underlying tx */}
-          <details className="group rounded-[20px] border bg-card" open={hasTx}>
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
-              <span className="text-sm font-semibold">Riwayat transaksi</span>
-              <span className="text-xs text-muted-foreground">{data.transactions.length} transaksi</span>
-            </summary>
-            <div className="space-y-3 px-4 pb-4">
-              <Separator />
-              <p className="text-xs text-muted-foreground">Transaksi yang membentuk ringkasan {data.rangeLabel}.</p>
-              {hasTx ? (
-                <div className="space-y-2">
-                  {data.transactions.map((t) => (
-                    <TransactionRow key={t.id} tx={t} />
-                  ))}
-                  <Link href={`/transactions?from=${data.from}&to=${data.to}`} className="flex h-9 items-center justify-center rounded-xl border bg-background text-sm font-medium">
-                    Lihat dengan filter penuh →
-                  </Link>
-                </div>
-              ) : (
-                <Card className="border-dashed">
-                  <CardContent className="p-4 text-center text-xs text-muted-foreground">Tidak ada transaksi di periode ini.</CardContent>
-                </Card>
-              )}
-            </div>
-          </details>
-
-          <p className="pb-2 text-center text-[11px] tracking-wide text-muted-foreground">
-            Laporan derivasi ledger • Transfer antar kantong tidak mempengaruhi ringkasan.
-          </p>
+          <p className="pb-2 text-center text-[11px] tracking-wide text-muted-foreground">Laporan bulanan adalah dokumen resmi — snapshot tidak berubah setelah bulan ditutup.</p>
         </main>
 
         <BottomNavSpacer />

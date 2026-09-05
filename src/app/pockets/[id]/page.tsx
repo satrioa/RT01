@@ -6,7 +6,7 @@ import { getPocketSummary } from "@/lib/data/transactions";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PocketPeriodFilter } from "@/components/pockets/pocket-period-filter";
-import { Button } from "@/components/ui/button";
+import { PocketMonthlyReports } from "@/components/pockets/pocket-monthly-reports";
 import { ArrowLeft, Wallet, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -69,7 +69,7 @@ export default async function PocketDetailPage({
   const summary = await getPocketSummary(id);
 
   // Fetch filtered transactions for list (periode filter ganti Tambah Transaksi)
-  let txQuery = supabase
+  const txQuery = supabase
     .from("transactions")
     .select("*, category:categories(name)")
     .eq("pocket_id", id)
@@ -158,6 +158,9 @@ export default async function PocketDetailPage({
               </CardContent>
             </Card>
           </div>
+
+          {/* Laporan Bulanan — monthly only, no custom date */}
+          <PocketMonthlyReports rtId={DEV_RT_ID} pocketId={id} pocketName={pocket?.name ?? "Kantong"} />
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">

@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable */
 "use client";
 
 import { pie as d3Pie } from "d3-shape";

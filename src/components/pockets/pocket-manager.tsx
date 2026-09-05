@@ -41,12 +41,12 @@ function PocketForm({
 
   // keep color in sync when switching between pockets without remount edge
   React.useEffect(() => {
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     setColor(initial?.color ?? "#111827");
   }, [initial?.color, initial?.id]);
 
   React.useEffect(() => {
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     setIsActive(initial ? String(initial.is_active) : "true");
   }, [initial?.is_active, initial?.id]);
 

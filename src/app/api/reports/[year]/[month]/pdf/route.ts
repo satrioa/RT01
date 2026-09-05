@@ -1,0 +1,42 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import { getMonthlyReport } from "@/lib/reports/monthly-report-service";
+import { getReportFileBuffer } from "@/lib/reports/storage";
+import { getCurrentRtId } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ year: string; month: string }> }
+) {
+  const { year: yStr, month: mStr } = await params;
+  const year = Number(yStr);
+  const month = Number(mStr);
+  if (!Number.isFinite(year) || !Number.isFinite(month)) {
+    return NextResponse.json({ error: "Invalid month" }, { status: 400 });
+  }
+
+  try {
+    const rtId = await getCurrentRtId();
+    const supabase = createServiceClient();
+    const report = await getMonthlyReport(supabase, rtId, year, month);
+    if (!report || !report.pdf_url) {
+      return NextResponse.json({ error: "Laporan belum tersedia" }, { status: 404 });
+    }
+
+    const buf = await getReportFileBuffer(report.pdf_url);
+    if (!buf) return NextResponse.json({ error: "File tidak ditemukan" }, { status: 404 });
+
+    return new NextResponse(buf as unknown as BodyInit, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="laporan-keuangan-${year}-${String(month).padStart(2, "0")}.pdf"`,
+        "Cache-Control": "private, max-age=60",
+      },
+    });
+  } catch (e) {
+    console.error("[pdf download]", e);
+    return NextResponse.json({ error: "Gagal download" }, { status: 500 });
+  }
+}

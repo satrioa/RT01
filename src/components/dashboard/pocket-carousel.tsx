@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatRupiah } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Wallet, Building2, Heart, Calendar, PiggyBank } from "lucide-react";
 import type { PocketBalance } from "@/types/database";
