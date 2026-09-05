@@ -60,6 +60,15 @@ function toLocalISODate(d: Date): string | null {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+const INDONESIAN_MONTHS: Record<string, number> = {
+  januari: 1, februari: 2, maret: 3, april: 4, mei: 5, juni: 6,
+  juli: 7, agustus: 8, september: 9, oktober: 10, november: 11, desember: 12,
+  jan: 1, feb: 2, mar: 3, apr: 4, jun: 6, jul: 7, agu: 8, ags: 8,
+  sep: 9, sept: 9, okt: 10, nov: 11, des: 12,
+  january: 1, february: 2, march: 3, may: 5, june: 6, july: 7,
+  august: 8, october: 10, december: 12,
+};
+
 function isValidCalendarDate(year: number, month: number, day: number): boolean {
   if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return false;
   if (year < 1900 || year > 2100) return false;
@@ -118,8 +127,21 @@ export function parseExcelDate(value: unknown): string | null {
       return toLocalISODate(new Date(year, month - 1, day));
     }
 
-    // 4) Fallback: format teks lain (mis. "5 Jan 2024"). Sengaja terakhir
-    //    agar pola ambigu angka tidak pernah lewat sini.
+    // 4) Nama bulan Indonesia/Inggris: "9 Agustus 2026", "9 Agustus-2026",
+    //    "9-Agustus-2026", "9 Agu 2026", "17 Agustus 1945".
+    m = s.match(/^(\d{1,2})\s*[-/.\s]\s*([A-Za-z]+)\s*[-/.\s]\s*(\d{2,4})$/);
+    if (m) {
+      const day = Number(m[1]);
+      const month = INDONESIAN_MONTHS[m[2].toLowerCase()];
+      let year = Number(m[3]);
+      if (m[3].length === 2) year += 2000;
+      if (month === undefined) return null;
+      if (!isValidCalendarDate(year, month, day)) return null;
+      return toLocalISODate(new Date(year, month - 1, day));
+    }
+
+    // 5) Fallback: format teks lain. Sengaja terakhir agar pola di atas
+    //    tidak pernah lewat sini.
     const d = new Date(s);
     if (!isNaN(d.getTime())) return toLocalISODate(d);
   }

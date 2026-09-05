@@ -51,7 +51,7 @@ export function buildImportTemplate(): XLSX.WorkBook {
     ["Petunjuk Import Excel RT Finance"],
     [""],
     ["Kolom wajib:"],
-    ["- Tanggal: format DD/MM/YYYY (contoh: 05/01/2024 = 5 Januari 2024, 12/02/2026 = 12 Februari 2026)."],
+    ["- Tanggal: format DD/MM/YYYY (contoh: 05/01/2024 = 5 Januari 2024, 12/02/2026 = 12 Februari 2026) atau nama bulan (9 Agustus 2026)."],
     ["- PENTING: kolom Tanggal di template dikunci sebagai TEKS agar Excel tidak mengubah sendiri (mis. Excel US membaca 12/2/2026 sebagai 2 Des). Ketik persis DD/MM/YYYY, jangan ubah format kolom."],
     ["- Tanggal tidak valid (mis. bulan 13, 30 Februari) akan ditolak saat validasi, bukan ditebak."],
     ["- Keterangan: deskripsi transaksi, tidak boleh kosong"],

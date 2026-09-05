@@ -27,6 +27,19 @@ describe("parseExcelDate DD/MM/YYYY", () => {
   it("Date object tidak geser (WIB)", () => {
     expect(parseExcelDate(new Date(2024, 0, 5, 0, 0, 0))).toBe("2024-01-05");
   });
+  it("nama bulan Indonesia: '9 Agustus-2026' = 9 Agu 2026", () => {
+    expect(parseExcelDate("9 Agustus-2026")).toBe("2026-08-09");
+    expect(parseExcelDate("9 Agustus 2026")).toBe("2026-08-09");
+    expect(parseExcelDate("9-Agustus-2026")).toBe("2026-08-09");
+    expect(parseExcelDate("9 Agu 2026")).toBe("2026-08-09");
+    expect(parseExcelDate("9 AGS 2026")).toBe("2026-08-09");
+    expect(parseExcelDate("17 Agustus 1945")).toBe("1945-08-17");
+    expect(parseExcelDate("29 Februari 2024")).toBe("2024-02-29");
+  });
+  it("nama bulan tak dikenal / tanggal mustahil → null", () => {
+    expect(parseExcelDate("9 Foo-2026")).toBeNull();
+    expect(parseExcelDate("30 Februari 2024")).toBeNull();
+  });
   it("kosong → null", () => {
     expect(parseExcelDate("")).toBeNull();
     expect(parseExcelDate(null)).toBeNull();
