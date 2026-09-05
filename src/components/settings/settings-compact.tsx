@@ -8,10 +8,11 @@ import { PocketManager } from "@/components/pockets/pocket-manager";
 import { AiProviderSettings } from "@/components/ai/ai-provider-settings";
 import { LinkTelegramCard } from "@/components/telegram/link-telegram";
 import { AppearanceSettings } from "@/components/settings/appearance-settings";
+import { StorageSettings } from "@/components/settings/storage-settings";
 import type { Pocket, RtAiSettings, RtAppearanceSettings } from "@/types/database";
-import { Database, Plug, FileSpreadsheet, Wallet, Bot, Send, ChevronRight, ArrowLeft, Palette } from "lucide-react";
+import { Database, Plug, FileSpreadsheet, Wallet, Bot, Send, ChevronRight, ArrowLeft, Palette, HardDrive } from "lucide-react";
 
-type Section = "kantong" | "ai" | "telegram" | "tampilan" | null;
+type Section = "kantong" | "ai" | "telegram" | "tampilan" | "storage" | null;
 
 export function SettingsCompact({
   pockets,
@@ -93,6 +94,16 @@ export function SettingsCompact({
           </div>
         )}
 
+        {section === "storage" && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <HardDrive className="size-3.5 text-muted-foreground" />
+              <p className="text-xs font-semibold tracking-wide text-muted-foreground">STORAGE</p>
+            </div>
+            <StorageSettings />
+          </div>
+        )}
+
       </div>
     );
   }
@@ -128,6 +139,19 @@ export function SettingsCompact({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">Kantong</p>
                 <p className="text-xs text-muted-foreground">{pockets.length} kantong • kelola saldo awal & warna</p>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </button>
+          </Card>
+
+          <Card className="overflow-hidden transition hover:bg-accent/50">
+            <button type="button" onClick={() => setSection("storage")} className="flex w-full items-center gap-3 p-3 text-left">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-muted text-foreground border">
+                <HardDrive className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Storage</p>
+                <p className="text-xs text-muted-foreground">Backup JSON & reset data transaksi</p>
               </div>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </button>
