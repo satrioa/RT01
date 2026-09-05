@@ -36,7 +36,7 @@ export default async function Page() {
 
   const rtName = data.rt?.name ?? "RT 01";
   const rtNumber = data.rt?.rt_number ?? "01";
-  const rwNumber = data.rt?.rw_number ?? "01";
+  const rwNumber = data.rt?.rw_number ?? "07";
 
   return (
     <div className="min-h-dvh bg-background">

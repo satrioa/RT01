@@ -10,7 +10,7 @@ insert into public.rt_profiles (id, name, rt_number, rw_number, address, kelurah
 values (
   '00000000-0000-4000-a000-000000000001',
   'RT 01',
-  '01', '01',
+  '01', '07',
   'Jl. Warga No. 1',
   'Kelurahan Contoh',
   'Kecamatan Contoh',

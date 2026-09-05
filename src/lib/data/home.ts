@@ -22,7 +22,7 @@ export async function getHomeData(): Promise<HomeData> {
         id: DEV_RT_ID,
         name: "RT 01",
         rt_number: "01",
-        rw_number: "01",
+        rw_number: "07",
         address: null,
         kelurahan: null,
         kecamatan: null,

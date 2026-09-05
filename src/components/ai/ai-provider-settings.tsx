@@ -142,7 +142,7 @@ export function AiProviderSettings({
             <p className="text-xs text-muted-foreground">Model akan dipakai untuk parsing: &ldquo;Beli konsumsi 75 ribu dari kas&rdquo; → expense</p>
             <div className="space-y-1">
               <Label className="text-xs">Atau ketik model ID custom (OpenRouter)</Label>
-              <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="mis. google/gemini-2.0-flash-001 atau google/gemini-1.5-flash" className="font-mono text-xs" />
+              <Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="mis. google/gemini-2.5-flash atau google/gemini-1.5-flash" className="font-mono text-xs" />
               <p className="text-[11px] text-muted-foreground">Jika model Gemini Anda tidak ada di daftar, ketik langsung ID-nya di sini. Nilai <code>OPENROUTER_MODEL</code> dari <code>.env</code> akan muncul sebagai opsi custom di atas.</p>
             </div>
           </div>

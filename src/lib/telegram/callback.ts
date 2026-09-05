@@ -74,6 +74,13 @@ export async function handleCallback(
         await setPendingStatus(pendingId, "cancelled");
         return;
       }
+      const { data: linked } = await supabase
+        .from("telegram_accounts")
+        .select("profile_id")
+        .eq("telegram_user_id", telegramUserId)
+        .maybeSingle();
+      const profileId = (linked as { profile_id: string } | null)?.profile_id ?? null;
+
       const insert = {
         rt_id: rtId,
         pocket_id: payload.pocketId!,
@@ -83,7 +90,7 @@ export async function handleCallback(
         description: payload.description ?? null,
         transaction_date: payload.transaction_date ?? new Date().toISOString().slice(0, 10),
         source: "telegram" as const,
-        created_by: pending.payload as unknown as { profile_id?: string } as never,
+        created_by: profileId,
       };
       // Use service_role to bypass RLS: supabase client uses anon but with service? For bot we use service_role if configured via SUPABASE_SERVICE_ROLE_KEY?
       // For now use same client (which may be anon). If RLS blocks, error will show.

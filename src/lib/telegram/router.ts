@@ -229,7 +229,14 @@ async function parseForRt(trimmed: string, rtId: string) {
     raw = await provider.parse(trimmed, ctx);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Gagal parse AI";
-    const isAuthError = msg.includes("401") || msg.toLowerCase().includes("user not found") || msg.toLowerCase().includes("unauthorized");
+    const isAuthError =
+      msg.includes("401") ||
+      msg.includes("404") ||
+      msg.toLowerCase().includes("user not found") ||
+      msg.toLowerCase().includes("unauthorized") ||
+      msg.toLowerCase().includes("is no longer available") ||
+      msg.toLowerCase().includes("not_found") ||
+      msg.toLowerCase().includes("model");
     if (isAuthError) {
       try {
         const fallback = new MockProvider();
