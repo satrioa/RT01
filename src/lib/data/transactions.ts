@@ -87,11 +87,20 @@ export async function getPocketSummary(pocketId: string): Promise<{
     supabase.from("transfers").select("amount, from_pocket_id, to_pocket_id").eq("rt_id", rtId).or(`from_pocket_id.eq.${pocketId},to_pocket_id.eq.${pocketId}`),
   ]);
 
-  // fallback if view missing
+  // fallback if view missing / view without gradient columns -> enrich with gradient_* from pockets
   let pocket: (Pocket & { balance: string | number }) | null = pocketRes.data as unknown as Pocket & { balance: string } | null;
   if (pocketRes.error && String(pocketRes.error.message).includes("pocket_balances")) {
     const fb = await supabase.from("pockets").select("*").eq("id", pocketId).maybeSingle();
     pocket = fb.data ? ({ ...(fb.data as Pocket), balance: "0" } as Pocket & { balance: string }) : null;
+  } else if (pocket && ((pocket as unknown as { gradient_c1?: string | null }).gradient_c1 === undefined)) {
+    // view outdated (migrasi 011 belum recreate) -> ambil gradient dari tabel pockets
+    const { data: g } = await supabase.from("pockets").select("gradient_c1, gradient_c3, color").eq("id", pocketId).maybeSingle();
+    if (g) {
+      (pocket as unknown as Record<string, unknown>).gradient_c1 = (g as { gradient_c1: string | null }).gradient_c1 ?? null;
+      (pocket as unknown as Record<string, unknown>).gradient_c3 = (g as { gradient_c3: string | null }).gradient_c3 ?? null;
+      // color sudah ada di view, tapi pastikan sinkron
+      if ((g as { color: string | null }).color) (pocket as unknown as Record<string, unknown>).color = (g as { color: string | null }).color;
+    }
   }
 
   const income = ((txRes.data as { amount: string; type: string }[] | null) ?? [])

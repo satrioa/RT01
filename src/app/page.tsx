@@ -10,6 +10,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { AlertTriangle } from "lucide-react";
 import { HomeWalletCard } from "@/components/dashboard/home-wallet-card";
+import { ExpenseCategoryPie } from "@/components/dashboard/expense-category-pie";
 import { getAppearanceSettings } from "@/lib/actions/appearance";
 
 // Force dynamic so greeting reflects server time and data is fresh
@@ -21,17 +22,29 @@ export default async function Page() {
   // Fetch income/expense for current month directly from DB
   let totalIncome = 0;
   let totalExpense = 0;
+  let expenseByCategory: { label: string; value: number }[] = [];
   if (hasSupabaseEnv()) {
     const supabase = createServiceClient();
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const [incRes, expRes] = await Promise.all([
+    const [incRes, expRes, expCatRes] = await Promise.all([
       supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "income").gte("transaction_date", start),
       supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", start),
+      supabase.from("transactions").select("amount, category:categories(name)").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", start).limit(2000),
     ]);
     totalIncome = (incRes.data ?? []).reduce((s: number, r: { amount: string }) => s + Number(r.amount), 0);
     totalExpense = (expRes.data ?? []).reduce((s: number, r: { amount: string }) => s + Number(r.amount), 0);
+    const byCat = new Map<string, number>();
+    for (const r of ((expCatRes.data as unknown as { amount: string; category: { name: string } | null }[] | null) ?? [])) {
+      const label = r.category?.name ?? "Tanpa kategori";
+      byCat.set(label, (byCat.get(label) ?? 0) + Number(r.amount));
+    }
+    expenseByCategory = Array.from(byCat.entries())
+      .map(([label, value]) => ({ label, value }))
+      .filter((i) => i.value > 0)
+      .sort((a, b) => b.value - a.value);
   }
+  const expenseMonthLabel = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 
   const rtName = data.rt?.name ?? "RT 01";
   const rtNumber = data.rt?.rt_number ?? "01";
@@ -67,6 +80,8 @@ export default async function Page() {
               netChange={totalIncome - totalExpense}
             />
           </div>
+
+          <ExpenseCategoryPie items={expenseByCategory} monthLabel={expenseMonthLabel} />
 
           <SmartInput />
 
