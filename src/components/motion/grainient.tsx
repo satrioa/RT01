@@ -1,11 +1,10 @@
-/* eslint-disable */
 "use client";
 
 import { useEffect, useRef } from "react";
 import { Renderer, Program, Mesh, Triangle } from "ogl";
 import "./grainient.css";
 
-const hexToRgb = (hex: string): [number, number, number] => {
+const hexToRgb = (hex: string) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return [1, 1, 1];
   return [parseInt(result[1], 16) / 255, parseInt(result[2], 16) / 255, parseInt(result[3], 16) / 255];
@@ -55,19 +54,16 @@ void mainImage(out vec4 o, vec2 C){
   float ratio=iResolution.x/iResolution.y;
   vec2 tuv=uv-0.5+uCenterOffset;
   tuv/=max(uZoom,0.001);
-
   float degree=noise(vec2(t*0.1,tuv.x*tuv.y)*uNoiseScale);
   tuv.y*=1.0/ratio;
   tuv*=Rot(radians((degree-0.5)*uRotationAmount+180.0));
   tuv.y*=ratio;
-
   float frequency=uWarpFrequency;
   float ws=max(uWarpStrength,0.001);
   float amplitude=uWarpAmplitude/ws;
   float warpTime=t*uWarpSpeed;
   tuv.x+=sin(tuv.y*frequency+warpTime)/amplitude;
   tuv.y+=sin(tuv.x*(frequency*1.5)+warpTime)/(amplitude*0.5);
-
   vec3 colLav=uColor1;
   vec3 colOrg=uColor2;
   vec3 colDark=uColor3;
@@ -82,12 +78,10 @@ void mainImage(out vec4 o, vec2 C){
   vec3 layer1=mix(colDark,colOrg,S(edge0,edge1,blendX));
   vec3 layer2=mix(colOrg,colLav,S(edge0,edge1,blendX));
   vec3 col=mix(layer1,layer2,S(v0,v1,tuv.y));
-
   vec2 grainUv=uv*max(uGrainScale,0.001);
   if(uGrainAnimated>0.5){grainUv+=vec2(iTime*0.05);} 
   float grain=fract(sin(dot(grainUv,vec2(12.9898,78.233)))*43758.5453);
   col+=(grain-0.5)*uGrainAmount;
-
   col=(col-0.5)*uContrast+0.5;
   float luma=dot(col,vec3(0.2126,0.7152,0.0722));
   col=mix(vec3(luma),col,uSaturation);
@@ -100,7 +94,6 @@ void mainImage(out vec4 o, vec2 C){
     float coverage=clamp(0.12+chroma*1.15+energy*0.18,0.0,0.88);
     col=mix(vec3(1.0),clamp(hue*0.58+col*0.18,0.0,1.0),coverage);
   }
-
   o=vec4(col,1.0);
 }
 void main(){
@@ -110,6 +103,7 @@ void main(){
 }
 `;
 
+// Keep renderer/program alive across re-renders so Effect 2 can update uniforms without ever rebuilding the WebGL context.
 const ctxMap = new WeakMap<Element, { renderer: Renderer; program: Program; mesh: Mesh }>();
 
 type GrainientProps = {
@@ -281,9 +275,7 @@ const Grainient = ({
       ctxMap.delete(container);
       try {
         container.removeChild(canvas);
-      } catch {
-        /* ignore */
-      }
+      } catch {}
     };
   }, []);
 

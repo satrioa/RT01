@@ -1,17 +1,15 @@
 import { GreetingHeader } from "@/components/dashboard/greeting-header";
-import { PocketCarousel } from "@/components/dashboard/pocket-carousel";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
-import { TotalBalanceCard } from "@/components/dashboard/total-balance-card";
 import { OverviewCards } from "@/components/reports/overview-cards";
 import { SmartInput } from "@/components/ai/smart-input";
 import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getHomeData } from "@/lib/data/home";
 import { createServiceClient } from "@/lib/supabase/service";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { AlertTriangle } from "lucide-react";
+import { HomeWalletCard } from "@/components/dashboard/home-wallet-card";
 
 // Force dynamic so greeting reflects server time and data is fresh
 export const dynamic = "force-dynamic";
@@ -57,15 +55,8 @@ export default async function Page() {
             </Card>
           )}
 
-          <TotalBalanceCard total={data.totalBalance} activeCount={data.pockets.length} />
-
-          <section className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-sm font-semibold">Kantong</h2>
-              <span className="text-xs text-muted-foreground">{data.pockets.length} aktif</span>
-            </div>
-            <PocketCarousel pockets={data.pockets} />
-          </section>
+          {/* Wallet — ganti pilihan kantong: Semua / Kas / BOP */}
+          <HomeWalletCard pockets={data.pockets} totalBalance={data.totalBalance} />
 
           {/* KPI */}
           <div className="space-y-3">

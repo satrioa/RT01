@@ -72,7 +72,7 @@ export class GeminiProvider implements AiProvider {
       config: {
         temperature: 0.1,
         responseMimeType: "application/json",
-        maxOutputTokens: 400,
+        maxOutputTokens: 800,
       },
     });
 
@@ -92,9 +92,25 @@ export class GeminiProvider implements AiProvider {
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      throw new Error(
-        `AI returned invalid JSON: ${cleaned.slice(0, 300)}`
-      );
+      // try to repair truncated JSON (e.g. cut off at 400 tokens)
+      let fixed = cleaned;
+      // count braces/brackets
+      const openBraces = (fixed.match(/\{/g) || []).length;
+      const closeBraces = (fixed.match(/\}/g) || []).length;
+      const openBrackets = (fixed.match(/\[/g) || []).length;
+      const closeBrackets = (fixed.match(/\]/g) || []).length;
+      // if truncated inside string, cut to last complete field
+      if (fixed.endsWith(",") || fixed.endsWith('"') || fixed.endsWith(":")) {
+        fixed = fixed.replace(/,\s*$/, "").replace(/"\s*$/, '"').replace(/:\s*$/, "");
+      }
+      // append missing closes
+      for (let i = 0; i < openBrackets - closeBrackets; i++) fixed += "]";
+      for (let i = 0; i < openBraces - closeBraces; i++) fixed += "}";
+      try {
+        parsed = JSON.parse(fixed);
+      } catch {
+        throw new Error(`AI returned invalid JSON: ${cleaned.slice(0, 300)}`);
+      }
     }
 
     const loose = looseResultSchema.parse(parsed);

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight } from "lucide-react";

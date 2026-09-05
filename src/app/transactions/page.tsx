@@ -3,7 +3,7 @@ import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TransactionFilters } from "@/components/transactions/filters";
-import { TransactionRow } from "@/components/transactions/transaction-row";
+import { TransactionGroupedList } from "@/components/transactions/transaction-grouped-list";
 import { getTransactionsFiltered, getPocketsAndCategories } from "@/lib/data/transactions";
 import { Plus, Receipt } from "lucide-react";
 
@@ -68,12 +68,7 @@ export default async function TransactionsPage({
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
-              <p className="px-1 text-xs text-muted-foreground">{txs.length} transaksi</p>
-              {txs.map((t) => (
-                <TransactionRow key={t.id} tx={t} />
-              ))}
-            </div>
+            <TransactionGroupedList txs={txs} />
           )}
         </main>
 

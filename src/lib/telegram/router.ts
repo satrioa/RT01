@@ -231,19 +231,34 @@ async function parseForRt(trimmed: string, rtId: string) {
   // Duplicate minimal logic from parser.ts but rt-aware context
   const { createServiceClient } = await import("@/lib/supabase/service");
   const supabase = createServiceClient();
-  const [pRes, cRes] = await Promise.all([
+  const [pRes, cRes, rRes] = await Promise.all([
     supabase.from("pockets").select("name").eq("rt_id", rtId).eq("is_active", true),
     supabase.from("categories").select("name, type").eq("rt_id", rtId).eq("is_active", true),
+    supabase
+      .from("transactions")
+      .select("description, type, category:categories(name)")
+      .eq("rt_id", rtId)
+      .not("description", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
   const pockets = ((pRes.data as { name: string }[] | null) ?? []).map((p) => p.name);
   const categories = ((cRes.data as { name: string; type: "income" | "expense" | "both" }[] | null) ?? []).map((c) => ({
     name: c.name,
     type: c.type as "income" | "expense" | "both",
   }));
+  const recentExamples = ((rRes.data as unknown as { description: string | null; type: string; category: { name: string } | null }[] | null) ?? [])
+    .filter((r) => r.description && r.category?.name)
+    .map((r) => ({
+      description: r.description!.slice(0, 40),
+      category: r.category!.name,
+      type: r.type as "income" | "expense",
+    }));
   const ctx = {
     pockets: pockets.length ? pockets : ["Kas", "BOP", "Sosial", "Kegiatan"],
     categories: categories.length ? categories : [{ name: "Iuran Warga", type: "income" as const }, { name: "Konsumsi", type: "expense" as const }],
     currentDate: new Date().toISOString().slice(0, 10),
+    recentExamples,
   };
 
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -263,7 +278,9 @@ async function parseForRt(trimmed: string, rtId: string) {
       msg.toLowerCase().includes("unauthorized") ||
       msg.toLowerCase().includes("is no longer available") ||
       msg.toLowerCase().includes("not_found") ||
-      msg.toLowerCase().includes("model");
+      msg.toLowerCase().includes("model") ||
+      msg.toLowerCase().includes("invalid json") ||
+      msg.toLowerCase().includes("returned invalid json");
     if (isAuthError) {
       try {
         const fallback = new MockProvider();
@@ -312,13 +329,34 @@ async function parseForRt(trimmed: string, rtId: string) {
     const pocketsList = (pAll.data as { id: string; name: string }[] | null) ?? [];
     const categoriesList = (cAll.data as { id: string; name: string }[] | null) ?? [];
     const pocketId = pocketsList.find((p) => p.name.toLowerCase() === parsed.data.pocket.toLowerCase())?.id;
-    let catName = parsed.data.category ?? null;
+    let catName: string | null = parsed.data.category ?? null;
+    let catConf: number | null = (parsed.data as unknown as { category_confidence?: number | null }).category_confidence ?? null;
+    let catReason: string | null = (parsed.data as unknown as { category_reason?: string | null }).category_reason ?? null;
     if (catName) {
       const knownCat = ctx.categories.some((c) => c.name.toLowerCase() === catName!.toLowerCase());
-      if (!knownCat) catName = null;
+      if (!knownCat) {
+        catName = null;
+        catConf = null;
+        catReason = null;
+      }
+    }
+    if (!catName) {
+      const fallback =
+        ctx.categories.find((c) => c.name.toLowerCase() === "lain-lain") ??
+        ctx.categories.find((c) => c.type === parsed.data.type) ??
+        ctx.categories.find((c) => c.type === "both") ??
+        ctx.categories[0];
+      if (fallback) {
+        catName = fallback.name;
+        catConf = 0.55;
+        catReason = "default";
+      }
     }
     const categoryId = catName ? categoriesList.find((c) => c.name.toLowerCase() === catName!.toLowerCase())?.id ?? null : null;
-    return { type: "transaction" as const, data: { ...parsed.data, category: catName, pocketId, categoryId } };
+    return {
+      type: "transaction" as const,
+      data: { ...parsed.data, category: catName, category_confidence: catConf, category_reason: catReason, pocketId, categoryId },
+    };
   }
   if (raw.intent === "create_transfer") {
     const parsed = aiTransferOutputSchema.safeParse(raw);

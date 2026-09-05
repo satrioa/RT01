@@ -22,7 +22,9 @@ import {
 import { ColorPickerPopover } from "@/components/ui/color-picker";
 import { createPocketAction, updatePocketAction, deletePocketAction, archivePocketAction } from "@/lib/actions/pockets";
 import type { Pocket } from "@/types/database";
-import { Pencil, Trash2, Plus, Wallet, Archive, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Wallet, Archive, Loader2, Palette, Sparkles } from "lucide-react";
+import { GRADIENT_PRESETS, applyPresetToPocket } from "@/lib/gradients";
+import { deriveGradient } from "@/lib/color";
 
 function PocketForm({
   initial,
@@ -36,26 +38,62 @@ function PocketForm({
   const { toast } = useToast();
   const [submitting, setSubmitting] = React.useState(false);
   const [color, setColor] = React.useState(initial?.color ?? "#111827");
+  const [gradientC1, setGradientC1] = React.useState<string | null>(initial?.gradient_c1 ?? null);
+  const [gradientC3, setGradientC3] = React.useState<string | null>(initial?.gradient_c3 ?? null);
+  const [customGradient, setCustomGradient] = React.useState<boolean>(!!initial?.gradient_c1 || !!initial?.gradient_c3);
   const [isActive, setIsActive] = React.useState<string>(initial ? String(initial.is_active) : "true");
   const isEdit = !!initial;
 
-  // keep color in sync when switching between pockets without remount edge
+  // keep in sync when switching between pockets without remount edge
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     setColor(initial?.color ?? "#111827");
   }, [initial?.color, initial?.id]);
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    setGradientC1(initial?.gradient_c1 ?? null);
+  }, [initial?.gradient_c1, initial?.id]);
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    setGradientC3(initial?.gradient_c3 ?? null);
+  }, [initial?.gradient_c3, initial?.id]);
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    setCustomGradient(!!initial?.gradient_c1 || !!initial?.gradient_c3);
+  }, [initial?.gradient_c1, initial?.gradient_c3, initial?.id]);
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     setIsActive(initial ? String(initial.is_active) : "true");
   }, [initial?.is_active, initial?.id]);
 
+  const preview = React.useMemo(() => {
+    if (customGradient && gradientC1 && gradientC3) return { c1: gradientC1, c2: color, c3: gradientC3 };
+    return deriveGradient(color);
+  }, [color, gradientC1, gradientC3, customGradient]);
+
+  function handlePresetClick(presetId: string) {
+    const preset = GRADIENT_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    const applied = applyPresetToPocket(preset);
+    setColor(applied.color);
+    setGradientC1(applied.gradient_c1);
+    setGradientC3(applied.gradient_c3);
+    setCustomGradient(true);
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true);
     const fd = new FormData(e.currentTarget);
-    // override color from controlled picker (hidden input already holds it, but ensure)
     fd.set("color", color);
+    if (customGradient) {
+      fd.set("gradient_c1", gradientC1 ?? "");
+      fd.set("gradient_c3", gradientC3 ?? "");
+    } else {
+      fd.set("gradient_c1", "");
+      fd.set("gradient_c3", "");
+    }
     if (!fd.get("is_active")) fd.set("is_active", "true");
     const res = isEdit && initial
       ? await updatePocketAction(initial.id, fd)
@@ -91,7 +129,7 @@ function PocketForm({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label>Warna</Label>
+          <Label>Warna (tengah)</Label>
           <ColorPickerPopover
             value={color}
             onValueChange={setColor}
@@ -104,6 +142,61 @@ function PocketForm({
         <div className="space-y-2">
           <Label htmlFor="pocket-order">Urutan</Label>
           <Input name="sort_order" id="pocket-order" type="number" min={0} defaultValue={String(initial?.sort_order ?? 0)} />
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-2xl border bg-muted/20 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <Label className="flex items-center gap-1.5"><Palette className="size-3.5" /> Tema Gradien</Label>
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={customGradient} onChange={(e) => setCustomGradient(e.target.checked)} className="rounded border" />
+            Custom
+          </label>
+        </div>
+
+        <div className="grid grid-cols-4 gap-2">
+          {GRADIENT_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => handlePresetClick(preset.id)}
+              className="group flex flex-col items-center gap-1 rounded-xl border bg-card p-2 hover:border-primary/50"
+              title={`${preset.label} — ${preset.character}`}
+            >
+              <span className="flex h-6 w-full gap-0.5 overflow-hidden rounded-full">
+                <span className="flex-1" style={{ background: preset.c1 }} />
+                <span className="flex-1" style={{ background: preset.c2 }} />
+                <span className="flex-1" style={{ background: preset.c3 }} />
+              </span>
+              <span className="text-[10px] font-medium">{preset.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {customGradient ? (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Ujung terang (c1)</Label>
+              <ColorPickerPopover value={gradientC1 ?? "#f9f9ff"} onValueChange={(v) => setGradientC1(v)} triggerLabel="c1" />
+              <input type="hidden" name="gradient_c1" value={gradientC1 ?? ""} />
+            </div>
+            <div className="space-y-2">
+              <Label>Ujung gelap (c3)</Label>
+              <ColorPickerPopover value={gradientC3 ?? "#d2e3ff"} onValueChange={(v) => setGradientC3(v)} triggerLabel="c3" />
+              <input type="hidden" name="gradient_c3" value={gradientC3 ?? ""} />
+            </div>
+          </div>
+        ) : (
+          <>
+            <input type="hidden" name="gradient_c1" value="" />
+            <input type="hidden" name="gradient_c3" value="" />
+          </>
+        )}
+
+        <div className="space-y-1">
+          <p className="text-[11px] text-muted-foreground flex items-center gap-1"><Sparkles className="size-3" /> Preview</p>
+          <div className="h-16 w-full overflow-hidden rounded-xl border" style={{ background: `linear-gradient(135deg, ${preview.c1}, ${preview.c2}, ${preview.c3})` }} />
+          <p className="text-[10px] text-muted-foreground">Tanpa custom, warna otomatis dari warna tengah via HSL (terang +38, gelap -22 + hue +18).</p>
         </div>
       </div>
 
@@ -277,7 +370,7 @@ export function PocketManager({ pockets }: { pockets: Pocket[] }) {
           )}
 
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Tap pensil untuk edit â€” kantong dengan transaksi tidak bisa dihapus permanen, akan diarsip.
+            Tap pensil untuk edit - kantong dengan transaksi tidak bisa dihapus permanen, akan diarsip.
           </p>
         </CardContent>
       </Card>

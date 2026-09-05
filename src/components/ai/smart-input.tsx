@@ -12,6 +12,8 @@ import { useToast } from "@/components/ui/toaster";
 import { formatRupiah } from "@/lib/format";
 import { Loader2, Send, Check, X, AlertTriangle, Wallet, Sparkles } from "lucide-react";
 import type { SmartParseResult } from "@/lib/ai/parser";
+import { createBrowserClient } from "@/lib/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PLACEHOLDER_EXAMPLES = [
   "Beli konsumsi 75 ribu dari kas",
@@ -32,6 +34,33 @@ export function SmartInput() {
   const [isDeleting, setIsDeleting] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const [cats, setCats] = React.useState<{ id: string; name: string; type: string }[]>([]);
+  const [editedCatId, setEditedCatId] = React.useState<string | null>(null);
+  const [editedCatName, setEditedCatName] = React.useState<string | null>(null);
+
+  // fetch kategori untuk dropdown edit
+  React.useEffect(() => {
+    const supabase = createBrowserClient();
+    supabase
+      .from("categories")
+      .select("id, name, type")
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data }) => {
+        if (data) setCats(data as { id: string; name: string; type: string }[]);
+      });
+  }, []);
+
+  // sinkron kategori AI ke state editable saat result berubah
+  React.useEffect(() => {
+    if (result?.type === "transaction") {
+      setEditedCatId(result.data.categoryId ?? null);
+      setEditedCatName(result.data.category ?? null);
+    } else {
+      setEditedCatId(null);
+      setEditedCatName(null);
+    }
+  }, [result]);
 
   // Typewriter untuk placeholder
   React.useEffect(() => {
@@ -76,7 +105,8 @@ export function SmartInput() {
     const fd = new FormData();
     fd.set("type", d.type);
     fd.set("pocket_id", d.pocketId);
-    if (d.categoryId) fd.set("category_id", d.categoryId);
+    const finalCatId = editedCatId ?? d.categoryId;
+    if (finalCatId) fd.set("category_id", finalCatId);
     fd.set("amount", String(d.amount));
     fd.set("description", d.description ?? "");
     fd.set("transaction_date", d.transaction_date ?? new Date().toISOString().slice(0, 10));
@@ -213,9 +243,57 @@ export function SmartInput() {
                     <span className="text-xs text-muted-foreground">conf {(result.data.confidence * 100).toFixed(0)}%</span>
                   </div>
                   <p className="text-2xl font-bold tabular-nums">{formatRupiah(result.data.amount)}</p>
+                  {(result.data as unknown as { category_confidence?: number | null; category_reason?: string | null }).category_confidence !== undefined && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="rounded-full text-[11px]">
+                        <Sparkles className="mr-1 size-3" />
+                        AI {(((result.data as unknown as { category_confidence?: number | null }).category_confidence ?? 0) * 100).toFixed(0)}%
+                        {(result.data as unknown as { category_reason?: string | null }).category_reason
+                          ? ` • ${(result.data as unknown as { category_reason?: string | null }).category_reason}`
+                          : ""}
+                      </Badge>
+                      {((result.data as unknown as { category_confidence?: number | null }).category_confidence ?? 1) < 0.7 && (
+                        <span className="text-[11px] text-warning">Saran — bisa diganti</span>
+                      )}
+                    </div>
+                  )}
                   <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-3 text-sm">
                     <div><p className="text-xs text-muted-foreground">Kantong</p><p className="font-medium">{result.data.pocket}</p></div>
-                    <div><p className="text-xs text-muted-foreground">Kategori</p><p className="font-medium">{result.data.category ?? "—"}</p></div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Kategori</p>
+                      {cats.length > 0 ? (
+                        <Select
+                          value={editedCatId ?? undefined}
+                          onValueChange={(v) => {
+                            if (v === "__clear__") {
+                              setEditedCatId(null);
+                              setEditedCatName(null);
+                              return;
+                            }
+                            const c = cats.find((x) => x.id === v);
+                            setEditedCatId(v);
+                            setEditedCatName(c?.name ?? null);
+                          }}
+                        >
+                          <SelectTrigger className="mt-1 h-8 rounded-lg bg-card text-sm">
+                            <SelectValue placeholder="Pilih kategori" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {cats
+                              .filter((c) => c.type === result.data.type || c.type === "both")
+                              .map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.name} ({c.type})
+                                </SelectItem>
+                              ))}
+                            <SelectItem value="__clear__">— Tanpa kategori —</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="font-medium">{editedCatName ?? result.data.category ?? "—"}</p>
+                      )}
+                      <p className="mt-1 text-[11px] text-muted-foreground">{editedCatName ?? result.data.category ?? "—"}</p>
+                    </div>
                     <div className="col-span-2"><p className="text-xs text-muted-foreground">Deskripsi</p><p className="font-medium">{result.data.description ?? "—"}</p></div>
                     <div><p className="text-xs text-muted-foreground">Tanggal</p><p className="font-medium">{result.data.transaction_date ?? "Hari ini"}</p></div>
                   </div>

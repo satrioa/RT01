@@ -7,21 +7,24 @@ import { Button } from "@/components/ui/button";
 import { PocketManager } from "@/components/pockets/pocket-manager";
 import { AiProviderSettings } from "@/components/ai/ai-provider-settings";
 import { LinkTelegramCard } from "@/components/telegram/link-telegram";
-import type { Pocket, RtAiSettings } from "@/types/database";
-import { Database, Plug, FileSpreadsheet, Wallet, Bot, Send, ChevronRight, ArrowLeft } from "lucide-react";
+import { AppearanceSettings } from "@/components/settings/appearance-settings";
+import type { Pocket, RtAiSettings, RtAppearanceSettings } from "@/types/database";
+import { Database, Plug, FileSpreadsheet, Wallet, Bot, Send, ChevronRight, ArrowLeft, Palette } from "lucide-react";
 
-type Section = "kantong" | "ai" | "telegram" | null;
+type Section = "kantong" | "ai" | "telegram" | "tampilan" | null;
 
 export function SettingsCompact({
   pockets,
   loadError,
   aiSettings,
   envStatus,
+  appearance,
 }: {
   pockets: Pocket[];
   loadError: string | null;
   aiSettings: RtAiSettings | null;
   envStatus: Record<string, boolean>;
+  appearance: RtAppearanceSettings | null;
 }) {
   const [section, setSection] = React.useState<Section>(null);
 
@@ -80,6 +83,16 @@ export function SettingsCompact({
           </div>
         )}
 
+        {section === "tampilan" && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <Palette className="size-3.5 text-muted-foreground" />
+              <p className="text-xs font-semibold tracking-wide text-muted-foreground">TAMPILAN</p>
+            </div>
+            <AppearanceSettings initial={appearance} />
+          </div>
+        )}
+
       </div>
     );
   }
@@ -122,6 +135,29 @@ export function SettingsCompact({
           {loadError ? (
             <p className="px-1 text-[11px] text-destructive">Gagal memuat kantong — buka menu Kantong untuk detail.</p>
           ) : null}
+        </div>
+      </div>
+
+      {/* TAMPILAN */}
+      <div className="space-y-3 pt-1">
+        <div className="flex items-center gap-2 px-1">
+          <Palette className="size-3.5 text-muted-foreground" />
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">TAMPILAN</p>
+          <span className="ml-auto text-[11px] text-muted-foreground">Kartu</span>
+        </div>
+        <div className="grid gap-2">
+          <Card className="overflow-hidden transition hover:bg-accent/50">
+            <button type="button" onClick={() => setSection("tampilan")} className="flex w-full items-center gap-3 p-3 text-left">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#FDE68A] via-[#FB7185] to-[#7C3AED] text-white border">
+                <Palette className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Tampilan</p>
+                <p className="text-xs text-muted-foreground">Atur gradient & animasi kartu — hero & detail</p>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </button>
+          </Card>
         </div>
       </div>
 

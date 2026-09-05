@@ -74,31 +74,65 @@ export class MockProvider implements AiProvider {
       } as unknown as AiParsedResult;
     }
 
-    // Try category heuristics
-    const catKeywords: Record<string, string> = {
-      konsumsi: "Konsumsi",
-      iuran: "Iuran Warga",
-      sumbang: "Sumbangan",
-      kebersihan: "Kebersihan",
-      keamanan: "Keamanan",
-      kegiatan: "Kegiatan",
+    // Try category heuristics — diperluas untuk makanan/minuman/operasional
+    const catKeywords: Record<string, { name: string; reason: string }> = {
+      konsumsi: { name: "Konsumsi", reason: "makanan" },
+      makan: { name: "Konsumsi", reason: "makanan" },
+      ayam: { name: "Konsumsi", reason: "makanan" },
+      mie: { name: "Konsumsi", reason: "makanan" },
+      minum: { name: "Konsumsi", reason: "minuman" },
+      air: { name: "Konsumsi", reason: "minuman" },
+      mineral: { name: "Konsumsi", reason: "minuman" },
+      iuran: { name: "Iuran Warga", reason: "iuran rutin" },
+      warga: { name: "Iuran Warga", reason: "iuran rutin" },
+      sumbang: { name: "Sumbangan", reason: "sumbangan" },
+      kebersihan: { name: "Kebersihan", reason: "kebersihan" },
+      keamanan: { name: "Keamanan", reason: "keamanan" },
+      kegiatan: { name: "Kegiatan", reason: "kegiatan" },
+      bensin: { name: "Operasional", reason: "transport" },
+      solar: { name: "Operasional", reason: "transport" },
+      transport: { name: "Operasional", reason: "transport" },
+      listrik: { name: "Operasional", reason: "tagihan listrik" },
+      wifi: { name: "Operasional", reason: "tagihan wifi" },
+      atk: { name: "Operasional", reason: "atk" },
+      operasional: { name: "Operasional", reason: "operasional" },
+      retribusi: { name: "Retribusi", reason: "retribusi" },
+      administrasi: { name: "Administrasi", reason: "administrasi" },
+      sosial: { name: "Sosial", reason: "sosial" },
+      sarana: { name: "Sarana & Prasarana", reason: "sarana" },
     };
     let category: string | null = null;
-    for (const [kw, name] of Object.entries(catKeywords)) {
-      if (raw.includes(kw) && context.categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
-        category = name;
+    let category_reason: string | null = null;
+    for (const [kw, info] of Object.entries(catKeywords)) {
+      if (raw.includes(kw) && context.categories.some((c) => c.name.toLowerCase() === info.name.toLowerCase())) {
+        category = info.name;
+        category_reason = info.reason;
         break;
+      }
+    }
+    // fallback: tebak by type jika tidak ketemu keyword
+    if (!category) {
+      const fallback =
+        context.categories.find((c) => c.name.toLowerCase() === "lain-lain") ??
+        context.categories.find((c) => c.type === (isIncome ? "income" : "expense")) ??
+        context.categories.find((c) => c.type === "both") ??
+        context.categories[0];
+      if (fallback) {
+        category = fallback.name;
+        category_reason = "default";
       }
     }
 
     const type: "income" | "expense" = isIncome ? "income" : "expense";
-
+    const isFallback = category_reason === "default";
     return {
       intent: "create_transaction",
       type,
       amount,
       pocket,
       category,
+      category_confidence: category ? (isFallback ? 0.55 : 0.82) : 0.4,
+      category_reason: category_reason ?? null,
       description: cleanDesc(raw),
       transaction_date: null,
       confidence: 0.75,

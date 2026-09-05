@@ -49,7 +49,7 @@ export class OpenRouterProvider implements AiProvider {
         ],
         response_format: { type: "json_object" },
         temperature: 0.1,
-        max_tokens: 400,
+        max_tokens: 800,
       }),
       cache: "no-store",
     });
@@ -72,7 +72,21 @@ export class OpenRouterProvider implements AiProvider {
     try {
       parsed = JSON.parse(cleaned);
     } catch {
-      throw new Error(`AI returned invalid JSON: ${cleaned.slice(0, 300)}`);
+      let fixed = cleaned;
+      const openBraces = (fixed.match(/\{/g) || []).length;
+      const closeBraces = (fixed.match(/\}/g) || []).length;
+      const openBrackets = (fixed.match(/\[/g) || []).length;
+      const closeBrackets = (fixed.match(/\]/g) || []).length;
+      if (fixed.endsWith(",") || fixed.endsWith('"') || fixed.endsWith(":")) {
+        fixed = fixed.replace(/,\s*$/, "").replace(/"\s*$/, '"').replace(/:\s*$/, "");
+      }
+      for (let i = 0; i < openBrackets - closeBrackets; i++) fixed += "]";
+      for (let i = 0; i < openBraces - closeBraces; i++) fixed += "}";
+      try {
+        parsed = JSON.parse(fixed);
+      } catch {
+        throw new Error(`AI returned invalid JSON: ${cleaned.slice(0, 300)}`);
+      }
     }
 
     // Minimal Zod validation — allow loose then refine in parser.ts

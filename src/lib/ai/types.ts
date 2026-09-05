@@ -4,6 +4,7 @@ export interface AiContext {
   pockets: string[]; // available pocket names
   categories: { name: string; type: "income" | "expense" | "both" }[];
   currentDate: string; // YYYY-MM-DD
+  recentExamples?: { description: string; category: string; type: "income" | "expense" }[];
 }
 
 // Raw AI output — validated via Zod before use
@@ -21,6 +22,8 @@ export const aiTransactionOutputSchema = z.object({
   amount: z.number().int().positive(),
   pocket: z.string().trim().min(1),
   category: z.string().trim().min(1).optional().nullable(),
+  category_confidence: z.number().min(0).max(1).optional().nullable(),
+  category_reason: z.string().trim().max(120).optional().nullable(),
   description: z.string().trim().max(500).optional().nullable(),
   transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   confidence: z.number().min(0).max(1),

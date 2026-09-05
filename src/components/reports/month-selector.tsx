@@ -38,37 +38,13 @@ export function MonthSelector({
     }
   }, [months, selectedYear, selectedMonth]);
 
-  // drag handling
-  const drag = React.useRef<{ down: boolean; x: number; left: number }>({ down: false, x: 0, left: 0 });
-  function onPointerDown(e: React.PointerEvent) {
-    const el = scrollRef.current;
-    if (!el) return;
-    drag.current = { down: true, x: e.clientX, left: el.scrollLeft };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }
-  function onPointerMove(e: React.PointerEvent) {
-    if (!drag.current.down) return;
-    const el = scrollRef.current;
-    if (!el) return;
-    const dx = e.clientX - drag.current.x;
-    el.scrollLeft = drag.current.left - dx;
-  }
-  function onPointerUp(e: React.PointerEvent) {
-    drag.current.down = false;
-    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
-  }
-
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-2">
         <div className="relative flex min-w-0 flex-1 items-center gap-1">
           <div
             ref={scrollRef}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerLeave={onPointerUp}
-            className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth py-1 select-none touch-pan-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory cursor-grab active:cursor-grabbing"
+            className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory"
           >
             {months.map(({ year, month }) => {
               const isSelected = year === selectedYear && month === selectedMonth;

@@ -24,15 +24,29 @@ export type SmartParseResult =
 async function getContext(): Promise<AiContext> {
   const supabase = createServerClient();
   const rtId = DEV_RT_ID;
-  const [pRes, cRes] = await Promise.all([
+  const [pRes, cRes, rRes] = await Promise.all([
     supabase.from("pockets").select("name").eq("rt_id", rtId).eq("is_active", true),
     supabase.from("categories").select("name, type").eq("rt_id", rtId).eq("is_active", true),
+    supabase
+      .from("transactions")
+      .select("description, type, category:categories(name)")
+      .eq("rt_id", rtId)
+      .not("description", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
   const pockets = ((pRes.data as { name: string }[] | null) ?? []).map((p) => p.name);
   const categories = ((cRes.data as { name: string; type: "income" | "expense" | "both" }[] | null) ?? []).map((c) => ({
     name: c.name,
     type: c.type as "income" | "expense" | "both",
   }));
+  const recentExamples = ((rRes.data as unknown as { description: string | null; type: string; category: { name: string } | null }[] | null) ?? [])
+    .filter((r) => r.description && r.category?.name)
+    .map((r) => ({
+      description: r.description!.slice(0, 40),
+      category: r.category!.name,
+      type: r.type as "income" | "expense",
+    }));
   // fallback to seed names if DB empty
   const finalPockets = pockets.length ? pockets : ["Kas", "BOP", "Sosial", "Kegiatan"];
   const finalCategories = categories.length
@@ -47,6 +61,7 @@ async function getContext(): Promise<AiContext> {
     pockets: finalPockets,
     categories: finalCategories,
     currentDate: new Date().toISOString().slice(0, 10),
+    recentExamples,
   };
 }
 
@@ -138,16 +153,19 @@ export async function parseSmartInput(rawInput: string): Promise<SmartParseResul
     raw = await provider.parse(input, ctx);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Gagal parse AI";
-    // Fallback to Mock on auth/model errors — keep app usable with bad/missing key or deprecated model
-    const isAuthError =
+    // Fallback to Mock on auth/model/invalid JSON errors — keep app usable
+    const isRecoverable =
       msg.includes("401") ||
       msg.includes("404") ||
       msg.toLowerCase().includes("user not found") ||
       msg.toLowerCase().includes("unauthorized") ||
       msg.toLowerCase().includes("is no longer available") ||
       msg.toLowerCase().includes("not_found") ||
-      msg.toLowerCase().includes("model");
-    if (isAuthError && providerId !== "mock") {
+      msg.toLowerCase().includes("model") ||
+      msg.toLowerCase().includes("invalid json") ||
+      msg.toLowerCase().includes("invalid_json") ||
+      msg.toLowerCase().includes("returned invalid json");
+    if (isRecoverable && providerId !== "mock") {
       try {
         const fallback = new MockProvider();
         raw = await fallback.parse(input, ctx);
@@ -197,11 +215,30 @@ export async function parseSmartInput(rawInput: string): Promise<SmartParseResul
         },
       };
     }
-    // Category if provided must be known, else drop
-    let catName = parsed.data.category;
+    // Category: pakai AI suggestion dengan confidence, auto-isi jika kosong
+    let catName: string | null = parsed.data.category ?? null;
+    let catConf: number | null = (parsed.data as unknown as { category_confidence?: number | null }).category_confidence ?? null;
+    let catReason: string | null = (parsed.data as unknown as { category_reason?: string | null }).category_reason ?? null;
     if (catName) {
       const knownCat = ctx.categories.some((c) => c.name.toLowerCase() === catName!.toLowerCase());
-      if (!knownCat) catName = null;
+      if (!knownCat) {
+        catName = null;
+        catConf = null;
+        catReason = null;
+      }
+    }
+    // Auto-isi kategori kosong: pakai "Lain-lain" jika ada, else kategori pertama sesuai type
+    if (!catName) {
+      const fallback =
+        ctx.categories.find((c) => c.name.toLowerCase() === "lain-lain") ??
+        ctx.categories.find((c) => c.type === parsed.data.type) ??
+        ctx.categories.find((c) => c.type === "both") ??
+        ctx.categories[0];
+      if (fallback) {
+        catName = fallback.name;
+        catConf = 0.55;
+        catReason = "default";
+      }
     }
 
     // Resolve IDs for confirmation save
@@ -216,7 +253,10 @@ export async function parseSmartInput(rawInput: string): Promise<SmartParseResul
     const pocketId = pockets.length ? resolvePocketId(parsed.data.pocket, pockets) : undefined;
     const categoryId = categories.length ? resolveCategoryId(catName ?? null, categories) : null;
 
-    return { type: "transaction", data: { ...parsed.data, category: catName ?? null, pocketId, categoryId } };
+    return {
+      type: "transaction",
+      data: { ...parsed.data, category: catName ?? null, category_confidence: catConf, category_reason: catReason, pocketId, categoryId },
+    };
   }
 
   if (raw.intent === "create_transfer") {

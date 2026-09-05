@@ -1,10 +1,19 @@
 import { z } from "zod";
 
+const hexColor = z
+  .string()
+  .trim()
+  .regex(/^#[0-9a-fA-F]{6}$/, "Warna harus hex #RRGGBB")
+  .optional()
+  .nullable();
+
 export const pocketSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(50),
   description: z.string().trim().max(200).optional().nullable(),
   icon: z.string().trim().max(50).optional().nullable(),
   color: z.string().trim().max(20).optional().nullable(),
+  gradient_c1: hexColor,
+  gradient_c3: hexColor,
   opening_balance: z
     .number()
     .min(0, "Saldo awal tidak boleh negatif")

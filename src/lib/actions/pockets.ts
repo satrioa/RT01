@@ -24,6 +24,8 @@ function parsePocketForm(formData: FormData) {
     description: (formData.get("description") as string) || null,
     icon: (formData.get("icon") as string) || null,
     color: (formData.get("color") as string) || null,
+    gradient_c1: (formData.get("gradient_c1") as string) || null,
+    gradient_c3: (formData.get("gradient_c3") as string) || null,
     opening_balance: parseAmountToNumber(formData.get("opening_balance")),
     is_active: formData.get("is_active") === "false" ? false : true,
     sort_order: Number(formData.get("sort_order") ?? 0),
@@ -31,6 +33,8 @@ function parsePocketForm(formData: FormData) {
   if (raw.description === "") raw.description = null;
   if (raw.icon === "") raw.icon = null;
   if (raw.color === "") raw.color = null;
+  if (raw.gradient_c1 === "") raw.gradient_c1 = null;
+  if (raw.gradient_c3 === "") raw.gradient_c3 = null;
   return raw;
 }
 
