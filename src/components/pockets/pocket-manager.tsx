@@ -22,9 +22,10 @@ import {
 import { ColorPickerPopover } from "@/components/ui/color-picker";
 import { createPocketAction, updatePocketAction, deletePocketAction, archivePocketAction } from "@/lib/actions/pockets";
 import type { Pocket } from "@/types/database";
-import { Pencil, Trash2, Plus, Wallet, Archive, Loader2, Palette, Sparkles } from "lucide-react";
-import { GRADIENT_PRESETS, applyPresetToPocket } from "@/lib/gradients";
+import { Pencil, Trash2, Plus, Wallet, Archive, Loader2 } from "lucide-react";
+import { applyPresetToPocket, GRADIENT_PRESET_MAP } from "@/lib/gradients";
 import { deriveGradient } from "@/lib/color";
+import { GradientPickerPopover } from "./gradient-picker";
 
 function PocketForm({
   initial,
@@ -73,7 +74,7 @@ function PocketForm({
   }, [color, gradientC1, gradientC3, customGradient]);
 
   function handlePresetClick(presetId: string) {
-    const preset = GRADIENT_PRESETS.find((p) => p.id === presetId);
+    const preset = GRADIENT_PRESET_MAP.get(presetId);
     if (!preset) return;
     const applied = applyPresetToPocket(preset);
     setColor(applied.color);
@@ -145,59 +146,30 @@ function PocketForm({
         </div>
       </div>
 
-      <div className="space-y-3 rounded-2xl border bg-muted/20 p-3">
-        <div className="flex items-center justify-between gap-2">
-          <Label className="flex items-center gap-1.5"><Palette className="size-3.5" /> Tema Gradien</Label>
-          <label className="flex items-center gap-2 text-xs">
-            <input type="checkbox" checked={customGradient} onChange={(e) => setCustomGradient(e.target.checked)} className="rounded border" />
-            Custom
-          </label>
-        </div>
-
-        <div className="grid grid-cols-4 gap-2">
-          {GRADIENT_PRESETS.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => handlePresetClick(preset.id)}
-              className="group flex flex-col items-center gap-1 rounded-xl border bg-card p-2 hover:border-primary/50"
-              title={`${preset.label} — ${preset.character}`}
-            >
-              <span className="flex h-6 w-full gap-0.5 overflow-hidden rounded-full">
-                <span className="flex-1" style={{ background: preset.c1 }} />
-                <span className="flex-1" style={{ background: preset.c2 }} />
-                <span className="flex-1" style={{ background: preset.c3 }} />
-              </span>
-              <span className="text-[10px] font-medium">{preset.label}</span>
-            </button>
-          ))}
-        </div>
-
+      <div className="space-y-2">
+        <Label>Tema Gradien</Label>
+        <GradientPickerPopover
+          color={color}
+          gradientC1={gradientC1}
+          gradientC3={gradientC3}
+          customGradient={customGradient}
+          preview={preview}
+          onPresetClick={handlePresetClick}
+          onCustomChange={setCustomGradient}
+          onC1Change={setGradientC1}
+          onC3Change={setGradientC3}
+        />
         {customGradient ? (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>Ujung terang (c1)</Label>
-              <ColorPickerPopover value={gradientC1 ?? "#f9f9ff"} onValueChange={(v) => setGradientC1(v)} triggerLabel="c1" />
-              <input type="hidden" name="gradient_c1" value={gradientC1 ?? ""} />
-            </div>
-            <div className="space-y-2">
-              <Label>Ujung gelap (c3)</Label>
-              <ColorPickerPopover value={gradientC3 ?? "#d2e3ff"} onValueChange={(v) => setGradientC3(v)} triggerLabel="c3" />
-              <input type="hidden" name="gradient_c3" value={gradientC3 ?? ""} />
-            </div>
-          </div>
+          <>
+            <input type="hidden" name="gradient_c1" value={gradientC1 ?? ""} />
+            <input type="hidden" name="gradient_c3" value={gradientC3 ?? ""} />
+          </>
         ) : (
           <>
             <input type="hidden" name="gradient_c1" value="" />
             <input type="hidden" name="gradient_c3" value="" />
           </>
         )}
-
-        <div className="space-y-1">
-          <p className="text-[11px] text-muted-foreground flex items-center gap-1"><Sparkles className="size-3" /> Preview</p>
-          <div className="h-16 w-full overflow-hidden rounded-xl border" style={{ background: `linear-gradient(135deg, ${preview.c1}, ${preview.c2}, ${preview.c3})` }} />
-          <p className="text-[10px] text-muted-foreground">Tanpa custom, warna otomatis dari warna tengah via HSL (terang +38, gelap -22 + hue +18).</p>
-        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

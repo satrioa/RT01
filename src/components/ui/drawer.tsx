@@ -69,8 +69,10 @@ function DrawerContent({
         <motion.div
           animate={{ height: bounds.height }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="overflow-y-auto overscroll-contain"
-          style={{ maxHeight: "92dvh" }}
+          // touch-pan-y: vaul menyuntik touch-action:none di drawer root,
+          // tanpa ini scroll sentuh di dalam drawer mati total (mouse-wheel tetap jalan)
+          className="touch-pan-y overflow-y-auto overscroll-contain"
+          style={{ maxHeight: "92dvh", WebkitOverflowScrolling: "touch" }}
         >
           <div ref={elementRef} className="p-6">
             {children}
