@@ -23,7 +23,21 @@ export async function getAiSettings(): Promise<RtAiSettings | null> {
     // Fallback to service + env defaults
     const svc = createServiceClient();
     const { data: svcData } = await svc.from("rt_ai_settings").select("*").eq("rt_id", rtId).maybeSingle();
-    if (svcData) return svcData as unknown as RtAiSettings;
+    if (svcData) {
+      // auto-migrate deprecated model on read
+      const row = svcData as unknown as RtAiSettings;
+      const map: Record<string, string> = {
+        "models/gemini-2.5-flash": "gemini-3.6-flash",
+        "models/gemini-2.5-flash-lite": "gemini-3.6-flash",
+        "gemini-2.5-flash": "gemini-3.6-flash",
+        "gemini-2.0-flash-001": "gemini-3.6-flash",
+        "google/gemini-2.5-flash": "google/gemini-3.6-flash",
+      };
+      if (map[row.model]) {
+        row.model = map[row.model];
+      }
+      return row as unknown as RtAiSettings;
+    }
     return {
       id: "env-default",
       rt_id: rtId,
@@ -34,7 +48,18 @@ export async function getAiSettings(): Promise<RtAiSettings | null> {
       updated_at: new Date().toISOString(),
     } as RtAiSettings;
   }
-  return data as unknown as RtAiSettings;
+  const row = data as unknown as RtAiSettings;
+  const map: Record<string, string> = {
+    "models/gemini-2.5-flash": "gemini-3.6-flash",
+    "models/gemini-2.5-flash-lite": "gemini-3.6-flash",
+    "gemini-2.5-flash": "gemini-3.6-flash",
+    "gemini-2.0-flash-001": "gemini-3.6-flash",
+    "google/gemini-2.5-flash": "google/gemini-3.6-flash",
+  };
+  if (map[row.model]) {
+    row.model = map[row.model];
+  }
+  return row as unknown as RtAiSettings;
 }
 
 export async function saveAiSettingsAction(formData: FormData): Promise<{ ok: boolean; error?: string }> {
@@ -57,6 +82,24 @@ export async function saveAiSettingsAction(formData: FormData): Promise<{ ok: bo
     console.warn(`[ai-settings] custom model "${parsed.data.model}" untuk ${parsed.data.provider} tidak ada di daftar — tetap disimpan`);
   }
 
+  // Auto-migrate deprecated gemini models (404) → latest
+  const deprecatedModelMap: Record<string, string> = {
+    "models/gemini-2.5-flash": "gemini-3.6-flash",
+    "models/gemini-2.5-flash-lite": "gemini-3.6-flash",
+    "models/gemini-2.0-flash-001": "gemini-3.6-flash",
+    "models/gemini-2.0-flash": "gemini-3.6-flash",
+    "gemini-2.5-flash": "gemini-3.6-flash",
+    "gemini-2.5-flash-lite": "gemini-3.6-flash",
+    "gemini-2.0-flash-001": "gemini-3.6-flash",
+    "gemini-2.0-flash": "gemini-3.6-flash",
+    "google/gemini-2.5-flash": "google/gemini-3.6-flash",
+    "google/gemini-2.0-flash-001": "google/gemini-3.6-flash",
+  };
+  const migratedModel = deprecatedModelMap[parsed.data.model] ?? parsed.data.model;
+  if (migratedModel !== parsed.data.model) {
+    console.warn(`[ai-settings] auto-migrate model ${parsed.data.model} → ${migratedModel}`);
+  }
+
   const rtId = await getCurrentRtId();
   const supabase = createServiceClient(); // service to bypass RLS for upsert
 
@@ -64,13 +107,30 @@ export async function saveAiSettingsAction(formData: FormData): Promise<{ ok: bo
     {
       rt_id: rtId,
       provider: parsed.data.provider as AiProviderId,
-      model: parsed.data.model,
+      model: migratedModel,
       is_enabled: parsed.data.is_enabled ?? true,
     },
     { onConflict: "rt_id" }
   );
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    // Handle check constraint not yet migrated (provider gemini not in DB)
+    if (error.message.includes("rt_ai_settings_provider_check") || error.message.includes("violates check constraint")) {
+      return {
+        ok: false,
+        error:
+          "Database belum izinkan provider 'gemini'. Jalankan di Supabase SQL Editor: " +
+          "alter table public.rt_ai_settings drop constraint if exists rt_ai_settings_provider_check; " +
+          "alter table public.rt_ai_settings add constraint rt_ai_settings_provider_check check (provider in ('openrouter','openai','anthropic','gemini','mock')); " +
+          "Atau jalankan file supabase/migrations/009_add_gemini_provider.sql",
+      };
+    }
+    // Handle model deprecation 404 guidance
+    if (error.message.includes("models/gemini-2.5-flash")) {
+      return { ok: false, error: "Model gemini-2.5-flash sudah deprecated (404). Pilih gemini-3.6-flash di Pengaturan → Simpan, lalu coba lagi." };
+    }
+    return { ok: false, error: error.message };
+  }
 
   revalidatePath("/pengaturan");
   return { ok: true };
