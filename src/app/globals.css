@@ -257,10 +257,16 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    /* Kunci overflow horizontal global — full-bleed w-screen (section putih,
+       skeleton load) tidak boleh melebarkan viewport sesaat */
+    overflow-x: clip;
   }
   /* Mobile-first viewport helpers */
   html {
     -webkit-tap-highlight-color: transparent;
+    /* Cadangkan ruang scrollbar vertikal — lebar halaman tidak bergeser saat
+       navigasi antar halaman pendek/panjang atau saat skeleton → konten */
+    scrollbar-gutter: stable;
   }
   :focus-visible {
     outline: 1px solid var(--focus-ring, #6B97FF);
