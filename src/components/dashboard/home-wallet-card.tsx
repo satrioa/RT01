@@ -206,7 +206,7 @@ export function HomeWalletCard({
           <span className="shrink-0 text-xs text-white/70">{activeId === "semua" ? "Semua" : activePocket?.name}</span>
         </div>
 
-        <div className="mt-8 flex flex-col items-center text-center">
+        <div className="mt-6 flex flex-col items-center text-center">
           <div className="flex items-center gap-1.5">
             <p className="text-xs text-white/80">Saldo</p>
             <button
