@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Paperclip, Pencil } from "lucide-react";
 import { TransactionActions } from "@/components/transactions/transaction-actions";
+import { getCurrentUserRole } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
 
   const { data: attachments } = await supabase.from("transaction_attachments").select("*").eq("transaction_id", id);
 
+  const role = await getCurrentUserRole();
+  const isLoggedIn = role === "admin" || role === "bendahara";
+
   return (
     <div className="min-h-dvh bg-background">
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-background">
@@ -108,18 +112,20 @@ export default async function TransactionDetailPage({ params }: { params: Promis
             </CardContent>
           </Card>
 
-          <Card className="border-dashed bg-muted/20">
-            <CardContent className="p-4">
-              <p className="text-xs font-medium">Bebas edit — aplikasi pribadi</p>
-              <p className="mt-1 text-xs text-muted-foreground">Ubah pemasukan ↔ pengeluaran, kantong, kategori tanpa batasan. Saldo menyesuaikan otomatis.</p>
-              <div className="mt-3">
-                <TransactionActions id={id} />
-              </div>
-              <Link href={`/transactions/${id}/edit`} className="mt-2 flex items-center justify-center gap-1 text-xs text-primary hover:underline">
-                <Pencil className="size-3" /> Buka halaman edit (fallback)
-              </Link>
-            </CardContent>
-          </Card>
+          {isLoggedIn && (
+            <Card className="border-dashed bg-muted/20">
+              <CardContent className="p-4">
+                <p className="text-xs font-medium">Bebas edit — aplikasi pribadi</p>
+                <p className="mt-1 text-xs text-muted-foreground">Ubah pemasukan ↔ pengeluaran, kantong, kategori tanpa batasan. Saldo menyesuaikan otomatis.</p>
+                <div className="mt-3">
+                  <TransactionActions id={id} />
+                </div>
+                <Link href={`/transactions/${id}/edit`} className="mt-2 flex items-center justify-center gap-1 text-xs text-primary hover:underline">
+                  <Pencil className="size-3" /> Buka halaman edit (fallback)
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </main>
       </div>
     </div>

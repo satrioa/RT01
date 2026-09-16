@@ -1,6 +1,5 @@
 import { GreetingHeader } from "@/components/dashboard/greeting-header";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
-import { OverviewCards } from "@/components/reports/overview-cards";
 import { SmartInput } from "@/components/ai/smart-input";
 import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,11 +8,10 @@ import { getHomeData } from "@/lib/data/home";
 import { createServiceClient } from "@/lib/supabase/service";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { AlertTriangle } from "lucide-react";
-import { HomeWalletCard } from "@/components/dashboard/home-wallet-card";
 import { ExpenseCategoryPie } from "@/components/dashboard/expense-category-pie";
 import { getAppearanceSettings } from "@/lib/actions/appearance";
-import { IncomeExpenseBarChart } from "@/components/dashboard/income-expense-bar-chart";
 import { getCurrentUserRole } from "@/lib/auth";
+import { DashboardClient } from "@/components/dashboard/dashboard-client";
 
 // Force dynamic so greeting reflects server time and data is fresh
 export const dynamic = "force-dynamic";
@@ -122,19 +120,13 @@ export default async function Page() {
             </Card>
           )}
 
-          {/* Wallet — ganti pilihan kantong: Semua / Kas / BOP */}
-          <HomeWalletCard pockets={data.pockets} totalBalance={data.totalBalance} appearance={appearance} role={role} />
-
-          {/* KPI */}
-          <div className="space-y-3">
-            <OverviewCards
-              totalIncome={totalIncome}
-              totalExpense={totalExpense}
-              netChange={totalIncome - totalExpense}
-            />
-          </div>
-
-          <IncomeExpenseBarChart data={monthlyChartData.map(({ month, income, expense, pocketId }) => ({ month, income, expense, pocketId }))} pockets={data.pockets.map((pocket) => ({ id: pocket.id, name: pocket.name }))} />
+          <DashboardClient
+            pockets={data.pockets}
+            totalBalance={data.totalBalance}
+            appearance={appearance}
+            role={role}
+            monthlyChartData={monthlyChartData}
+          />
 
           <ExpenseCategoryPie dataByPeriod={dataByPeriod} defaultPeriod="month" />
 

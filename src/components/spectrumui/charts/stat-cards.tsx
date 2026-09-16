@@ -30,6 +30,7 @@ export type StatCardData = {
   goodWhen?: 'up' | 'down';
   deltaLabel?: string;
   caption?: string;
+  xLabels?: string[];
 };
 
 function walk(seed: number, n: number, start: number, drift: number, vol: number): number[] {
@@ -99,7 +100,7 @@ function StatCard({
   index: number;
   reduce: boolean;
 }) {
-  const { label, series, goodWhen = 'up', deltaLabel = 'vs start', caption, progress } = card;
+  const { label, series, goodWhen = 'up', deltaLabel = 'vs start', caption, progress, xLabels } = card;
   const format = card.format ?? ((v: number) => formatCount(v, 1));
   const [hover, setHover] = React.useState<number | null>(null);
   const sparkRef = React.useRef<HTMLDivElement | null>(null);
@@ -179,13 +180,14 @@ function StatCard({
 
   const scrubDot = hover != null && spark ? spark.points[hover] : null;
 
+  const hoverLabel = hover != null && xLabels?.[hover] ? xLabels[hover] : hover != null ? `day ${hover + 1} of ${n}` : null;
   return (
     <div
       className="flex items-stretch justify-between gap-5 rounded-2xl border border-black/8 bg-white/60 p-5 dark:border-white/10 dark:bg-white/[0.02]"
       role="img"
       aria-label={`${label}: ${format(headline)}${
         delta != null ? `, ${rising ? 'up' : 'down'} ${Math.abs(delta).toFixed(0)} percent ${deltaLabel}` : ''
-      }.`}
+      }${hoverLabel ? `, ${hoverLabel}: ${series ? format(series[hover!]) : ''}` : ''}.`}
       style={
         reduce
           ? undefined
@@ -204,7 +206,7 @@ function StatCard({
         <p className="mt-2 h-[17px] overflow-hidden whitespace-nowrap text-[12.5px] font-medium leading-none">
           {hover != null && series ? (
             <span className="text-neutral-400 dark:text-neutral-500">
-              day {hover + 1} of {n}
+              {xLabels?.[hover] ?? `day ${hover + 1} of ${n}`}
             </span>
           ) : delta != null ? (
             <span style={{ color }}>

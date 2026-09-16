@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatRupiah } from "@/lib/format";
 
 type ChartDatum = {
@@ -16,27 +17,44 @@ type PocketOption = { id: string; name: string };
 export function IncomeExpenseBarChart({
   data,
   pockets,
+  activePocketId: controlledActivePocketId,
+  onActivePocketChange,
 }: {
   data: (ChartDatum & { pocketId: string | null })[];
   pockets: PocketOption[];
+  activePocketId?: string | null;
+  onActivePocketChange?: (id: string | null) => void;
 }) {
-  const [pocketId, setPocketId] = React.useState<string | null>(null);
-  const visibleData = data.filter((item) => item.pocketId === pocketId);
+  const [internalPocketId, setInternalPocketId] = React.useState<string | null>(null);
+  const isControlled = controlledActivePocketId !== undefined;
+  const activePocketId = isControlled ? controlledActivePocketId : internalPocketId;
+  const setPocketId = (id: string | null) => {
+    if (onActivePocketChange) onActivePocketChange(id);
+    else setInternalPocketId(id);
+  };
+  const visibleData = data.filter((item) => item.pocketId === activePocketId);
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-sm">Pemasukan vs Pengeluaran</CardTitle>
-          <select
-            value={pocketId ?? "all"}
-            onChange={(event) => setPocketId(event.target.value === "all" ? null : event.target.value)}
-            className="h-8 max-w-32 rounded-lg border border-input bg-background px-2 text-[11px] outline-none focus-visible:ring-1 focus-visible:ring-primary"
-            aria-label="Filter kantong chart"
+          <Select
+            value={activePocketId ?? "all"}
+            onValueChange={(value) => setPocketId(value === "all" ? null : value)}
           >
-            <option value="all">Semua</option>
-            {pockets.map((pocket) => <option key={pocket.id} value={pocket.id}>{pocket.name}</option>)}
-          </select>
+            <SelectTrigger className="h-8 max-w-32 text-xs" aria-label="Filter kantong chart">
+              <SelectValue placeholder="Semua" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua</SelectItem>
+              {pockets.map((pocket) => (
+                <SelectItem key={pocket.id} value={pocket.id}>
+                  {pocket.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-[var(--chart-1)]" /> Pemasukan</span>

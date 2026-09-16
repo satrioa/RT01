@@ -7,7 +7,6 @@ import { useState } from "react";
 import { GlassButton } from "@/components/glass-button";
 import { ActionSwapText } from "@/components/motion/action-swap";
 import { AccountSwitcher } from "@/components/motion/wallet-card/account-switcher";
-import { BalanceDelta } from "@/components/motion/wallet-card/balance-delta";
 import type { WalletAccount } from "@/components/motion/wallet-card/types";
 import { ShaderGradientBackground, type ShaderGradientPreset } from "@/components/motion/shader-gradient-background";
 import { Button } from "@/components/ui/button";
@@ -61,11 +60,17 @@ export function HomeWalletCard({
   totalBalance,
   appearance,
   role,
+  activeId: controlledActiveId,
+  onActiveIdChange,
+  updatedLabel,
 }: {
   pockets: PocketBalance[];
   totalBalance: number;
   appearance?: RtAppearanceSettings | null;
   role?: UserRole | null;
+  activeId?: string;
+  onActiveIdChange?: (id: string) => void;
+  updatedLabel?: string;
 }) {
   const router = useRouter();
   const isViewer = !role || role === "viewer";
@@ -79,7 +84,15 @@ export function HomeWalletCard({
     })),
   ];
 
-  const [activeId, setActiveId] = useState<string>("semua");
+  const [internalActiveId, setInternalActiveId] = useState<string>("semua");
+  const isControlled = controlledActiveId !== undefined;
+  const activeId = isControlled ? (controlledActiveId as string) : internalActiveId;
+  const setActiveId = (id: string) => {
+    if (onActiveIdChange) onActiveIdChange(id);
+    else setInternalActiveId(id);
+  };
+  const effectiveUpdatedLabel =
+    updatedLabel ?? new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
   const [balanceHidden, setBalanceHidden] = useState(false);
 
   const activePocket = pockets.find((p) => p.id === activeId);
@@ -217,7 +230,7 @@ export function HomeWalletCard({
               <span className="translate-y-[3px] text-sm font-semibold text-white/70 leading-none tracking-[0.3em]">*****</span>
             </div>
           ) : (
-            <BalanceDelta balance={balance} initialChange={0} />
+            <p className="mt-2 text-[11px] text-white/70">Diperbarui {effectiveUpdatedLabel}</p>
           )}
           <p className="mt-1 text-[11px] text-white/70">
             {activeId === "semua" ? `${pockets.length} kantong aktif` : `${formatRupiah(balance)} - ${activePocket?.name ?? ""}`}
