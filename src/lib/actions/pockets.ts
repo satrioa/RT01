@@ -26,6 +26,7 @@ function parsePocketForm(formData: FormData) {
     color: (formData.get("color") as string) || null,
     gradient_c1: (formData.get("gradient_c1") as string) || null,
     gradient_c3: (formData.get("gradient_c3") as string) || null,
+    gradient_c4: (formData.get("gradient_c4") as string) || null,
     gradient_preset: (formData.get("gradient_preset") as string) || null,
     opening_balance: parseAmountToNumber(formData.get("opening_balance")),
     is_active: formData.get("is_active") === "false" ? false : true,
@@ -36,6 +37,7 @@ function parsePocketForm(formData: FormData) {
   if (raw.color === "") raw.color = null;
   if (raw.gradient_c1 === "") raw.gradient_c1 = null;
   if (raw.gradient_c3 === "") raw.gradient_c3 = null;
+  if (raw.gradient_c4 === "") raw.gradient_c4 = null;
   if (raw.gradient_preset === "" || raw.gradient_preset === "null") raw.gradient_preset = null;
   return raw;
 }

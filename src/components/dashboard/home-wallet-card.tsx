@@ -9,7 +9,7 @@ import { ActionSwapText } from "@/components/motion/action-swap";
 import { AccountSwitcher } from "@/components/motion/wallet-card/account-switcher";
 import { BalanceDelta } from "@/components/motion/wallet-card/balance-delta";
 import type { WalletAccount } from "@/components/motion/wallet-card/types";
-import Grainient from "@/components/motion/grainient";
+import { ShaderGradientBackground, type ShaderGradientPreset } from "@/components/motion/shader-gradient-background";
 import { Button } from "@/components/ui/button";
 import { SPRING_PRESS } from "@/lib/ease";
 import { formatRupiah } from "@/lib/format";
@@ -103,67 +103,85 @@ export function HomeWalletCard({
   };
 
   const reduceMotion = useReducedMotion();
-  const grainColors = (() => {
-    // Semua kartu mengikuti pengaturan Tampilan global.
+  const shaderPreset = (() => {
     if (activeId === "semua") {
-      if (appearance?.gradient_color1 && appearance.gradient_color2 && appearance.gradient_color3) {
-        return { c1: appearance.gradient_color1, c2: appearance.gradient_color2, c3: appearance.gradient_color3 };
+      if (appearance?.gradient_preset && appearance.gradient_preset !== "custom") return appearance.gradient_preset as ShaderGradientPreset;
+      return "custom" as ShaderGradientPreset;
+    }
+    const pocketPreset = activePocket?.gradient_preset;
+    if (pocketPreset && pocketPreset !== "custom") return pocketPreset as ShaderGradientPreset;
+    return "custom" as ShaderGradientPreset;
+  })();
+  const shaderColors = (() => {
+    // Semua: appearance.gradient_color1-4 with fallback to style preset or default
+    if (activeId === "semua") {
+      if (appearance?.gradient_color1 && appearance.gradient_color2 && appearance.gradient_color3 && appearance.gradient_color4) {
+        return { c1: appearance.gradient_color1, c2: appearance.gradient_color2, c3: appearance.gradient_color3, c4: appearance.gradient_color4 };
+      }
+      // partial custom colors -> fill gaps with legacy style preset or derived fallback
+      if (appearance?.gradient_color1 || appearance?.gradient_color2 || appearance?.gradient_color3 || appearance?.gradient_color4) {
+        const fallback = (() => {
+          const styleId = appearance?.style ?? "sunset";
+          if (styleId !== "auto") {
+            const preset = GRADIENT_PRESET_MAP.get(styleId);
+            if (preset) return { c1: preset.c1, c2: preset.c2, c3: preset.c3, c4: "#D2D7EC" };
+            if (styleId === "biru_rt") return { c1: "#f9f9ff", c2: "#5697ff", c3: "#d2e3ff", c4: "#D2D7EC" };
+          }
+          return { c1: DEFAULT_PRESET.c1, c2: DEFAULT_PRESET.c2, c3: DEFAULT_PRESET.c3, c4: "#D2D7EC" };
+        })();
+        return {
+          c1: appearance?.gradient_color1 ?? fallback.c1,
+          c2: appearance?.gradient_color2 ?? fallback.c2,
+          c3: appearance?.gradient_color3 ?? fallback.c3,
+          c4: appearance?.gradient_color4 ?? fallback.c4,
+        };
       }
       const styleId = appearance?.style ?? "sunset";
       if (styleId !== "auto") {
         const preset = GRADIENT_PRESET_MAP.get(styleId);
-        if (preset) return { c1: preset.c1, c2: preset.c2, c3: preset.c3 };
-        if (styleId === "biru_rt") return { c1: "#f9f9ff", c2: "#5697ff", c3: "#d2e3ff" };
+        if (preset) return { c1: preset.c1, c2: preset.c2, c3: preset.c3, c4: "#D2D7EC" };
+        if (styleId === "biru_rt") return { c1: "#f9f9ff", c2: "#5697ff", c3: "#d2e3ff", c4: "#D2D7EC" };
       }
-      return { c1: DEFAULT_PRESET.c1, c2: DEFAULT_PRESET.c2, c3: DEFAULT_PRESET.c3 };
+      return { c1: DEFAULT_PRESET.c1, c2: DEFAULT_PRESET.c2, c3: DEFAULT_PRESET.c3, c4: "#D2D7EC" };
     }
-    // Per kantong: c2 = color, c1/c3 = custom atau derive
+    // Per kantong: c2 = color, c1/c3/c4 = custom atau derive
     const base = activePocket?.color ?? "#111827";
     const c1 = activePocket?.gradient_c1 ?? null;
     const c3 = activePocket?.gradient_c3 ?? null;
-    if (c1 && c3) return { c1, c2: base, c3 };
-    return deriveGradient(base);
-  })();
-  const grainTimeSpeed = appearance?.animation_enabled === false || reduceMotion ? 0 : 0.18;
-  const grainSaturation = appearance?.saturation ?? 1.1;
-  const grainContrast = appearance?.contrast ?? 1.6;
-  const gradientPreset = (() => {
-    if (activeId === "semua") {
-      if (appearance?.gradient_preset && appearance.gradient_preset !== "custom") return appearance.gradient_preset as "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
-      return undefined;
+    const c4 = activePocket?.gradient_c4 ?? null;
+    if (c1 && c3 && c4) return { c1, c2: base, c3, c4 };
+    if (c1 || c3 || c4) {
+      const derived = deriveGradient(base);
+      return { c1: c1 ?? derived.c1, c2: base, c3: c3 ?? derived.c3, c4: c4 ?? "#D2D7EC" };
     }
-    const pocketPreset = activePocket?.gradient_preset;
-    if (pocketPreset && pocketPreset !== "custom") return pocketPreset as "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
-    return undefined;
+    const derived = deriveGradient(base);
+    return { c1: derived.c1, c2: derived.c2, c3: derived.c3, c4: "#D2D7EC" };
   })();
+  const shaderSpeed = appearance?.gradient_speed ?? 0.14;
+  const shaderBlur = appearance?.gradient_blur ?? 0.7;
+  const shaderIntensity = appearance?.gradient_intensity ?? 0.95;
 
   // For delta, use 0 as defaultChange
   return (
     <div className="relative w-full overflow-hidden rounded-4xl border border-border p-6">
-      {/* Grainient animated background */}
+      {/* Shader gradient background */}
       <div className="absolute inset-0">
-        <Grainient
-          color1={grainColors.c1}
-          color2={grainColors.c2}
-          color3={grainColors.c3}
-          timeSpeed={grainTimeSpeed}
-          warpStrength={0.7}
-          warpFrequency={4.5}
-          warpSpeed={1.6}
-          grainAmount={0.04}
-          grainAnimated={false}
-          contrast={grainContrast}
-          saturation={grainSaturation}
-          zoom={0.85}
-           lightMode
-           preset={gradientPreset}
-           className="opacity-90"
+        <ShaderGradientBackground
+          preset={shaderPreset}
+          color1={shaderColors.c1}
+          color2={shaderColors.c2}
+          color3={shaderColors.c3}
+          color4={shaderColors.c4}
+          speed={shaderSpeed}
+          blur={shaderBlur}
+          intensity={shaderIntensity}
+          animationEnabled={appearance?.animation_enabled !== false}
+          reducedMotion={!!reduceMotion}
+          className="absolute inset-0"
         />
-        {/* Soft overlay for readability */}
-         <div className="absolute inset-0 bg-white/15 backdrop-blur-[0.5px] dark:bg-zinc-900/25" />
       </div>
 
-      {/* Content above grainient */}
+      {/* Content above shader */}
       <div className="relative z-10">
         {/* Header: wallet switcher */}
         <div className="flex items-center justify-between gap-2">

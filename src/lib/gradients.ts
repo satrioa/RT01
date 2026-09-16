@@ -9,6 +9,8 @@ export type GradientPreset = {
   character: string;
 };
 
+export type AnimatedGradientColors = { c1: string; c2: string; c3: string; c4: string };
+
 export const GRADIENT_PRESETS: GradientPreset[] = [
   { id: "pastel", label: "Pastel", c1: "#FFD6E7", c2: "#D9E8FF", c3: "#D9F7E8", character: "Soft, playful" },
   { id: "blue_ocean", label: "Blue Ocean", c1: "#0EA5E9", c2: "#2563EB", c3: "#172554", character: "Deep, cool" },
@@ -36,13 +38,13 @@ export const GRADIENT_PRESET_MAP = new Map(GRADIENT_PRESETS.map((p) => [p.id, p]
 
 export type AnimatedGradientPreset = "custom" | "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
 
-export const ANIMATED_GRADIENT_PRESETS: Record<Exclude<AnimatedGradientPreset, "custom">, GradientTriplet> = {
-  Prism: { c1: "#FAFAFA", c2: "#66B3FF", c3: "#050505" },
-  Lava: { c1: "#FF9F21", c2: "#FF0303", c3: "#FAFAFA" },
-  Plasma: { c1: "#B566FF", c2: "#FAFAFA", c3: "#FAFAFA" },
-  Pulse: { c1: "#66FF85", c2: "#FAFAFA", c3: "#FAFAFA" },
-  Vortex: { c1: "#FAFAFA", c2: "#000000", c3: "#FAFAFA" },
-  Mist: { c1: "#FAFAFA", c2: "#FF66B8", c3: "#FAFAFA" },
+export const ANIMATED_GRADIENT_PRESETS: Record<Exclude<AnimatedGradientPreset, "custom">, AnimatedGradientColors> = {
+  Prism: { c1: "#FAFAFA", c2: "#66B3FF", c3: "#050505", c4: "#D2D7EC" },
+  Lava: { c1: "#FF9F21", c2: "#FF0303", c3: "#FAFAFA", c4: "#FFD6A0" },
+  Plasma: { c1: "#B566FF", c2: "#FAFAFA", c3: "#FAFAFA", c4: "#E9D5FF" },
+  Pulse: { c1: "#66FF85", c2: "#FAFAFA", c3: "#FAFAFA", c4: "#A7F3D0" },
+  Vortex: { c1: "#FAFAFA", c2: "#000000", c3: "#FAFAFA", c4: "#B4D8C4" },
+  Mist: { c1: "#FAFAFA", c2: "#FF66B8", c3: "#FAFAFA", c4: "#E9D5FF" },
 };
 
 export const DEFAULT_PRESET_ID = "sunset";
@@ -56,6 +58,6 @@ export function getPreset(id: string | null | undefined): GradientPreset | undef
   return GRADIENT_PRESET_MAP.get(id);
 }
 
-export function applyPresetToPocket(preset: GradientPreset): { color: string; gradient_c1: string; gradient_c3: string } {
-  return { color: preset.c2.toLowerCase(), gradient_c1: preset.c1.toLowerCase(), gradient_c3: preset.c3.toLowerCase() };
+export function applyPresetToPocket(preset: GradientPreset): { color: string; gradient_c1: string; gradient_c3: string; gradient_c4: string } {
+  return { color: preset.c2.toLowerCase(), gradient_c1: preset.c1.toLowerCase(), gradient_c3: preset.c3.toLowerCase(), gradient_c4: "#d2d7ec" };
 }

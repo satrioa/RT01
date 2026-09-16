@@ -46,6 +46,7 @@ export interface Pocket {
   color: string | null;
   gradient_c1: string | null;
   gradient_c3: string | null;
+  gradient_c4: string | null;
   gradient_preset: string | null;
   opening_balance: string; // NUMERIC(15,2) saldo awal
   is_active: boolean;
@@ -61,6 +62,10 @@ export interface RtAppearanceSettings {
   gradient_color1?: string | null;
   gradient_color2?: string | null;
   gradient_color3?: string | null;
+  gradient_color4?: string | null;
+  gradient_speed: number;
+  gradient_blur: number;
+  gradient_intensity: number;
   saturation: number;
   contrast: number;
   animation_enabled: boolean;

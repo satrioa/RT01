@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Wallet } from "lucide-react";
 import { useReducedMotion } from "motion/react";
-import Grainient from "@/components/motion/grainient";
+import { ShaderGradientBackground, type ShaderGradientPreset } from "@/components/motion/shader-gradient-background";
 import { formatRupiah } from "@/lib/format";
 import type { Pocket, RtAppearanceSettings } from "@/types/database";
 import { deriveGradient } from "@/lib/color";
@@ -20,54 +20,77 @@ export function PocketDetailHero({
 }) {
   const reduceMotion = useReducedMotion();
 
-  const colors = (() => {
+  const shaderPreset = (() => {
     const pocketPreset = pocket?.gradient_preset;
-    if (pocketPreset && pocketPreset !== "custom" && pocket) {
-      const base = pocket.color ?? "#111827";
-      const c1 = pocket.gradient_c1 ?? null;
-      const c3 = pocket.gradient_c3 ?? null;
-      if (c1 && c3) return { c1, c2: base, c3 };
-      return deriveGradient(base);
-    }
-    if (appearance?.gradient_color1 && appearance.gradient_color2 && appearance.gradient_color3) {
-      return { c1: appearance.gradient_color1, c2: appearance.gradient_color2, c3: appearance.gradient_color3 };
-    }
-    const base = pocket?.color ?? "#111827";
-    const c1 = pocket?.gradient_c1 ?? null;
-    const c3 = pocket?.gradient_c3 ?? null;
-    if (c1 && c3) return { c1, c2: base, c3 };
-    return deriveGradient(base);
+    if (pocketPreset && pocketPreset !== "custom") return pocketPreset as ShaderGradientPreset;
+    if (appearance?.gradient_preset && appearance.gradient_preset !== "custom") return appearance.gradient_preset as ShaderGradientPreset;
+    return "custom" as ShaderGradientPreset;
   })();
 
-  const timeSpeed = appearance?.animation_enabled === false || reduceMotion ? 0 : 0.18;
-  const gradientPreset = (() => {
-    const pocketPreset = pocket?.gradient_preset;
-    if (pocketPreset && pocketPreset !== "custom") return pocketPreset as "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
-    if (appearance?.gradient_preset && appearance.gradient_preset !== "custom") return appearance.gradient_preset as "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
-    return undefined;
+  const shaderColors = (() => {
+    // Pocket has priority when custom; else global appearance
+    const base = pocket?.color ?? "#111827";
+    const pc1 = pocket?.gradient_c1 ?? null;
+    const pc3 = pocket?.gradient_c3 ?? null;
+    const pc4 = pocket?.gradient_c4 ?? null;
+    const hasPocketCustom = !!(pc1 || pc3 || pc4);
+    const isPocketPreset = !!(pocket?.gradient_preset && pocket.gradient_preset !== "custom");
+    if (hasPocketCustom && !isPocketPreset) {
+      if (pc1 && pc3 && pc4) return { c1: pc1, c2: base, c3: pc3, c4: pc4 };
+      const derived = deriveGradient(base);
+      return { c1: pc1 ?? derived.c1, c2: base, c3: pc3 ?? derived.c3, c4: pc4 ?? "#D2D7EC" };
+    }
+    if (isPocketPreset) {
+      const derived = deriveGradient(base);
+      if (pc1 && pc3 && pc4) return { c1: pc1, c2: base, c3: pc3, c4: pc4 };
+      // preset mode: colors ignored, but provide fallback derivation
+      return { c1: pc1 ?? derived.c1, c2: base, c3: pc3 ?? derived.c3, c4: pc4 ?? "#D2D7EC" };
+    }
+    // No pocket custom -> use global appearance if available
+    if (appearance?.gradient_color1 && appearance.gradient_color2 && appearance.gradient_color3 && appearance.gradient_color4) {
+      return { c1: appearance.gradient_color1, c2: appearance.gradient_color2, c3: appearance.gradient_color3, c4: appearance.gradient_color4 };
+    }
+    if (appearance?.gradient_color1 || appearance?.gradient_color2 || appearance?.gradient_color3 || appearance?.gradient_color4) {
+      const fallback = (() => {
+        const styleId = appearance?.style ?? "sunset";
+        if (styleId !== "auto") {
+          const p = GRADIENT_PRESET_MAP.get(styleId);
+          if (p) return { c1: p.c1, c2: p.c2, c3: p.c3, c4: "#D2D7EC" };
+        }
+        const fb = GRADIENT_PRESET_MAP.get("sunset")!;
+        return { c1: fb.c1, c2: fb.c2, c3: fb.c3, c4: "#D2D7EC" };
+      })();
+      return {
+        c1: appearance?.gradient_color1 ?? fallback.c1,
+        c2: appearance?.gradient_color2 ?? fallback.c2,
+        c3: appearance?.gradient_color3 ?? fallback.c3,
+        c4: appearance?.gradient_color4 ?? fallback.c4,
+      };
+    }
+    if (pc1 && pc3) return { c1: pc1, c2: base, c3: pc3, c4: pc4 ?? "#D2D7EC" };
+    const derived = deriveGradient(base);
+    return { c1: derived.c1, c2: derived.c2, c3: derived.c3, c4: pc4 ?? "#D2D7EC" };
   })();
+  const shaderSpeed = appearance?.gradient_speed ?? 0.14;
+  const shaderBlur = appearance?.gradient_blur ?? 0.7;
+  const shaderIntensity = appearance?.gradient_intensity ?? 0.95;
 
   return (
     <div className="relative w-full overflow-hidden rounded-4xl border border-border p-6">
       <div className="absolute inset-0">
-        <Grainient
-          color1={colors.c1}
-          color2={colors.c2}
-          color3={colors.c3}
-          timeSpeed={timeSpeed}
-          warpStrength={0.7}
-          warpFrequency={4.5}
-          warpSpeed={1.6}
-          grainAmount={0.04}
-          grainAnimated={false}
-          contrast={appearance?.contrast ?? 1.6}
-          saturation={appearance?.saturation ?? 1.1}
-           zoom={0.85}
-           lightMode
-           preset={gradientPreset}
-           className="opacity-90"
+        <ShaderGradientBackground
+          preset={shaderPreset}
+          color1={shaderColors.c1}
+          color2={shaderColors.c2}
+          color3={shaderColors.c3}
+          color4={shaderColors.c4}
+          speed={shaderSpeed}
+          blur={shaderBlur}
+          intensity={shaderIntensity}
+          animationEnabled={appearance?.animation_enabled !== false}
+          reducedMotion={!!reduceMotion}
+          className="absolute inset-0"
         />
-         <div className="absolute inset-0 bg-white/15 backdrop-blur-[0.5px] dark:bg-zinc-900/25" />
       </div>
 
       <div className="relative z-10">
@@ -91,11 +114,14 @@ export function PocketDetailHero({
 }
 
 export function resolveSemuaGradient(appearance: RtAppearanceSettings | null) {
+  if (appearance?.gradient_color1 && appearance.gradient_color2 && appearance.gradient_color3 && appearance.gradient_color4) {
+    return { c1: appearance.gradient_color1, c2: appearance.gradient_color2, c3: appearance.gradient_color3, c4: appearance.gradient_color4 };
+  }
   const styleId = appearance?.style ?? "sunset";
   if (styleId !== "auto") {
     const preset = GRADIENT_PRESET_MAP.get(styleId);
-    if (preset) return { c1: preset.c1, c2: preset.c2, c3: preset.c3 };
+    if (preset) return { c1: preset.c1, c2: preset.c2, c3: preset.c3, c4: appearance?.gradient_color4 ?? "#D2D7EC" };
   }
   const fallback = GRADIENT_PRESET_MAP.get("sunset")!;
-  return { c1: fallback.c1, c2: fallback.c2, c3: fallback.c3 };
+  return { c1: fallback.c1, c2: fallback.c2, c3: fallback.c3, c4: appearance?.gradient_color4 ?? "#D2D7EC" };
 }

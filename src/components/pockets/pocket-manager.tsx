@@ -39,7 +39,8 @@ function PocketForm({
   const [color, setColor] = React.useState(initial?.color ?? "#111827");
   const [gradientC1, setGradientC1] = React.useState<string | null>(initial?.gradient_c1 ?? null);
   const [gradientC3, setGradientC3] = React.useState<string | null>(initial?.gradient_c3 ?? null);
-  const [customGradient, setCustomGradient] = React.useState<boolean>(!!initial?.gradient_c1 || !!initial?.gradient_c3);
+  const [gradientC4, setGradientC4] = React.useState<string | null>(initial?.gradient_c4 ?? null);
+  const [customGradient, setCustomGradient] = React.useState<boolean>(!!initial?.gradient_c1 || !!initial?.gradient_c3 || !!initial?.gradient_c4);
   const [gradientPreset, setGradientPreset] = React.useState<string | null>(initial?.gradient_preset ?? null);
   const [isActive, setIsActive] = React.useState<string>(initial ? String(initial.is_active) : "true");
   const isEdit = !!initial;
@@ -59,8 +60,12 @@ function PocketForm({
   }, [initial?.gradient_c3, initial?.id]);
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
-    setCustomGradient(!!initial?.gradient_c1 || !!initial?.gradient_c3);
-  }, [initial?.gradient_c1, initial?.gradient_c3, initial?.id]);
+    setGradientC4(initial?.gradient_c4 ?? null);
+  }, [initial?.gradient_c4, initial?.id]);
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    setCustomGradient(!!initial?.gradient_c1 || !!initial?.gradient_c3 || !!initial?.gradient_c4);
+  }, [initial?.gradient_c1, initial?.gradient_c3, initial?.gradient_c4, initial?.id]);
   React.useEffect(() => {
     setGradientPreset(initial?.gradient_preset ?? null);
   }, [initial?.gradient_preset, initial?.id]);
@@ -71,9 +76,14 @@ function PocketForm({
   }, [initial?.is_active, initial?.id]);
 
   const preview = React.useMemo(() => {
-    if (customGradient && gradientC1 && gradientC3) return { c1: gradientC1, c2: color, c3: gradientC3 };
-    return deriveGradient(color);
-  }, [color, gradientC1, gradientC3, customGradient]);
+    if (customGradient) {
+      if (gradientC1 && gradientC3 && gradientC4) return { c1: gradientC1, c2: color, c3: gradientC3, c4: gradientC4 };
+      const d = deriveGradient(color);
+      return { c1: gradientC1 ?? d.c1, c2: color, c3: gradientC3 ?? d.c3, c4: gradientC4 ?? "#D2D7EC" };
+    }
+    const d = deriveGradient(color);
+    return { c1: d.c1, c2: d.c2, c3: d.c3, c4: "#D2D7EC" };
+  }, [color, gradientC1, gradientC3, gradientC4, customGradient]);
 
   function handlePresetClick(presetId: string) {
     const animatedPreset = ANIMATED_GRADIENT_PRESETS[presetId as keyof typeof ANIMATED_GRADIENT_PRESETS];
@@ -81,6 +91,7 @@ function PocketForm({
       setColor(animatedPreset.c2.toLowerCase());
       setGradientC1(animatedPreset.c1.toLowerCase());
       setGradientC3(animatedPreset.c3.toLowerCase());
+      setGradientC4(animatedPreset.c4.toLowerCase());
       setGradientPreset(presetId);
       setCustomGradient(true);
       return;
@@ -91,6 +102,7 @@ function PocketForm({
     setColor(applied.color);
     setGradientC1(applied.gradient_c1);
     setGradientC3(applied.gradient_c3);
+    setGradientC4(applied.gradient_c4);
     setGradientPreset("custom");
     setCustomGradient(true);
   }
@@ -103,10 +115,12 @@ function PocketForm({
     if (customGradient) {
       fd.set("gradient_c1", gradientC1 ?? "");
       fd.set("gradient_c3", gradientC3 ?? "");
+      fd.set("gradient_c4", gradientC4 ?? "");
       fd.set("gradient_preset", gradientPreset ?? "custom");
     } else {
       fd.set("gradient_c1", "");
       fd.set("gradient_c3", "");
+      fd.set("gradient_c4", "");
       fd.set("gradient_preset", "");
     }
     if (!fd.get("is_active")) fd.set("is_active", "true");
@@ -153,21 +167,23 @@ function PocketForm({
           <Palette className="size-3.5 text-muted-foreground" />
           <Label className="text-sm">Tampilan Kantong</Label>
         </div>
-        <p className="text-[11px] text-muted-foreground">Atur tiga warna gradient secara bebas atau pilih tema preset.</p>
+        <p className="text-[11px] text-muted-foreground">Atur empat warna gradient secara bebas atau pilih tema preset.</p>
         <GradientPickerPopover
           color={color}
           gradientC1={gradientC1}
           gradientC3={gradientC3}
+          gradientC4={gradientC4}
           gradientPreset={gradientPreset}
           customGradient={customGradient}
           preview={preview}
           onPresetClick={handlePresetClick}
         />
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {([
             { label: "Color 1", value: preview.c1, onChange: setGradientC1 },
             { label: "Color 2", value: color, onChange: setColor },
             { label: "Color 3", value: preview.c3, onChange: setGradientC3 },
+            { label: "Color 4", value: preview.c4, onChange: setGradientC4 },
           ] as const).map((item) => (
             <label key={item.label} className="flex min-w-0 flex-col gap-1 text-[11px] text-muted-foreground">
               {item.label}
@@ -191,12 +207,14 @@ function PocketForm({
           <>
             <input type="hidden" name="gradient_c1" value={gradientC1 ?? ""} />
             <input type="hidden" name="gradient_c3" value={gradientC3 ?? ""} />
+            <input type="hidden" name="gradient_c4" value={gradientC4 ?? ""} />
             <input type="hidden" name="gradient_preset" value={gradientPreset ?? "custom"} />
           </>
         ) : (
           <>
             <input type="hidden" name="gradient_c1" value="" />
             <input type="hidden" name="gradient_c3" value="" />
+            <input type="hidden" name="gradient_c4" value="" />
             <input type="hidden" name="gradient_preset" value="" />
           </>
         )}

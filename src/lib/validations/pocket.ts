@@ -14,6 +14,7 @@ export const pocketSchema = z.object({
   color: z.string().trim().max(20).optional().nullable(),
   gradient_c1: hexColor,
   gradient_c3: hexColor,
+  gradient_c4: hexColor,
   gradient_preset: z.enum(["custom","Prism","Lava","Plasma","Pulse","Vortex","Mist"]).nullable().optional(),
   opening_balance: z
     .number()

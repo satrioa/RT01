@@ -25,6 +25,7 @@ export function GradientPickerPopover({
   color,
   gradientC1,
   gradientC3,
+  gradientC4,
   customGradient,
   gradientPreset,
   onPresetClick,
@@ -32,13 +33,15 @@ export function GradientPickerPopover({
   color: string;
   gradientC1: string | null;
   gradientC3: string | null;
+  gradientC4?: string | null;
   customGradient: boolean;
   gradientPreset?: string | null;
-  preview?: unknown;
+  preview?: { c1: string; c2: string; c3: string; c4: string } | unknown;
   onPresetClick: (presetId: string) => void;
   onCustomChange?: (v: boolean) => void;
   onC1Change?: (v: string) => void;
   onC3Change?: (v: string) => void;
+  onC4Change?: (v: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const matched = customGradient ? findMatchingPreset(color, gradientC1, gradientC3) : undefined;
@@ -55,7 +58,7 @@ export function GradientPickerPopover({
         <span
           className="h-8 w-16 shrink-0 overflow-hidden rounded-lg border"
           style={{
-            background: `linear-gradient(135deg, ${gradientC1 ?? color}, ${color}, ${gradientC3 ?? color})`,
+            background: `linear-gradient(135deg, ${gradientC1 ?? color}, ${color}, ${gradientC3 ?? color}, ${gradientC4 ?? "#D2D7EC"})`,
           }}
         />
         <span className="min-w-0 flex-1">
@@ -71,7 +74,7 @@ export function GradientPickerPopover({
         <div className="border-t p-3">
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Animated Gradient</p>
           <div className="mb-3 grid grid-cols-3 gap-2">
-            {(Object.entries(ANIMATED_GRADIENT_PRESETS) as [string, { c1: string; c2: string; c3: string }][]).map(([id, preset]) => {
+            {(Object.entries(ANIMATED_GRADIENT_PRESETS) as [string, { c1: string; c2: string; c3: string; c4: string }][]).map(([id, preset]) => {
               const selected = gradientPreset === id;
               return (
                 <button
@@ -91,6 +94,7 @@ export function GradientPickerPopover({
                     <span className="flex-1" style={{ background: preset.c1 }} />
                     <span className="flex-1" style={{ background: preset.c2 }} />
                     <span className="flex-1" style={{ background: preset.c3 }} />
+                    <span className="flex-1" style={{ background: preset.c4 }} />
                   </span>
                   <span className="flex items-center gap-0.5 text-[10px] font-medium">
                     {selected && <Check className="size-3 text-primary" />}
@@ -122,6 +126,7 @@ export function GradientPickerPopover({
                     <span className="flex-1" style={{ background: preset.c1 }} />
                     <span className="flex-1" style={{ background: preset.c2 }} />
                     <span className="flex-1" style={{ background: preset.c3 }} />
+                    <span className="flex-1" style={{ background: "#D2D7EC" }} />
                   </span>
                   <span className="flex items-center gap-0.5 text-[10px] font-medium">
                     {selected && <Check className="size-3 text-primary" />}
