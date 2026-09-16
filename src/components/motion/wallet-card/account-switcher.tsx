@@ -114,7 +114,7 @@ export function AccountSwitcher({
             role="listbox"
             transition={morph}
             style={{ borderRadius: 16 }}
-            className="absolute top-0 -right-2 -left-2 z-30 overflow-hidden border border-border/30 bg-background backdrop-blur-md"
+            className="absolute top-0 -right-2 -left-2 z-30 overflow-hidden border border-zinc-800 bg-zinc-900 text-white"
           >
             <button
               type="button"
@@ -124,7 +124,7 @@ export function AccountSwitcher({
               {activeAccount ? <AccountAvatar account={activeAccount} /> : null}
               <motion.span
                 layout="position"
-                className="min-w-0 flex-1 truncate text-sm font-medium text-foreground"
+                className="min-w-0 flex-1 truncate text-sm font-medium text-white"
               >
                 {activeAccount?.name ?? "Select account"}
               </motion.span>
@@ -132,7 +132,7 @@ export function AccountSwitcher({
                 layout="position"
                 animate={{ rotate: 180 }}
                 transition={morph}
-                className="text-muted-foreground"
+                className="text-white/60"
               >
                 <ChevronDown className="h-4 w-4" />
               </motion.span>
@@ -156,10 +156,10 @@ export function AccountSwitcher({
                     className={cn(
                       "flex items-center rounded-xl pr-1 text-sm transition-colors",
                       selected
-                        ? "bg-muted text-foreground"
+                        ? "bg-zinc-800 text-white"
                         : cn(
-                            "text-muted-foreground",
-                            armed && "hover:bg-muted hover:text-foreground",
+                            "text-white/70",
+                            armed && "hover:bg-zinc-800 hover:text-white",
                           ),
                     )}
                   >
@@ -178,15 +178,18 @@ export function AccountSwitcher({
                         <span className="truncate font-medium">
                           {account.name}
                         </span>
-                        <span className="truncate text-xs text-muted-foreground">
+                        <span className="truncate text-xs text-white/60">
                           {truncateAddress(account.address)}
                         </span>
                       </span>
                       {selected ? (
-                        <Check className="h-4 w-4 shrink-0 text-foreground" />
+                        <Check className="h-4 w-4 shrink-0 text-white" />
                       ) : null}
                     </button>
-                    <CopyButton value={account.address} />
+                    <CopyButton
+                      value={account.address}
+                      className="text-white/60 hover:bg-zinc-800 hover:text-white"
+                    />
                   </motion.li>
                 );
               })}

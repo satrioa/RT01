@@ -4,6 +4,7 @@ import { TrendingDown, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { EASE_OUT } from "@/lib/ease";
+import { formatRupiah } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
@@ -56,11 +57,7 @@ export function BalanceDelta({
             ) : (
               <TrendingDown className="h-3.5 w-3.5" />
             )}
-            {up ? "+" : "-"}$
-            {Math.abs(delta.amount).toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {`${up ? "+" : "-"}${formatRupiah(Math.abs(delta.amount))}`}
           </motion.span>
         ) : null}
       </AnimatePresence>
