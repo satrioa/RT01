@@ -162,12 +162,26 @@ function PocketForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-2xl border bg-muted/20 p-3">
+      <div className="space-y-3">
         <div className="flex items-center gap-1.5">
           <Palette className="size-3.5 text-muted-foreground" />
           <Label className="text-sm">Tampilan Kantong</Label>
+          <span className="ml-auto text-[11px] text-muted-foreground">Kartu</span>
         </div>
-        <p className="text-[11px] text-muted-foreground">Atur empat warna gradient secara bebas atau pilih tema preset.</p>
+
+        <div className="relative isolate h-16 w-full overflow-hidden rounded-xl border bg-muted">
+          <div
+            className="absolute inset-0 transition-all duration-300"
+            style={{
+              background: `linear-gradient(135deg, ${preview.c1}, ${preview.c2}, ${preview.c3}, ${preview.c4})`,
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/30" />
+          <div className="relative z-10 flex h-full items-center px-3">
+            <span className="text-xs font-semibold text-white drop-shadow-sm">Preview gradien kantong ini</span>
+          </div>
+        </div>
+
         <GradientPickerPopover
           color={color}
           gradientC1={gradientC1}
@@ -178,6 +192,7 @@ function PocketForm({
           preview={preview}
           onPresetClick={handlePresetClick}
         />
+
         <div className="grid grid-cols-4 gap-2">
           {([
             { label: "Color 1", value: preview.c1, onChange: setGradientC1 },
@@ -195,7 +210,7 @@ function PocketForm({
                   setGradientPreset("custom");
                   item.onChange(e.target.value);
                 }}
-                className="h-10 w-full cursor-pointer rounded-lg border bg-background p-1"
+                className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background p-1"
                 aria-label={item.label}
               />
               <span className="truncate font-mono text-[10px] uppercase">{item.value}</span>
