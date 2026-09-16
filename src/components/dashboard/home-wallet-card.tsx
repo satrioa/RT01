@@ -45,11 +45,11 @@ function RtWalletActions({
             size="icon"
             onClick={onClick}
             aria-label={label}
-            className="size-12 rounded-full"
+            className="size-12 rounded-full text-white"
           >
             <Icon className="h-5 w-5" />
           </GlassButton>
-          <span className="text-xs font-medium text-muted-foreground">{label}</span>
+          <span className="text-xs font-medium text-white/90">{label}</span>
         </motion.div>
       ))}
     </div>
@@ -180,23 +180,27 @@ export function HomeWalletCard({
           className="absolute inset-0"
         />
       </div>
+      {/* Readability overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-black/15 to-black/35" />
 
       {/* Content above shader */}
       <div className="relative z-10">
         {/* Header: wallet switcher */}
         <div className="flex items-center justify-between gap-2">
-          <AccountSwitcher accounts={accounts} activeAccount={accounts.find((a) => a.id === activeId)} onSelect={setActiveId} />
-          <span className="shrink-0 text-xs text-muted-foreground">{activeId === "semua" ? "Semua" : activePocket?.name}</span>
+          <div className="min-w-0 flex-1 text-white [&_.text-foreground]:!text-white [&_.text-muted-foreground]:!text-white/60">
+            <AccountSwitcher accounts={accounts} activeAccount={accounts.find((a) => a.id === activeId)} onSelect={setActiveId} />
+          </div>
+          <span className="shrink-0 text-xs text-white/70">{activeId === "semua" ? "Semua" : activePocket?.name}</span>
         </div>
 
         <div className="mt-8 flex flex-col items-center text-center">
           <div className="flex items-center gap-1.5">
-            <p className="text-xs text-muted-foreground">Saldo</p>
+            <p className="text-xs text-white/80">Saldo</p>
             <button
               type="button"
               onClick={() => setBalanceHidden((h) => !h)}
               aria-label={balanceHidden ? "Show balance" : "Hide balance"}
-              className="text-muted-foreground outline-none transition-colors hover:text-foreground"
+              className="text-white/70 outline-none transition-colors hover:text-white"
             >
               {balanceHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
             </button>
@@ -204,18 +208,18 @@ export function HomeWalletCard({
           <ActionSwapText
             value={balanceHidden ? "hidden" : shownBalance}
             animation="cascade"
-            className="text-3xl font-semibold text-foreground"
+            className="text-3xl font-semibold text-white"
           >
             {balanceHidden ? maskedBalance : shownBalance}
           </ActionSwapText>
           {balanceHidden ? (
             <div className="mt-2 flex h-7 items-center justify-center">
-              <span className="translate-y-[3px] text-sm font-semibold text-muted-foreground leading-none tracking-[0.3em]">*****</span>
+              <span className="translate-y-[3px] text-sm font-semibold text-white/70 leading-none tracking-[0.3em]">*****</span>
             </div>
           ) : (
             <BalanceDelta balance={balance} initialChange={0} />
           )}
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-[11px] text-white/70">
             {activeId === "semua" ? `${pockets.length} kantong aktif` : `${formatRupiah(balance)} - ${activePocket?.name ?? ""}`}
           </p>
         </div>

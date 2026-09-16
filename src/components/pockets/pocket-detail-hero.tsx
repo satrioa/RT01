@@ -92,20 +92,22 @@ export function PocketDetailHero({
           className="absolute inset-0"
         />
       </div>
+      {/* Readability overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-black/15 to-black/35" />
 
       <div className="relative z-10">
-        <p className="flex items-center gap-2 text-lg font-semibold text-foreground">
+        <p className="flex items-center gap-2 text-lg font-semibold text-white">
           <Wallet className="size-5" /> {pocket?.name ?? pocketId.slice(0, 8)}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">{pocket?.description ?? "Kantong RT"}</p>
-        <p className="mt-4 text-[11px] tracking-widest text-muted-foreground">SALDO SAAT INI</p>
-        <p className="text-3xl font-bold tracking-tight text-foreground">
+        <p className="mt-1 text-xs text-white/75">{pocket?.description ?? "Kantong RT"}</p>
+        <p className="mt-4 text-[11px] tracking-widest text-white/70">SALDO SAAT INI</p>
+        <p className="text-3xl font-bold tracking-tight text-white">
           {formatRupiah(Number(pocket?.balance ?? 0))}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-white/70">
           Saldo awal: {formatRupiah(Number(pocket?.opening_balance ?? 0))}
         </p>
-        <Link href="/transactions/new?type=transfer" className="mt-3 inline-flex text-xs font-medium text-primary underline">
+        <Link href="/transactions/new?type=transfer" className="mt-3 inline-flex text-xs font-medium text-white/90 underline decoration-white/50 underline-offset-4 hover:text-white">
           Pindah Kantong →
         </Link>
       </div>
