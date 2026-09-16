@@ -67,20 +67,22 @@ export function BottomNav() {
           value={active}
           onValueChange={(v) => router.push(v)}
           aria-label="Primary"
-          className="rounded-full px-1.5 py-1.5"
+          variant="dark"
+          className="rounded-full bg-zinc-900 border border-zinc-800 px-1.5 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
         >
           {NAV.map((item) => (
             <GlassToggleGroupItem
               key={item.value}
               value={item.value}
               aria-label={item.label}
+              variant="dark"
               className={cn(
-                "px-3.5 py-2.5",
+                "px-3.5 py-2.5 text-white/60 hover:text-white data-checked:text-white",
                 item.fab &&
-                  "mx-0.5 bg-zinc-900 text-white hover:text-white data-checked:text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:text-zinc-900 dark:data-checked:text-zinc-900"
+                  "mx-0.5 bg-white text-zinc-900 hover:text-zinc-900 data-checked:text-zinc-900 hover:bg-white"
               )}
             >
-              <item.icon className="size-5" strokeWidth={active === item.value ? 2.2 : 1.8} />
+              <item.icon className="size-5 text-current" strokeWidth={active === item.value ? 2.2 : 1.8} />
             </GlassToggleGroupItem>
           ))}
         </GlassToggleGroup>

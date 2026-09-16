@@ -56,6 +56,7 @@ export function PocketReportContent({
   prevYear,
   prevMonth,
   pocketsCount,
+  isViewer,
 }: {
   pocket: { id: string; name: string; color: string | null } | null;
   isRekap: boolean;
@@ -65,6 +66,7 @@ export function PocketReportContent({
   prevYear: number;
   prevMonth: number;
   pocketsCount: number;
+  isViewer?: boolean;
 }) {
   const router = useRouter();
   const [generating, setGenerating] = React.useState(false);
@@ -183,13 +185,19 @@ export function PocketReportContent({
             <CardContent className="p-6 text-center">
               <p className="text-sm font-semibold">Laporan belum dibuat</p>
               <p className="mt-1 text-xs text-muted-foreground">Bulan {monthLabel(year, month)} {isRekap ? "Rekap" : pocket?.name} belum memiliki laporan.</p>
-              <Button className="mt-4 w-full rounded-xl" onClick={handleGenerate} disabled={generating}>
-                {generating ? "Membuat..." : `Buat Laporan ${isRekap ? "Rekap" : pocket?.name}`}
-              </Button>
-              {isRekap && pocketsCount > 0 && (
-                <Button variant="outline" className="mt-2 w-full rounded-xl" onClick={handleGenerateAll} disabled={generatingAll}>
-                  {generatingAll ? "Membuat..." : "Buat Semua Kantong + Rekap"}
-                </Button>
+              {!isViewer ? (
+                <>
+                  <Button className="mt-4 w-full rounded-xl" onClick={handleGenerate} disabled={generating}>
+                    {generating ? "Membuat..." : `Buat Laporan ${isRekap ? "Rekap" : pocket?.name}`}
+                  </Button>
+                  {isRekap && pocketsCount > 0 && (
+                    <Button variant="outline" className="mt-2 w-full rounded-xl" onClick={handleGenerateAll} disabled={generatingAll}>
+                      {generatingAll ? "Membuat..." : "Buat Semua Kantong + Rekap"}
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <p className="mt-4 text-xs text-muted-foreground">Hubungi bendahara untuk membuat laporan.</p>
               )}
             </CardContent>
           </Card>

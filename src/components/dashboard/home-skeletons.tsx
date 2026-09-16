@@ -47,13 +47,14 @@ export function OverviewCardsSkeleton() {
 
 export function ExpenseCategoryPieSkeleton() {
   return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between px-1">
-        <Skeleton className="h-4 w-44" />
-        <Skeleton className="h-3 w-20" />
-      </div>
-      <Card className="overflow-hidden">
-        <CardContent className="flex flex-col items-center gap-2 p-5">
+    <Card className="overflow-hidden">
+      <CardContent className="flex flex-col gap-3 p-5">
+        <div className="flex items-center justify-between gap-3">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-7 w-48 rounded-full" />
+        </div>
+        <Skeleton className="h-3 w-24" />
+        <div className="flex flex-col items-center gap-2">
           <Skeleton className="size-[200px] rounded-full" />
           <div className="mt-1 w-full space-y-1.5">
             {[0, 1, 2].map((i) => (
@@ -65,9 +66,9 @@ export function ExpenseCategoryPieSkeleton() {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-    </section>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -4,6 +4,7 @@ import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { getMonthlyReport, listMonthlyReports } from "@/lib/reports/monthly-report-service";
 import type { PocketReportData } from "@/components/reports/pocket-report-content";
 import { PocketReportTabs } from "@/components/reports/pocket-report-tabs";
+import { getCurrentUserRole } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -23,12 +24,14 @@ export default async function ReportsPage({
 
   const rtId = DEV_RT_ID;
   const supabase = createServiceClient();
-  const { data: rtProfile } = await supabase.from("rt_profiles").select("name, rt_number, rw_number").eq("id", rtId).maybeSingle();
+  const [{ data: rtProfile }, role, { data: pocketsData }] = await Promise.all([
+    supabase.from("rt_profiles").select("name, rt_number, rw_number").eq("id", rtId).maybeSingle(),
+    getCurrentUserRole(),
+    supabase.from("pockets").select("id, name, color").eq("rt_id", rtId).eq("is_active", true).order("sort_order", { ascending: true }),
+  ]);
   const rtName = (rtProfile as { name?: string } | null)?.name ?? "RT 01";
   const rwNumber = (rtProfile as { rw_number?: string } | null)?.rw_number ?? "07";
-
-  // Fetch active pockets for tabs (dinamis)
-  const { data: pocketsData } = await supabase.from("pockets").select("id, name, color").eq("rt_id", rtId).eq("is_active", true).order("sort_order", { ascending: true });
+  const isViewer = !role || role === "viewer";
   const pockets = (pocketsData as { id: string; name: string; color: string | null }[] | null) ?? [];
   const initialKey = sp.pocket ?? (pockets[0]?.id ?? "rekap");
 
@@ -65,6 +68,7 @@ export default async function ReportsPage({
           reportsMap={reportsMap}
           rtName={rtName}
           rwNumber={rwNumber}
+          isViewer={isViewer}
         />
         <BottomNavSpacer />
       </div>

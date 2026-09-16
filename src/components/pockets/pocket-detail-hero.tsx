@@ -21,6 +21,14 @@ export function PocketDetailHero({
   const reduceMotion = useReducedMotion();
 
   const colors = (() => {
+    const pocketPreset = pocket?.gradient_preset;
+    if (pocketPreset && pocketPreset !== "custom" && pocket) {
+      const base = pocket.color ?? "#111827";
+      const c1 = pocket.gradient_c1 ?? null;
+      const c3 = pocket.gradient_c3 ?? null;
+      if (c1 && c3) return { c1, c2: base, c3 };
+      return deriveGradient(base);
+    }
     if (appearance?.gradient_color1 && appearance.gradient_color2 && appearance.gradient_color3) {
       return { c1: appearance.gradient_color1, c2: appearance.gradient_color2, c3: appearance.gradient_color3 };
     }
@@ -32,9 +40,12 @@ export function PocketDetailHero({
   })();
 
   const timeSpeed = appearance?.animation_enabled === false || reduceMotion ? 0 : 0.18;
-  const gradientPreset = appearance?.gradient_preset && appearance.gradient_preset !== "custom"
-    ? appearance.gradient_preset
-    : undefined;
+  const gradientPreset = (() => {
+    const pocketPreset = pocket?.gradient_preset;
+    if (pocketPreset && pocketPreset !== "custom") return pocketPreset as "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
+    if (appearance?.gradient_preset && appearance.gradient_preset !== "custom") return appearance.gradient_preset as "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
+    return undefined;
+  })();
 
   return (
     <div className="relative w-full overflow-hidden rounded-4xl border border-border p-6">
@@ -69,7 +80,7 @@ export function PocketDetailHero({
           {formatRupiah(Number(pocket?.balance ?? 0))}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Saldo awal: {formatRupiah(Number((pocket as unknown as { opening_balance?: string | number } | null)?.opening_balance ?? 0))}
+          Saldo awal: {formatRupiah(Number(pocket?.opening_balance ?? 0))}
         </p>
         <Link href="/transactions/new?type=transfer" className="mt-3 inline-flex text-xs font-medium text-primary underline">
           Pindah Kantong →

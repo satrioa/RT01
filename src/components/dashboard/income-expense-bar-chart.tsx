@@ -46,7 +46,7 @@ export function IncomeExpenseBarChart({
       <CardContent className="px-2 pb-4">
         <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={visibleData} margin={{ top: 8, right: 8, bottom: 8, left: 8 }} barCategoryGap="28%">
+            <BarChart data={visibleData} margin={{ top: 8, right: 8, bottom: 8, left: 8 }} barCategoryGap="16%" barGap={6}>
               <CartesianGrid horizontal vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} />
               <Tooltip
@@ -54,8 +54,8 @@ export function IncomeExpenseBarChart({
                 contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)", fontSize: 11 }}
                 formatter={(value, name) => [formatRupiah(Number(value)), name === "income" ? "Pemasukan" : "Pengeluaran"]}
               />
-              <Bar dataKey="income" fill="var(--chart-1)" radius={[5, 5, 0, 0]} maxBarSize={18} />
-              <Bar dataKey="expense" fill="var(--chart-1)" fillOpacity={0.45} radius={[5, 5, 0, 0]} maxBarSize={18} />
+              <Bar dataKey="income" fill="var(--chart-1)" radius={[5, 5, 0, 0]} maxBarSize={32} />
+              <Bar dataKey="expense" fill="var(--chart-1)" fillOpacity={0.45} radius={[5, 5, 0, 0]} maxBarSize={32} />
             </BarChart>
           </ResponsiveContainer>
         </div>

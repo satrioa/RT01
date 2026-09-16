@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createBrowserClient } from "@/lib/supabase/client";
+import { createBrowserClient, syncAuthToCookies, clearAuthCookies } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,9 +42,12 @@ export default function AdminLoginPage() {
         const role = (profile as { role?: string } | null)?.role;
         if (role === "viewer") {
           await supabase.auth.signOut();
+          clearAuthCookies();
           setError("Akun Anda tidak memiliki akses admin.");
           return;
         }
+
+        syncAuthToCookies(data.session as unknown as { access_token: string; refresh_token?: string });
 
         router.push("/");
         router.refresh();

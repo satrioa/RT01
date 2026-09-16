@@ -22,6 +22,7 @@ export function PocketReportTabs({
   reportsMap,
   rtName,
   rwNumber,
+  isViewer,
 }: {
   pockets: { id: string; name: string; color: string | null }[];
   year: number;
@@ -30,6 +31,7 @@ export function PocketReportTabs({
   reportsMap: Record<string, PocketReportData>;
   rtName: string;
   rwNumber: string;
+  isViewer?: boolean;
 }) {
   const router = useRouter();
   const orderedKeys = React.useMemo(() => [...pockets.map((p) => p.id), "rekap"], [pockets]);
@@ -162,6 +164,7 @@ export function PocketReportTabs({
                 prevYear={prevYear}
                 prevMonth={prevMonth}
                 pocketsCount={pockets.length}
+                isViewer={isViewer}
               />
             </motion.div>
           </AnimatePresence>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownToLine, ArrowUp, Eye, EyeOff, Receipt } from "lucide-react";
+import { ArrowDownToLine, ArrowRight, ArrowUp, Eye, EyeOff, Receipt } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -10,9 +10,10 @@ import { AccountSwitcher } from "@/components/motion/wallet-card/account-switche
 import { BalanceDelta } from "@/components/motion/wallet-card/balance-delta";
 import type { WalletAccount } from "@/components/motion/wallet-card/types";
 import Grainient from "@/components/motion/grainient";
+import { Button } from "@/components/ui/button";
 import { SPRING_PRESS } from "@/lib/ease";
 import { formatRupiah } from "@/lib/format";
-import type { PocketBalance, RtAppearanceSettings } from "@/types/database";
+import type { PocketBalance, RtAppearanceSettings, UserRole } from "@/types/database";
 import { deriveGradient } from "@/lib/color";
 import { GRADIENT_PRESET_MAP, DEFAULT_PRESET } from "@/lib/gradients";
 
@@ -59,12 +60,15 @@ export function HomeWalletCard({
   pockets,
   totalBalance,
   appearance,
+  role,
 }: {
   pockets: PocketBalance[];
   totalBalance: number;
   appearance?: RtAppearanceSettings | null;
+  role?: UserRole | null;
 }) {
   const router = useRouter();
+  const isViewer = !role || role === "viewer";
   // Build accounts: Semua + dynamic pockets
   const accounts: WalletAccount[] = [
     { id: "semua", name: "Semua", address: `${pockets.length} kantong - Total` },
@@ -115,17 +119,23 @@ export function HomeWalletCard({
     }
     // Per kantong: c2 = color, c1/c3 = custom atau derive
     const base = activePocket?.color ?? "#111827";
-    const c1 = (activePocket as unknown as { gradient_c1?: string | null })?.gradient_c1 ?? null;
-    const c3 = (activePocket as unknown as { gradient_c3?: string | null })?.gradient_c3 ?? null;
+    const c1 = activePocket?.gradient_c1 ?? null;
+    const c3 = activePocket?.gradient_c3 ?? null;
     if (c1 && c3) return { c1, c2: base, c3 };
     return deriveGradient(base);
   })();
   const grainTimeSpeed = appearance?.animation_enabled === false || reduceMotion ? 0 : 0.18;
   const grainSaturation = appearance?.saturation ?? 1.1;
   const grainContrast = appearance?.contrast ?? 1.6;
-  const gradientPreset = activeId === "semua" && appearance?.gradient_preset && appearance.gradient_preset !== "custom"
-    ? appearance.gradient_preset
-    : undefined;
+  const gradientPreset = (() => {
+    if (activeId === "semua") {
+      if (appearance?.gradient_preset && appearance.gradient_preset !== "custom") return appearance.gradient_preset as "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
+      return undefined;
+    }
+    const pocketPreset = activePocket?.gradient_preset;
+    if (pocketPreset && pocketPreset !== "custom") return pocketPreset as "Prism" | "Lava" | "Plasma" | "Pulse" | "Vortex" | "Mist";
+    return undefined;
+  })();
 
   // For delta, use 0 as defaultChange
   return (
@@ -193,7 +203,18 @@ export function HomeWalletCard({
         </div>
 
         <div className="mt-8">
-          <RtWalletActions onPemasukan={handlePemasukan} onPengeluaran={handlePengeluaran} onTransaksi={handleTransaksi} />
+          {isViewer ? (
+            <Button
+              onClick={() => router.push("/transactions")}
+              variant="secondary"
+              className="w-full rounded-full bg-white/80 text-foreground backdrop-blur hover:bg-white dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+            >
+              Lihat semua transaksi
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <RtWalletActions onPemasukan={handlePemasukan} onPengeluaran={handlePengeluaran} onTransaksi={handleTransaksi} />
+          )}
         </div>
       </div>
     </div>

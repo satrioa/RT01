@@ -40,6 +40,7 @@ function PocketForm({
   const [gradientC1, setGradientC1] = React.useState<string | null>(initial?.gradient_c1 ?? null);
   const [gradientC3, setGradientC3] = React.useState<string | null>(initial?.gradient_c3 ?? null);
   const [customGradient, setCustomGradient] = React.useState<boolean>(!!initial?.gradient_c1 || !!initial?.gradient_c3);
+  const [gradientPreset, setGradientPreset] = React.useState<string | null>(initial?.gradient_preset ?? null);
   const [isActive, setIsActive] = React.useState<string>(initial ? String(initial.is_active) : "true");
   const isEdit = !!initial;
 
@@ -60,6 +61,9 @@ function PocketForm({
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     setCustomGradient(!!initial?.gradient_c1 || !!initial?.gradient_c3);
   }, [initial?.gradient_c1, initial?.gradient_c3, initial?.id]);
+  React.useEffect(() => {
+    setGradientPreset(initial?.gradient_preset ?? null);
+  }, [initial?.gradient_preset, initial?.id]);
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
@@ -77,6 +81,7 @@ function PocketForm({
       setColor(animatedPreset.c2.toLowerCase());
       setGradientC1(animatedPreset.c1.toLowerCase());
       setGradientC3(animatedPreset.c3.toLowerCase());
+      setGradientPreset(presetId);
       setCustomGradient(true);
       return;
     }
@@ -86,6 +91,7 @@ function PocketForm({
     setColor(applied.color);
     setGradientC1(applied.gradient_c1);
     setGradientC3(applied.gradient_c3);
+    setGradientPreset("custom");
     setCustomGradient(true);
   }
 
@@ -97,9 +103,11 @@ function PocketForm({
     if (customGradient) {
       fd.set("gradient_c1", gradientC1 ?? "");
       fd.set("gradient_c3", gradientC3 ?? "");
+      fd.set("gradient_preset", gradientPreset ?? "custom");
     } else {
       fd.set("gradient_c1", "");
       fd.set("gradient_c3", "");
+      fd.set("gradient_preset", "");
     }
     if (!fd.get("is_active")) fd.set("is_active", "true");
     const res = isEdit && initial
@@ -150,6 +158,7 @@ function PocketForm({
           color={color}
           gradientC1={gradientC1}
           gradientC3={gradientC3}
+          gradientPreset={gradientPreset}
           customGradient={customGradient}
           preview={preview}
           onPresetClick={handlePresetClick}
@@ -167,6 +176,7 @@ function PocketForm({
                 value={/^#[0-9a-fA-F]{6}$/.test(item.value) ? item.value : "#111827"}
                 onChange={(e) => {
                   setCustomGradient(true);
+                  setGradientPreset("custom");
                   item.onChange(e.target.value);
                 }}
                 className="h-10 w-full cursor-pointer rounded-lg border bg-background p-1"
@@ -181,11 +191,13 @@ function PocketForm({
           <>
             <input type="hidden" name="gradient_c1" value={gradientC1 ?? ""} />
             <input type="hidden" name="gradient_c3" value={gradientC3 ?? ""} />
+            <input type="hidden" name="gradient_preset" value={gradientPreset ?? "custom"} />
           </>
         ) : (
           <>
             <input type="hidden" name="gradient_c1" value="" />
             <input type="hidden" name="gradient_c3" value="" />
+            <input type="hidden" name="gradient_preset" value="" />
           </>
         )}
       </div>

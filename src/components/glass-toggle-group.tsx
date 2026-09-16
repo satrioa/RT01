@@ -19,6 +19,7 @@ type GlassToggleGroupProps = Omit<LiquidGlassProps, "children"> & {
   onValueChange?: (value: string) => void;
   children: React.ReactNode;
   "aria-label"?: string;
+  variant?: "light" | "dark";
 };
 
 function GlassToggleGroup({
@@ -32,6 +33,7 @@ function GlassToggleGroup({
   refraction,
   mapSize,
   bezel,
+  variant = "light",
   ...props
 }: GlassToggleGroupProps) {
   const [currentValue, setCurrentValue] = useState(value ?? defaultValue ?? "");
@@ -92,7 +94,11 @@ function GlassToggleGroup({
         refraction={refraction}
         mapSize={mapSize}
         bezel={bezel}
-        className={cn("inline-block overflow-visible rounded-full", className)}
+        className={cn(
+          "inline-block overflow-visible rounded-full",
+          variant === "dark" && "bg-zinc-900 border border-zinc-800 shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+          className
+        )}
         {...props}
       >
         <RadioGroup
@@ -107,10 +113,14 @@ function GlassToggleGroup({
               aria-hidden
               className={cn(
                 "pointer-events-none absolute top-0 h-full rounded-full",
-                "bg-gradient-to-b from-white/50 to-white/30 dark:from-white/[0.12] dark:to-white/[0.04]",
-                "border border-white/40 dark:border-white/[0.06]",
-                "shadow-[0_-1px_2px_rgba(255,255,255,0.8),0_1px_1px_rgba(0,0,0,0.08),0_2px_4px_rgba(0,0,0,0.1),0_4px_8px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.9),inset_0_-1px_1px_rgba(0,0,0,0.05)]",
-                "dark:shadow-[0_-1px_2px_rgba(255,255,255,0.1),0_1px_1px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.25),0_8px_16px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_-1px_1px_rgba(0,0,0,0.3)]",
+                variant === "dark"
+                  ? "bg-white/[0.14] border border-white/[0.1] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]"
+                  : cn(
+                      "bg-gradient-to-b from-white/50 to-white/30 dark:from-white/[0.12] dark:to-white/[0.04]",
+                      "border border-white/40 dark:border-white/[0.06]",
+                      "shadow-[0_-1px_2px_rgba(255,255,255,0.8),0_1px_1px_rgba(0,0,0,0.08),0_2px_4px_rgba(0,0,0,0.1),0_4px_8px_rgba(0,0,0,0.1),0_8px_16px_rgba(0,0,0,0.08),inset_0_1px_1px_rgba(255,255,255,0.9),inset_0_-1px_1px_rgba(0,0,0,0.05)]",
+                      "dark:shadow-[0_-1px_2px_rgba(255,255,255,0.1),0_1px_1px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.25),0_8px_16px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.12),inset_0_-1px_1px_rgba(0,0,0,0.3)]"
+                    )
               )}
               initial={{ left: puckStyle.left, width: puckStyle.width, scaleY: 1 }}
               animate={puckControls}
@@ -133,9 +143,10 @@ type GlassToggleGroupItemProps = {
   children: React.ReactNode;
   className?: string;
   "aria-label"?: string;
+  variant?: "light" | "dark";
 };
 
-function GlassToggleGroupItem({ value, children, className, "aria-label": ariaLabel }: GlassToggleGroupItemProps) {
+function GlassToggleGroupItem({ value, children, className, "aria-label": ariaLabel, variant = "light" }: GlassToggleGroupItemProps) {
   const context = useContext(GlassToggleGroupContext);
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -152,10 +163,9 @@ function GlassToggleGroupItem({ value, children, className, "aria-label": ariaLa
       className={cn(
         "relative z-10 inline-flex h-auto w-auto cursor-pointer items-center justify-center rounded-full px-4 py-2",
         "aspect-auto shrink-0 border-0 bg-transparent shadow-none after:hidden dark:bg-transparent data-checked:bg-transparent dark:data-checked:bg-transparent",
-        "text-sm font-medium text-foreground/60 transition-colors duration-200",
-        "hover:text-foreground/85",
-        "data-checked:text-foreground",
-        "focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+        variant === "dark"
+          ? "text-sm font-medium text-white/60 transition-colors duration-200 hover:text-white data-checked:text-white focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-white/20"
+          : "text-sm font-medium text-foreground/60 transition-colors duration-200 hover:text-foreground/85 data-checked:text-foreground focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
         className,
       )}
     >

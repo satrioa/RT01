@@ -31,9 +31,7 @@ function formatStatValue(
   prefix?: string,
   suffix?: string
 ): string {
-  const formatted = new Intl.NumberFormat(undefined, formatOptions).format(
-    value
-  );
+  const formatted = new Intl.NumberFormat("id-ID", formatOptions).format(value);
   return `${prefix ?? ""}${formatted}${suffix ?? ""}`;
 }
 
@@ -106,6 +104,7 @@ export function ChartStatFlow({
       <span className={cn("text-foreground tabular-nums", valueClassName)}>
         {numberFlowReady ? (
           <NumberFlow
+            locales="id-ID"
             format={formatOptions}
             isolate
             prefix={prefix}

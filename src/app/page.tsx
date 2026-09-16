@@ -24,8 +24,31 @@ export default async function Page() {
   // Fetch income/expense for current month directly from DB
   let totalIncome = 0;
   let totalExpense = 0;
-  let expenseByCategory: { label: string; value: number }[] = [];
   const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const startYear = new Date(now.getFullYear(), 0, 1).toISOString();
+  const todayLabel = now.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+  const monthLabel = now.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  const yearLabel = String(now.getFullYear());
+
+  type CatRow = { amount: string; category: { name: string } | null };
+  function mapByCat(data: unknown): { label: string; value: number }[] {
+    const byCat = new Map<string, number>();
+    for (const r of ((data as CatRow[] | null) ?? [])) {
+      const label = r.category?.name ?? "Tanpa kategori";
+      byCat.set(label, (byCat.get(label) ?? 0) + Number(r.amount));
+    }
+    return Array.from(byCat.entries())
+      .map(([label, value]) => ({ label, value }))
+      .filter((i) => i.value > 0)
+      .sort((a, b) => b.value - a.value);
+  }
+
+  let expenseByCategoryToday: { label: string; value: number }[] = [];
+  let expenseByCategoryMonth: { label: string; value: number }[] = [];
+  let expenseByCategoryYear: { label: string; value: number }[] = [];
+
   const monthlyChartData = Array.from({ length: 6 }, (_, index) => {
     const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
     const base = {
@@ -42,24 +65,19 @@ export default async function Page() {
   }).flat();
   if (hasSupabaseEnv()) {
     const supabase = createServiceClient();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const chartStart = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString();
-    const [incRes, expRes, expCatRes] = await Promise.all([
-      supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "income").gte("transaction_date", start),
-      supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", start),
-      supabase.from("transactions").select("amount, category:categories(name)").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", start).limit(2000),
+    const [incRes, expRes, expCatTodayRes, expCatMonthRes, expCatYearRes] = await Promise.all([
+      supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "income").gte("transaction_date", startMonth),
+      supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", startMonth),
+      supabase.from("transactions").select("amount, category:categories(name)").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", startToday).limit(2000),
+      supabase.from("transactions").select("amount, category:categories(name)").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", startMonth).limit(2000),
+      supabase.from("transactions").select("amount, category:categories(name)").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", startYear).limit(2000),
     ]);
     totalIncome = (incRes.data ?? []).reduce((s: number, r: { amount: string }) => s + Number(r.amount), 0);
     totalExpense = (expRes.data ?? []).reduce((s: number, r: { amount: string }) => s + Number(r.amount), 0);
-    const byCat = new Map<string, number>();
-    for (const r of ((expCatRes.data as unknown as { amount: string; category: { name: string } | null }[] | null) ?? [])) {
-      const label = r.category?.name ?? "Tanpa kategori";
-      byCat.set(label, (byCat.get(label) ?? 0) + Number(r.amount));
-    }
-    expenseByCategory = Array.from(byCat.entries())
-      .map(([label, value]) => ({ label, value }))
-      .filter((i) => i.value > 0)
-      .sort((a, b) => b.value - a.value);
+    expenseByCategoryToday = mapByCat(expCatTodayRes.data as unknown);
+    expenseByCategoryMonth = mapByCat(expCatMonthRes.data as unknown);
+    expenseByCategoryYear = mapByCat(expCatYearRes.data as unknown);
 
     const chartRes = await supabase
       .from("transactions")
@@ -75,7 +93,11 @@ export default async function Page() {
       for (const point of points) point[row.type] += Number(row.amount);
     }
   }
-  const expenseMonthLabel = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  const dataByPeriod = {
+    today: { label: todayLabel, items: expenseByCategoryToday },
+    month: { label: monthLabel, items: expenseByCategoryMonth },
+    year: { label: yearLabel, items: expenseByCategoryYear },
+  };
 
   const rtName = data.rt?.name ?? "RT 01";
   const rtNumber = data.rt?.rt_number ?? "01";
@@ -101,7 +123,7 @@ export default async function Page() {
           )}
 
           {/* Wallet — ganti pilihan kantong: Semua / Kas / BOP */}
-          <HomeWalletCard pockets={data.pockets} totalBalance={data.totalBalance} appearance={appearance} />
+          <HomeWalletCard pockets={data.pockets} totalBalance={data.totalBalance} appearance={appearance} role={role} />
 
           {/* KPI */}
           <div className="space-y-3">
@@ -114,7 +136,7 @@ export default async function Page() {
 
           <IncomeExpenseBarChart data={monthlyChartData.map(({ month, income, expense, pocketId }) => ({ month, income, expense, pocketId }))} pockets={data.pockets.map((pocket) => ({ id: pocket.id, name: pocket.name }))} />
 
-          <ExpenseCategoryPie items={expenseByCategory} monthLabel={expenseMonthLabel} />
+          <ExpenseCategoryPie dataByPeriod={dataByPeriod} defaultPeriod="month" />
 
           {(role === "admin" || role === "bendahara") && <SmartInput />}
 

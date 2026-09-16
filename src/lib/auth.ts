@@ -1,6 +1,108 @@
+import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { DEV_RT_ID } from "@/lib/env";
 import type { UserRole } from "@/types/database";
+
+/**
+ * Helper: read auth user from cookies.
+ * Supabase JS stores session as sb-<ref>-auth-token (base64-encoded JSON).
+ * Handles chunked cookies (.0/.1), base64- prefix, and JSON parse.
+ */
+async function getUserFromCookies() {
+  try {
+    const cookieStore = await cookies();
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !anonKey) return null;
+
+    let ref: string | null = null;
+    try {
+      ref = new URL(url).hostname.split(".")[0] ?? null;
+    } catch {
+      ref = null;
+    }
+
+    const all = cookieStore.getAll();
+    let raw: string | undefined;
+
+    if (ref) {
+      const primary = cookieStore.get(`sb-${ref}-auth-token`)?.value;
+      if (primary) raw = primary;
+    }
+
+    if (!raw) {
+      const found = all.find((c) => c.name.endsWith("-auth-token") && !c.name.match(/-auth-token\.\d+$/));
+      if (found) raw = found.value;
+    }
+
+    // Handle chunked cookies: sb-<ref>-auth-token.0, .1, etc.
+    const hasChunked = all.some((c) => /-auth-token\.\d+$/.test(c.name));
+    if (hasChunked) {
+      const chunks = all
+        .filter((c) => /-auth-token\.\d+$/.test(c.name))
+        // filter to current ref if known
+        .filter((c) => (ref ? c.name.startsWith(`sb-${ref}-auth-token.`) : true))
+        .sort((a, b) => {
+          const na = parseInt(a.name.split(".").pop() || "0", 10);
+          const nb = parseInt(b.name.split(".").pop() || "0", 10);
+          return na - nb;
+        });
+      // If we already have raw but chunks exist, prefer assembled chunks when raw seems incomplete
+      // Supabase chunks when cookie > 4KB; then primary cookie is split.
+      if (chunks.length > 0) {
+        // If raw was undefined or chunks exist, reassemble
+        // Only reassemble if raw is chunk part or missing; if raw exists and is not chunked, keep raw
+        // But when chunked, the base cookie often doesn't exist, so raw is undefined -> use chunks
+        if (!raw || raw.length < chunks.map((c) => c.value).join("").length) {
+          // If raw came from a non-chunked cookie but chunks also exist, chunks are more complete
+          // Prefer chunks if they exist and ref matches
+          const assembled = chunks.map((c) => c.value).join("");
+          // Only override if assembled is non-empty
+          if (assembled) raw = assembled;
+        }
+      }
+    }
+
+    if (!raw) return null;
+
+    let tokenString = raw;
+    if (tokenString.startsWith("base64-")) {
+      tokenString = tokenString.slice("base64-".length);
+      try {
+        if (typeof Buffer !== "undefined") {
+          tokenString = Buffer.from(tokenString, "base64").toString("utf-8");
+        } else {
+          tokenString = atob(tokenString);
+        }
+      } catch {
+        // keep as is
+      }
+    }
+
+    let accessToken: string | null = null;
+    try {
+      const parsed = JSON.parse(tokenString);
+      if (parsed && typeof parsed === "object") {
+        accessToken = (parsed as Record<string, string>).access_token ?? (parsed as Record<string, string>).accessToken ?? null;
+        // sometimes directly a stringified token?
+      }
+    } catch {
+      if (tokenString.startsWith("eyJ")) {
+        accessToken = tokenString;
+      }
+    }
+    if (!accessToken && tokenString.startsWith("eyJ")) accessToken = tokenString;
+    if (!accessToken) return null;
+
+    const anonClient = createClient(url, anonKey);
+    const { data } = await anonClient.auth.getUser(accessToken);
+    return data.user ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Resolve current RT id from authenticated session.
@@ -8,11 +110,11 @@ import type { UserRole } from "@/types/database";
  */
 export async function getCurrentRtId(): Promise<string> {
   try {
-    const supabase = createServerClient();
-    const { data } = await supabase.auth.getUser();
-    const userId = data.user?.id;
+    const user = await getUserFromCookies();
+    const userId = user?.id;
     if (userId) {
-      const { data: profile } = await supabase
+      const service = createServiceClient();
+      const { data: profile } = await service
         .from("profiles")
         .select("rt_id")
         .eq("id", userId)
@@ -31,12 +133,12 @@ export async function getCurrentRtId(): Promise<string> {
  */
 export async function getCurrentUserRole(): Promise<UserRole | null> {
   try {
-    const supabase = createServerClient();
-    const { data } = await supabase.auth.getUser();
-    const userId = data.user?.id;
+    const user = await getUserFromCookies();
+    const userId = user?.id;
     if (!userId) return null;
 
-    const { data: profile } = await supabase
+    const service = createServiceClient();
+    const { data: profile } = await service
       .from("profiles")
       .select("role")
       .eq("id", userId)
@@ -54,12 +156,12 @@ export async function getCurrentUserRole(): Promise<UserRole | null> {
  */
 export async function getAuthRtId(): Promise<string | null> {
   try {
-    const supabase = createServerClient();
-    const { data } = await supabase.auth.getUser();
-    const userId = data.user?.id;
+    const user = await getUserFromCookies();
+    const userId = user?.id;
     if (!userId) return null;
 
-    const { data: profile } = await supabase
+    const service = createServiceClient();
+    const { data: profile } = await service
       .from("profiles")
       .select("rt_id")
       .eq("id", userId)
