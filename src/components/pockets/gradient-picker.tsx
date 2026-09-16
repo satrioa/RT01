@@ -26,12 +26,14 @@ export function GradientPickerPopover({
   gradientC1,
   gradientC3,
   customGradient,
+  gradientPreset,
   onPresetClick,
 }: {
   color: string;
   gradientC1: string | null;
   gradientC3: string | null;
   customGradient: boolean;
+  gradientPreset?: string | null;
   preview?: unknown;
   onPresetClick: (presetId: string) => void;
   onCustomChange?: (v: boolean) => void;
@@ -40,7 +42,7 @@ export function GradientPickerPopover({
 }) {
   const [open, setOpen] = React.useState(false);
   const matched = customGradient ? findMatchingPreset(color, gradientC1, gradientC3) : undefined;
-  const label = !customGradient ? "Otomatis" : (matched?.label ?? "Custom");
+  const label = !customGradient ? "Otomatis" : gradientPreset && gradientPreset !== "custom" ? gradientPreset : (matched?.label ?? "Custom");
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-card">
@@ -70,9 +72,7 @@ export function GradientPickerPopover({
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Animated Gradient</p>
           <div className="mb-3 grid grid-cols-3 gap-2">
             {(Object.entries(ANIMATED_GRADIENT_PRESETS) as [string, { c1: string; c2: string; c3: string }][]).map(([id, preset]) => {
-              const selected = gradientC1?.toLowerCase() === preset.c1.toLowerCase()
-                && color.toLowerCase() === preset.c2.toLowerCase()
-                && gradientC3?.toLowerCase() === preset.c3.toLowerCase();
+              const selected = gradientPreset === id;
               return (
                 <button
                   key={id}

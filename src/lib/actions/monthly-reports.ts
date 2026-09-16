@@ -2,11 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/service";
-import { getCurrentRtId } from "@/lib/auth";
+import { getCurrentRtId, requireWriteRole } from "@/lib/auth";
 import { generateMonthlyReport, getMonthlyReport, reopenMonthlyReport, closeMonthlyReport } from "@/lib/reports/monthly-report-service";
 import { getReportFileUrl } from "@/lib/reports/storage";
 
 export async function generateReportAction(year: number, month: number, pocketId?: string | null, force = false) {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const rtId = await getCurrentRtId();
   const supabase = createServiceClient();
   let generatedBy: string | null = null;
@@ -26,6 +28,8 @@ export async function generateReportAction(year: number, month: number, pocketId
 }
 
 export async function generateAllReportsAction(year: number, month: number) {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const rtId = await getCurrentRtId();
   const supabase = createServiceClient();
   let generatedBy: string | null = null;
@@ -40,6 +44,8 @@ export async function generateAllReportsAction(year: number, month: number) {
 }
 
 export async function closeReportAction(year: number, month: number, pocketId?: string | null) {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const rtId = await getCurrentRtId();
   const report = await closeMonthlyReport(rtId, year, month, pocketId ?? null);
   revalidatePath("/reports");
@@ -47,6 +53,8 @@ export async function closeReportAction(year: number, month: number, pocketId?: 
 }
 
 export async function reopenReportAction(year: number, month: number, pocketId?: string | null) {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const rtId = await getCurrentRtId();
   const report = await reopenMonthlyReport(rtId, year, month, pocketId ?? null);
   revalidatePath("/reports");

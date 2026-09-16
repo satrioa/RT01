@@ -46,6 +46,7 @@ export interface Pocket {
   color: string | null;
   gradient_c1: string | null;
   gradient_c3: string | null;
+  gradient_preset: string | null;
   opening_balance: string; // NUMERIC(15,2) saldo awal
   is_active: boolean;
   sort_order: number;

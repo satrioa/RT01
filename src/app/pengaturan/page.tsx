@@ -1,6 +1,8 @@
+import { redirect } from "next/navigation";
 import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { createServerClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
+import { getCurrentUserRole } from "@/lib/auth";
 import { SettingsCompact } from "@/components/settings/settings-compact";
 import { getAiSettings, getEnvKeyStatus } from "@/lib/actions/ai-settings";
 import { getAppearanceSettings } from "@/lib/actions/appearance";
@@ -8,6 +10,10 @@ import { getAppearanceSettings } from "@/lib/actions/appearance";
 export const dynamic = "force-dynamic";
 
 export default async function PengaturanPage() {
+  const role = await getCurrentUserRole();
+  if (role !== "admin" && role !== "bendahara") {
+    redirect("/");
+  }
   let pockets: import("@/types/database").Pocket[] = [];
   let loadError: string | null = null;
   let aiSettings: import("@/types/database").RtAiSettings | null = null;

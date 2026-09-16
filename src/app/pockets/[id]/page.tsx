@@ -3,7 +3,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
 import { formatRupiah, formatDateShort } from "@/lib/format";
 import { getPocketSummary } from "@/lib/data/transactions";
-import { BottomNav, BottomNavSpacer } from "@/components/layout/bottom-nav";
+import { getCurrentUserRole } from "@/lib/auth";
+import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { PocketPeriodFilter } from "@/components/pockets/pocket-period-filter";
 import { PocketMonthlyReports } from "@/components/pockets/pocket-monthly-reports";
@@ -67,9 +68,10 @@ export default async function PocketDetailPage({
   }
 
   const supabase = createServerClient();
-  const [summary, appearance] = await Promise.all([
+  const [summary, appearance, role] = await Promise.all([
     getPocketSummary(id),
     getAppearanceSettings().catch(() => null),
+    getCurrentUserRole(),
   ]);
 
   // Fetch filtered transactions for list (periode filter ganti Tambah Transaksi)
@@ -98,9 +100,11 @@ export default async function PocketDetailPage({
             <h1 className="truncate text-sm font-semibold">{pocket?.name ?? "Kantong"}</h1>
             <p className="text-xs text-muted-foreground">Detail saldo & ringkasan</p>
           </div>
-          <Link href={`/transactions/new?pocket=${id}`} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground">
-            <Plus className="size-4" /> Tambah
-          </Link>
+          {(role === "admin" || role === "bendahara") && (
+            <Link href={`/transactions/new?pocket=${id}`} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground">
+              <Plus className="size-4" /> Tambah
+            </Link>
+          )}
         </header>
 
         <main className="flex flex-1 flex-col gap-6 p-5 pb-6">

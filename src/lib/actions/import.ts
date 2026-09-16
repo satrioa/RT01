@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { getCurrentRtId } from "@/lib/auth";
+import { getCurrentRtId, requireWriteRole } from "@/lib/auth";
 import { importRowSchema } from "@/lib/excel/validator";
 
 export interface ImportPayloadRow {
@@ -25,6 +25,8 @@ export interface ImportResult {
 export async function importTransactionsAction(
   rows: ImportPayloadRow[]
 ): Promise<ImportResult> {
+  const denied = await requireWriteRole();
+  if (denied) return { imported: 0, skipped: rows.length, errors: [{ index: -1, message: denied.error }], errorDetails: [denied.error] };
   const rtId = await getCurrentRtId();
 
   // Server-side: use service client to bypass RLS for bulk check? But we still validate ownership.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/service";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
+import { getCurrentUserRole } from "@/lib/auth";
 import { getMonthlyReport } from "@/lib/reports/monthly-report-service";
 import { formatRupiah } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +35,7 @@ export default async function MonthlyReportDetailPage({
 
   const supabase = createServiceClient();
   const rtId = DEV_RT_ID;
+  const [role] = await Promise.all([getCurrentUserRole()]);
   const pocketParam = sp.pocket ?? "rekap";
   const pocketId = pocketParam === "rekap" ? null : pocketParam;
   const report = await getMonthlyReport(supabase, rtId, year, month, pocketId).catch(() => null);
@@ -133,9 +135,11 @@ export default async function MonthlyReportDetailPage({
                   </Button>
                 </Link>
               </div>
-              <div className="pt-2">
-                <ReportActions year={year} month={month} pocketId={report.pocket_id} status={report.status} />
-              </div>
+              {(role === "admin" || role === "bendahara") && (
+                <div className="pt-2">
+                  <ReportActions year={year} month={month} pocketId={report.pocket_id} status={report.status} />
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
+import { getCurrentUserRole } from "@/lib/auth";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransferForm } from "@/components/transactions/transfer-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +17,11 @@ export default async function NewTransactionPage({
   searchParams: Promise<{ type?: string; pocket?: string }>;
 }) {
   const { type, pocket: pocketParam } = await searchParams;
+
+  const role = await getCurrentUserRole();
+  if (role !== "admin" && role !== "bendahara") {
+    redirect("/transactions");
+  }
   const tab = type === "transfer" ? "transfer" : type === "income" ? "income" : type === "expense" ? "expense" : "expense";
 
   if (!hasSupabaseEnv()) {

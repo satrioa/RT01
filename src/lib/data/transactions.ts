@@ -17,16 +17,16 @@ export interface TxWithMeta extends Transaction {
   category_name?: string;
 }
 
-export async function getTransactionsFiltered(filters: TxFilters): Promise<{ data: TxWithMeta[]; error: string | null }> {
+export async function getTransactionsFiltered(filters: TxFilters, rtId?: string): Promise<{ data: TxWithMeta[]; error: string | null }> {
   if (!hasSupabaseEnv()) return { data: [], error: null };
 
   const supabase = createServerClient();
-  const rtId = DEV_RT_ID;
+  const resolvedRtId = rtId ?? DEV_RT_ID;
 
   let query = supabase
     .from("transactions")
     .select("*, pocket:pockets(name), category:categories(name)")
-    .eq("rt_id", rtId)
+    .eq("rt_id", resolvedRtId)
     .order("transaction_date", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -54,13 +54,13 @@ export async function getTransactionsFiltered(filters: TxFilters): Promise<{ dat
   return { data: mapped, error: null };
 }
 
-export async function getPocketsAndCategories(): Promise<{ pockets: Pocket[]; categories: Category[]; error: string | null }> {
+export async function getPocketsAndCategories(rtId?: string): Promise<{ pockets: Pocket[]; categories: Category[]; error: string | null }> {
   if (!hasSupabaseEnv()) return { pockets: [], categories: [], error: null };
   const supabase = createServerClient();
-  const rtId = DEV_RT_ID;
+  const resolvedRtId = rtId ?? DEV_RT_ID;
   const [pRes, cRes] = await Promise.all([
-    supabase.from("pockets").select("*").eq("rt_id", rtId).order("sort_order"),
-    supabase.from("categories").select("*").eq("rt_id", rtId).eq("is_active", true).order("name"),
+    supabase.from("pockets").select("*").eq("rt_id", resolvedRtId).order("sort_order"),
+    supabase.from("categories").select("*").eq("rt_id", resolvedRtId).eq("is_active", true).order("name"),
   ]);
   return {
     pockets: (pRes.data as Pocket[] | null) ?? [],
@@ -69,7 +69,7 @@ export async function getPocketsAndCategories(): Promise<{ pockets: Pocket[]; ca
   };
 }
 
-export async function getPocketSummary(pocketId: string): Promise<{
+export async function getPocketSummary(pocketId: string, rtId?: string): Promise<{
   pocket: (Pocket & { balance: string | number }) | null;
   income: number;
   expense: number;
@@ -79,12 +79,12 @@ export async function getPocketSummary(pocketId: string): Promise<{
 }> {
   if (!hasSupabaseEnv()) return { pocket: null, income: 0, expense: 0, transferIn: 0, transferOut: 0, error: null };
   const supabase = createServerClient();
-  const rtId = DEV_RT_ID;
+  const resolvedRtId = rtId ?? DEV_RT_ID;
 
   const [pocketRes, txRes, trRes] = await Promise.all([
     supabase.from("pocket_balances").select("*").eq("id", pocketId).maybeSingle(),
-    supabase.from("transactions").select("amount, type").eq("rt_id", rtId).eq("pocket_id", pocketId),
-    supabase.from("transfers").select("amount, from_pocket_id, to_pocket_id").eq("rt_id", rtId).or(`from_pocket_id.eq.${pocketId},to_pocket_id.eq.${pocketId}`),
+    supabase.from("transactions").select("amount, type").eq("rt_id", resolvedRtId).eq("pocket_id", pocketId),
+    supabase.from("transfers").select("amount, from_pocket_id, to_pocket_id").eq("rt_id", resolvedRtId).or(`from_pocket_id.eq.${pocketId},to_pocket_id.eq.${pocketId}`),
   ]);
 
   // fallback if view missing / view without gradient columns -> enrich with gradient_* from pockets

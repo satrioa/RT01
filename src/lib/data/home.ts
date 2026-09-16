@@ -15,7 +15,7 @@ export interface HomeData {
  * Single parallel fetch for dashboard — avoids waterfall.
  * Falls back to empty/error states when Supabase env missing or query fails.
  */
-export async function getHomeData(): Promise<HomeData> {
+export async function getHomeData(rtId?: string): Promise<HomeData> {
   if (!hasSupabaseEnv()) {
     return {
       rt: {
@@ -39,28 +39,28 @@ export async function getHomeData(): Promise<HomeData> {
   }
 
   const supabase = createServerClient();
-  const rtId = DEV_RT_ID;
+  const resolvedRtId = rtId ?? DEV_RT_ID;
 
   // Parallel — no waterfall
   const [rtRes, pocketsRes, txRes, trRes] = await Promise.all([
-    supabase.from("rt_profiles").select("*").eq("id", rtId).maybeSingle(),
+    supabase.from("rt_profiles").select("*").eq("id", resolvedRtId).maybeSingle(),
     supabase
       .from("pocket_balances")
       .select("*")
-      .eq("rt_id", rtId)
+      .eq("rt_id", resolvedRtId)
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase
       .from("transactions")
       .select("*, pocket:pockets(name), category:categories(name)")
-      .eq("rt_id", rtId)
+      .eq("rt_id", resolvedRtId)
       .order("transaction_date", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(5),
     supabase
       .from("transfers")
       .select("*")
-      .eq("rt_id", rtId)
+      .eq("rt_id", resolvedRtId)
       .order("transaction_date", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(5),
@@ -101,7 +101,7 @@ export async function getHomeData(): Promise<HomeData> {
     const fallback = await supabase
       .from("pockets")
       .select("*")
-      .eq("rt_id", rtId)
+      .eq("rt_id", resolvedRtId)
       .eq("is_active", true)
       .order("sort_order");
     const fb = (fallback.data as PocketBalance[] | null) ?? [];

@@ -5,21 +5,35 @@ import { Home, Receipt, BarChart3, Settings, Plus } from "lucide-react";
 import { GlassToggleGroup, GlassToggleGroupItem } from "@/components/glass-toggle-group";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 import { cn } from "@/lib/utils";
+import { useRole } from "@/lib/role-context";
+import type { UserRole } from "@/types/database";
 
 type NavItem = {
   value: string;
   label: string;
   icon: typeof Home;
   fab?: boolean;
+  adminOnly?: boolean;
 };
 
-const NAV: NavItem[] = [
+const ADMIN_NAV: NavItem[] = [
   { value: "/", label: "Home", icon: Home },
   { value: "/transactions", label: "Transaksi", icon: Receipt },
   { value: "/transactions/new", label: "Tambah", icon: Plus, fab: true },
   { value: "/reports", label: "Laporan", icon: BarChart3 },
   { value: "/pengaturan", label: "Pengaturan", icon: Settings },
 ];
+
+const VIEWER_NAV: NavItem[] = [
+  { value: "/", label: "Home", icon: Home },
+  { value: "/transactions", label: "Transaksi", icon: Receipt },
+  { value: "/reports", label: "Laporan", icon: BarChart3 },
+];
+
+function getNavItems(role: UserRole): NavItem[] {
+  if (role === "admin" || role === "bendahara") return ADMIN_NAV;
+  return VIEWER_NAV;
+}
 
 function activeValue(pathname: string): string {
   if (pathname === "/") return "/";
@@ -33,11 +47,12 @@ function activeValue(pathname: string): string {
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { role } = useRole();
   const active = activeValue(pathname);
+  const NAV = getNavItems(role);
 
   return (
     <>
-      {/* Progressive blur dibawah dock — fixed di viewport bottom */}
       <ProgressiveBlur
         position="bottom"
         height="140px"

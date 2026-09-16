@@ -38,14 +38,17 @@ function formatStatValue(
 }
 
 function useNumberFlowElementReady(): boolean {
-  const [ready, setReady] = useState(
-    () =>
-      typeof customElements !== "undefined" &&
-      Boolean(customElements.get("number-flow-react"))
-  );
+  // Keep the first client render identical to the server render. Checking
+  // customElements during state initialization can return true before
+  // hydration when another component registered NumberFlow early.
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (ready) {
+    if (typeof customElements === "undefined") {
+      return;
+    }
+    if (customElements.get("number-flow-react")) {
+      setReady(true);
       return;
     }
     let cancelled = false;

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/service";
-import { getCurrentRtId } from "@/lib/auth";
+import { getCurrentRtId, requireWriteRole } from "@/lib/auth";
 
 export interface StorageStats {
   transactions: number;
@@ -70,6 +70,8 @@ export interface BackupPayload {
 }
 
 export async function exportBackupAction(): Promise<{ ok: boolean; backup?: BackupPayload; error?: string }> {
+  const denied = await requireWriteRole();
+  if (denied) return { ok: false, error: denied.error };
   const rtId = await getCurrentRtId();
   const supabase = createServiceClient();
   try {
@@ -182,6 +184,8 @@ export async function resetRtDataAction(confirmation: string): Promise<ResetResu
   if (confirmation !== "RESET") {
     return { ok: false, error: 'Ketik "RESET" untuk konfirmasi.' };
   }
+  const denied = await requireWriteRole();
+  if (denied) return { ok: false, error: denied.error };
   const rtId = await getCurrentRtId();
   const supabase = createServiceClient();
   try {

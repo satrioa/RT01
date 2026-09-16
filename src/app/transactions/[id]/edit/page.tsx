@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
+import { getCurrentUserRole } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { TransactionEditForm } from "@/components/transactions/transaction-edit-form";
 import { ArrowLeft } from "lucide-react";
@@ -10,6 +11,11 @@ export const dynamic = "force-dynamic";
 
 export default async function EditTransactionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  const role = await getCurrentUserRole();
+  if (role !== "admin" && role !== "bendahara") {
+    redirect(`/transactions/${id}`);
+  }
 
   if (!hasSupabaseEnv()) {
     return <div className="mx-auto max-w-[430px] p-5 text-sm text-muted-foreground">Supabase belum dikonfigurasi.</div>;

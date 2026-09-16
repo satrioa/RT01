@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createServerClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { getCurrentRtId } from "@/lib/auth";
+import { getCurrentRtId, requireWriteRole } from "@/lib/auth";
 import { AI_PROVIDERS, DEFAULT_MODEL, DEFAULT_PROVIDER } from "@/lib/ai/models";
 import type { AiProviderId, RtAiSettings } from "@/types/database";
 
@@ -63,6 +63,8 @@ export async function getAiSettings(): Promise<RtAiSettings | null> {
 }
 
 export async function saveAiSettingsAction(formData: FormData): Promise<{ ok: boolean; error?: string }> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const raw = {
     provider: formData.get("provider") as string,
     model: formData.get("model") as string,
@@ -147,6 +149,8 @@ export async function getEnvKeyStatus(): Promise<Record<string, boolean>> {
 }
 
 export async function testAiConnectionAction(formData: FormData): Promise<{ ok: boolean; error?: string; ms?: number }> {
+  const denied = await requireWriteRole();
+  if (denied) return { ok: false, error: denied.error };
   const provider = formData.get("provider") as string;
   const model = formData.get("model") as string;
 

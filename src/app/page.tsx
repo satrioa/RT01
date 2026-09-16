@@ -12,21 +12,38 @@ import { AlertTriangle } from "lucide-react";
 import { HomeWalletCard } from "@/components/dashboard/home-wallet-card";
 import { ExpenseCategoryPie } from "@/components/dashboard/expense-category-pie";
 import { getAppearanceSettings } from "@/lib/actions/appearance";
+import { IncomeExpenseBarChart } from "@/components/dashboard/income-expense-bar-chart";
+import { getCurrentUserRole } from "@/lib/auth";
 
 // Force dynamic so greeting reflects server time and data is fresh
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const [data, appearance] = await Promise.all([getHomeData(), getAppearanceSettings().catch(() => null)]);
+  const [data, appearance, role] = await Promise.all([getHomeData(), getAppearanceSettings().catch(() => null), getCurrentUserRole()]);
 
   // Fetch income/expense for current month directly from DB
   let totalIncome = 0;
   let totalExpense = 0;
   let expenseByCategory: { label: string; value: number }[] = [];
+  const now = new Date();
+  const monthlyChartData = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+    const base = {
+      month: date.toLocaleDateString("id-ID", { month: "short" }).replace(".", ""),
+      year: date.getFullYear(),
+      monthNumber: date.getMonth(),
+      income: 0,
+      expense: 0,
+    };
+    return [
+      { ...base, pocketId: null as string | null },
+      ...data.pockets.map((pocket) => ({ ...base, pocketId: pocket.id })),
+    ];
+  }).flat();
   if (hasSupabaseEnv()) {
     const supabase = createServiceClient();
-    const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const chartStart = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString();
     const [incRes, expRes, expCatRes] = await Promise.all([
       supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "income").gte("transaction_date", start),
       supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", start),
@@ -43,6 +60,20 @@ export default async function Page() {
       .map(([label, value]) => ({ label, value }))
       .filter((i) => i.value > 0)
       .sort((a, b) => b.value - a.value);
+
+    const chartRes = await supabase
+      .from("transactions")
+      .select("amount, type, transaction_date, pocket_id")
+      .eq("rt_id", DEV_RT_ID)
+      .gte("transaction_date", chartStart)
+      .limit(5000);
+    for (const row of (chartRes.data ?? []) as { amount: string; type: "income" | "expense"; transaction_date: string; pocket_id: string }[]) {
+      const date = new Date(`${row.transaction_date}T00:00:00`);
+      const points = monthlyChartData.filter(
+        (item) => item.year === date.getFullYear() && item.monthNumber === date.getMonth() && (item.pocketId === null || item.pocketId === row.pocket_id)
+      );
+      for (const point of points) point[row.type] += Number(row.amount);
+    }
   }
   const expenseMonthLabel = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 
@@ -81,9 +112,11 @@ export default async function Page() {
             />
           </div>
 
+          <IncomeExpenseBarChart data={monthlyChartData.map(({ month, income, expense, pocketId }) => ({ month, income, expense, pocketId }))} pockets={data.pockets.map((pocket) => ({ id: pocket.id, name: pocket.name }))} />
+
           <ExpenseCategoryPie items={expenseByCategory} monthLabel={expenseMonthLabel} />
 
-          <SmartInput />
+          {(role === "admin" || role === "bendahara") && <SmartInput />}
 
           <Separator />
 

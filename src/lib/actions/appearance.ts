@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
-import { getCurrentRtId } from "@/lib/auth";
+import { getCurrentRtId, requireWriteRole } from "@/lib/auth";
 import type { RtAppearanceSettings } from "@/types/database";
 
 const ALLOWED_STYLES = new Set([
@@ -42,6 +42,8 @@ export async function getAppearanceSettings(): Promise<RtAppearanceSettings | nu
 export type AppearanceActionResult = { ok: boolean; error?: string };
 
 export async function saveAppearanceAction(formData: FormData): Promise<AppearanceActionResult> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const rtId = await getCurrentRtId();
   const supabase = createServerClient();
 

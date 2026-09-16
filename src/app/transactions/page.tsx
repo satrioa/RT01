@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { TransactionFilters } from "@/components/transactions/filters";
 import { TransactionGroupedList } from "@/components/transactions/transaction-grouped-list";
 import { getTransactionsFiltered, getPocketsAndCategories } from "@/lib/data/transactions";
+import { getCurrentUserRole } from "@/lib/auth";
 import { Plus, Receipt } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -25,9 +26,10 @@ export default async function TransactionsPage({
     q: sp.q || undefined,
   };
 
-  const [{ data: txs, error }, { pockets, categories }] = await Promise.all([
+  const [{ data: txs, error }, { pockets, categories }, role] = await Promise.all([
     getTransactionsFiltered(filters),
     getPocketsAndCategories(),
+    getCurrentUserRole(),
   ]);
 
   return (
@@ -38,9 +40,11 @@ export default async function TransactionsPage({
             <h1 className="text-sm font-semibold">Transaksi</h1>
             <p className="text-xs text-muted-foreground">Pemasukan • Pengeluaran • Transfer</p>
           </div>
-          <Link href="/transactions/new" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground">
-            <Plus className="size-4" /> Tambah
-          </Link>
+          {(role === "admin" || role === "bendahara") && (
+            <Link href="/transactions/new" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground">
+              <Plus className="size-4" /> Tambah
+            </Link>
+          )}
         </header>
 
         <main className="flex flex-1 flex-col gap-4 p-5 pb-6">
@@ -60,11 +64,15 @@ export default async function TransactionsPage({
                 </div>
                 <p className="mt-3 text-sm font-semibold">Tidak ada transaksi</p>
                 <p className="mx-auto mt-1 max-w-[30ch] text-xs leading-relaxed text-muted-foreground">
-                  Coba ubah filter atau tambah transaksi baru.
+                  {role === "admin" || role === "bendahara"
+                    ? "Coba ubah filter atau tambah transaksi baru."
+                    : "Coba ubah filter untuk melihat transaksi."}
                 </p>
-                <Link href="/transactions/new" className="mt-4 inline-flex">
-                  <Button size="sm" className="rounded-xl">Tambah Transaksi</Button>
-                </Link>
+                {(role === "admin" || role === "bendahara") && (
+                  <Link href="/transactions/new" className="mt-4 inline-flex">
+                    <Button size="sm" className="rounded-xl">Tambah Transaksi</Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
           ) : (

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
-import { getCurrentRtId } from "@/lib/auth";
+import { getCurrentRtId, requireWriteRole } from "@/lib/auth";
 import { pocketSchema, pocketUpdateSchema } from "@/lib/validations/pocket";
 
 export type PocketActionResult = { ok: boolean; error?: string; id?: string };
@@ -26,6 +26,7 @@ function parsePocketForm(formData: FormData) {
     color: (formData.get("color") as string) || null,
     gradient_c1: (formData.get("gradient_c1") as string) || null,
     gradient_c3: (formData.get("gradient_c3") as string) || null,
+    gradient_preset: (formData.get("gradient_preset") as string) || null,
     opening_balance: parseAmountToNumber(formData.get("opening_balance")),
     is_active: formData.get("is_active") === "false" ? false : true,
     sort_order: Number(formData.get("sort_order") ?? 0),
@@ -35,10 +36,13 @@ function parsePocketForm(formData: FormData) {
   if (raw.color === "") raw.color = null;
   if (raw.gradient_c1 === "") raw.gradient_c1 = null;
   if (raw.gradient_c3 === "") raw.gradient_c3 = null;
+  if (raw.gradient_preset === "" || raw.gradient_preset === "null") raw.gradient_preset = null;
   return raw;
 }
 
 export async function createPocketAction(formData: FormData): Promise<PocketActionResult> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const raw = parsePocketForm(formData);
   const parsed = pocketSchema.safeParse(raw);
   if (!parsed.success) {
@@ -71,6 +75,8 @@ export async function createPocketAction(formData: FormData): Promise<PocketActi
 }
 
 export async function updatePocketAction(id: string, formData: FormData): Promise<PocketActionResult> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const raw = parsePocketForm(formData);
   // allow partial updates — require at least name if present
   const parsed = pocketUpdateSchema.safeParse(raw);
@@ -110,6 +116,8 @@ export async function updatePocketAction(id: string, formData: FormData): Promis
 }
 
 export async function archivePocketAction(id: string): Promise<PocketActionResult> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const rtId = await getCurrentRtId();
   const supabase = createServerClient();
 
@@ -130,6 +138,8 @@ export async function archivePocketAction(id: string): Promise<PocketActionResul
 }
 
 export async function deletePocketAction(id: string): Promise<PocketActionResult> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   // Hard delete — only if no transactions/transfers reference it
   const rtId = await getCurrentRtId();
   const supabase = createServerClient();

@@ -1,5 +1,7 @@
+import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv, DEV_RT_ID } from "@/lib/env";
+import { getCurrentUserRole } from "@/lib/auth";
 import { ExcelImportClient } from "@/components/import/excel-import-client";
 import { BottomNavSpacer } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +10,10 @@ import { AlertTriangle } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function ImportPage() {
+  const role = await getCurrentUserRole();
+  if (role !== "admin" && role !== "bendahara") {
+    redirect("/");
+  }
   if (!hasSupabaseEnv()) {
     return (
       <div className="min-h-dvh bg-background">

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
-import { getCurrentRtId } from "@/lib/auth";
+import { getCurrentRtId, requireWriteRole } from "@/lib/auth";
 import { transactionSchema } from "@/lib/validations/transaction";
 import { transferSchema } from "@/lib/validations/transfer";
 
@@ -11,6 +11,8 @@ export type ActionResult = { ok: boolean; error?: string; id?: string };
 export async function createTransactionAction(
   formData: FormData
 ): Promise<ActionResult> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const raw = {
     type: formData.get("type"),
     pocket_id: formData.get("pocket_id"),
@@ -84,6 +86,8 @@ export async function createTransactionAction(
 }
 
 export async function createTransferAction(formData: FormData): Promise<ActionResult> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const raw = {
     from_pocket_id: formData.get("from_pocket_id"),
     to_pocket_id: formData.get("to_pocket_id"),
@@ -128,6 +132,8 @@ export async function createTransferAction(formData: FormData): Promise<ActionRe
 }
 
 export async function updateTransactionAction(id: string, formData: FormData): Promise<ActionResult> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const raw = {
     type: formData.get("type"),
     pocket_id: formData.get("pocket_id"),
@@ -186,6 +192,8 @@ export async function updateTransactionAction(id: string, formData: FormData): P
 }
 
 export async function deleteTransactionAction(id: string): Promise<ActionResult> {
+  const denied = await requireWriteRole();
+  if (denied) return denied;
   const rtId = await getCurrentRtId();
   const supabase = createServerClient();
 
