@@ -42,6 +42,7 @@ export async function generateMonthlyPdf(opts: {
   rwNumber: string;
   pocketName?: string | null;
   isRekap?: boolean;
+  periodTitle?: string;
   snapshot: {
     year: number;
     month: number;
@@ -60,7 +61,7 @@ export async function generateMonthlyPdf(opts: {
   transfers: PdfTransfer[];
 }): Promise<Buffer> {
   const { rtName, rtNumber, rwNumber, pocketName, isRekap, snapshot, transactions, transfers } = opts;
-  const monthLabel = format(new Date(snapshot.year, snapshot.month - 1, 1), "MMMM yyyy", { locale: id });
+  const monthLabel = opts.periodTitle ?? format(new Date(snapshot.year, snapshot.month - 1, 1), "MMMM yyyy", { locale: id });
   const periodLabel = `${formatDateLong(snapshot.period_start)} – ${formatDateLong(snapshot.period_end)}`;
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });

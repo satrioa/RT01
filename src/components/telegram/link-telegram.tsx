@@ -83,7 +83,7 @@ export function LinkTelegramCard() {
             <p><code>/help</code> — bantuan</p>
             <p><code>/saldo</code> / <code>/saldo kas</code> — cek saldo (tanpa AI)</p>
             <p><code>/transaksi</code> — 5 terbaru</p>
-            <p><code>/laporan</code> — ringkasan bulan ini</p>
+            <p><code>/laporan</code> — ringkasan bulan ini (pilih &quot;📅 Periode Kustom&quot; untuk rentang tanggal bebas)</p>
             <p><code>/unlink</code> — putuskan</p>
           </div>
         </details>

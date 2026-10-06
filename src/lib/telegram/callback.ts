@@ -1,5 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
-import { getPending, setPendingStatus } from "./pending";
+import { getPending, setPendingStatus, createPending } from "./pending";
 import { sendMessage, answerCallbackQuery, editMessageText, sendDocument } from "./client";
 import { formatRupiah } from "@/lib/format";
 import { getRecentTransactionsWithId } from "./service";
@@ -110,6 +110,32 @@ export async function handleCallback(
     const kb = buildMonthKeyboard(`rt:report:${type}`);
     await answerCallbackQuery(callbackQueryId, `Laporan ${type.toUpperCase()} — pilih bulan`);
     await sendMessage(chatId, [`📅 Tahun: ${year}`, "", "Pilih bulan:"].join("\n"), { replyMarkup: kb });
+    return;
+  }
+
+  // rt:report:kas:custom or rt:report:bop:custom
+  if (data === "rt:report:kas:custom" || data === "rt:report:bop:custom") {
+    const type = data === "rt:report:kas:custom" ? "kas" : "bop";
+    const label = type === "kas" ? "Kas" : "BOP";
+    const supabase = createServiceClient();
+    const { data: acc } = await supabase.from("telegram_accounts").select("rt_id").eq("telegram_user_id", telegramUserId).maybeSingle();
+    if (!acc) {
+      await answerCallbackQuery(callbackQueryId, "Akun belum terhubung", true);
+      return;
+    }
+    const rtId = (acc as { rt_id: string }).rt_id;
+    await createPending(telegramUserId, chatId, rtId, "report_period", { intent: "report_period", reportType: type });
+    await answerCallbackQuery(callbackQueryId, `Laporan ${label} — periode kustom`);
+    await sendMessage(
+      chatId,
+      [
+        `📅 Periode ${label} — kirim rentang tanggal.`,
+        "",
+        "Contoh: 05/03/2026 - 20/03/2026",
+        "(atau satu tanggal: 05/03/2026)",
+        "/cancel untuk batal.",
+      ].join("\n")
+    );
     return;
   }
 

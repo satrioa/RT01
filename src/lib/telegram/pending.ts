@@ -1,7 +1,8 @@
 import { createServiceClient } from "@/lib/supabase/service";
 
 export interface PendingPayload {
-  intent: "create_transaction" | "create_transfer" | "update_transaction";
+  intent: "create_transaction" | "create_transfer" | "update_transaction" | "report_period";
+  reportType?: "kas" | "bop";
   amount?: number;
   // transaction
   type?: "income" | "expense";
@@ -26,7 +27,7 @@ export async function createPending(
   telegramUserId: number,
   chatId: number,
   rtId: string,
-  intentType: "create_transaction" | "create_transfer" | "update_transaction",
+  intentType: "create_transaction" | "create_transfer" | "update_transaction" | "report_period",
   payload: PendingPayload
 ): Promise<string> {
   const supabase = createServiceClient();
@@ -101,4 +102,29 @@ export async function getActiveEditPending(
 
 export async function findPendingById(id: string) {
   return getPending(id);
+}
+
+export async function getActiveReportPeriodPending(
+  telegramUserId: number,
+  chatId: number
+): Promise<null | {
+  id: string;
+  rt_id: string;
+  payload: PendingPayload;
+  status: string;
+}> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("telegram_pending_confirmations")
+    .select("id, rt_id, payload, status")
+    .eq("telegram_user_id", telegramUserId)
+    .eq("chat_id", chatId)
+    .eq("intent_type", "report_period")
+    .eq("status", "pending")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data) return null;
+  return data as unknown as { id: string; rt_id: string; payload: PendingPayload; status: string };
 }

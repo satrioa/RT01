@@ -1,10 +1,26 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { calculatePocketMonthlySnapshot, getMonthPeriod } from "@/lib/reports/monthly-report-calculator";
 import { generateMonthlyPdf } from "@/lib/reports/pdf-generator";
+import { parseExcelDate } from "@/lib/excel/parser";
 import { formatRupiah } from "@/lib/format";
+import { format } from "date-fns";
+import { id } from "date-fns/locale/id";
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const MONTH_FULL = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+const PERIOD_TOKEN = /\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4}/g;
+
+export function parsePeriodInput(text: string): { start: string; end: string } | null {
+  const tokens = text.match(PERIOD_TOKEN);
+  if (!tokens || (tokens.length !== 1 && tokens.length !== 2)) return null;
+  const parsed = tokens.map((t) => parseExcelDate(t));
+  if (parsed.some((p) => p === null)) return null;
+  const dates = parsed as string[];
+  if (dates.length === 1) return { start: dates[0], end: dates[0] };
+  if (dates[0] > dates[1]) return null;
+  return { start: dates[0], end: dates[1] };
+}
 
 export function getMonthLabel(month: number): string {
   return MONTH_FULL[month - 1] ?? String(month);
@@ -32,6 +48,67 @@ export async function generateKasBopReportPdf(
   year: number,
   month: number
 ): Promise<{ buffer: Buffer; filename: string; caption: string; totals: { income: number; expense: number; net: number; count: number } }> {
+  const monthName = getMonthLabel(month);
+  const res = await renderKasBopReport(rtId, type, year, month, getMonthPeriod(year, month), null);
+  return {
+    ...res,
+    filename: `RTFinance-Laporan-${type === "kas" ? "Kas" : "BOP"}-${monthName}-${year}.pdf`,
+    caption: buildCaption(type, res.totals, res.snapshot.closing_balance, res.totals.count, `${monthName} ${year}`),
+  };
+}
+
+export async function generateKasBopPeriodPdf(
+  rtId: string,
+  type: "kas" | "bop",
+  start: string,
+  end: string
+): Promise<{ buffer: Buffer; filename: string; caption: string; totals: { income: number; expense: number; net: number; count: number } }> {
+  if (start > end) throw new Error("Rentang tanggal tidak valid");
+  const s = toLocalDate(start);
+  const periodTitle = `${format(s, "d MMM yyyy", { locale: id })} – ${format(toLocalDate(end), "d MMM yyyy", { locale: id })}`;
+  const res = await renderKasBopReport(rtId, type, s.getFullYear(), s.getMonth() + 1, { period_start: start, period_end: end }, periodTitle);
+  return {
+    ...res,
+    filename: `RTFinance-Laporan-${type === "kas" ? "Kas" : "BOP"}-${start}_${end}.pdf`,
+    caption: buildCaption(type, res.totals, res.snapshot.closing_balance, res.totals.count, periodTitle),
+  };
+}
+
+function toLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function buildCaption(
+  type: "kas" | "bop",
+  totals: { income: number; expense: number },
+  closingBalance: number,
+  count: number,
+  periodLabel: string
+): string {
+  return [
+    `📄 Laporan ${type === "kas" ? "Kas" : "BOP"}`,
+    periodLabel,
+    ``,
+    `Total Pemasukan: ${formatRupiah(totals.income)}`,
+    `Total Pengeluaran: ${formatRupiah(totals.expense)}`,
+    `Saldo: ${formatRupiah(closingBalance)}`,
+    count === 0 ? `Tidak ada transaksi pada periode ini.` : `${count} transaksi`,
+  ].join("\n");
+}
+
+async function renderKasBopReport(
+  rtId: string,
+  type: "kas" | "bop",
+  year: number,
+  month: number,
+  period: { period_start: string; period_end: string },
+  title: string | null
+): Promise<{
+  buffer: Buffer;
+  totals: { income: number; expense: number; net: number; count: number };
+  snapshot: { closing_balance: number };
+}> {
   if (month < 1 || month > 12) throw new Error("Bulan tidak valid (1-12)");
   if (year < 2000 || year > 2100) throw new Error("Tahun tidak valid");
 
@@ -39,12 +116,12 @@ export async function generateKasBopReportPdf(
   const pocketInfo = await findPocketIdForReportType(rtId, type);
   if (!pocketInfo) throw new Error(`Kantong ${type.toUpperCase()} tidak ditemukan. Pastikan kantong "${type === "kas" ? "Kas" : "BOP"}" ada.`);
 
-  const { period_start, period_end } = getMonthPeriod(year, month);
+  const { period_start, period_end } = period;
 
   // snapshot via existing calculator (reuses opening_balance, transfer logic)
   let snapshot: Awaited<ReturnType<typeof calculatePocketMonthlySnapshot>>;
   try {
-    snapshot = await calculatePocketMonthlySnapshot(supabase, rtId, pocketInfo.id, year, month);
+    snapshot = await calculatePocketMonthlySnapshot(supabase, rtId, pocketInfo.id, year, month, period);
   } catch (e) {
     throw new Error(`Gagal hitung snapshot: ${e instanceof Error ? e.message : String(e)}`);
   }
@@ -84,6 +161,7 @@ export async function generateKasBopReportPdf(
     rwNumber,
     pocketName: pocketInfo.name,
     isRekap: false,
+    periodTitle: title ?? undefined,
     snapshot: {
       year: snapshot.year,
       month: snapshot.month,
@@ -127,25 +205,14 @@ export async function generateKasBopReportPdf(
     })),
   });
 
-  const monthName = getMonthLabel(month);
-  const filename = `RTFinance-Laporan-${type === "kas" ? "Kas" : "BOP"}-${monthName}-${year}.pdf`;
   const totals = {
     income: snapshot.total_income,
     expense: snapshot.total_expense,
     net: snapshot.closing_balance - snapshot.opening_balance,
     count: snapshot.transaction_count,
   };
-  const caption = [
-    `📄 Laporan ${type === "kas" ? "Kas" : "BOP"}`,
-    `${monthName} ${year}`,
-    ``,
-    `Total Pemasukan: ${formatRupiah(totals.income)}`,
-    `Total Pengeluaran: ${formatRupiah(totals.expense)}`,
-    `Saldo: ${formatRupiah(snapshot.closing_balance)}`,
-    totals.count === 0 ? `Tidak ada transaksi pada periode ini.` : `${totals.count} transaksi`,
-  ].join("\n");
 
-  return { buffer, filename, caption, totals };
+  return { buffer, totals, snapshot };
 }
 
 export function buildMonthKeyboard(prefix: string): { inline_keyboard: { text: string; callback_data: string }[][] } {
@@ -161,6 +228,7 @@ export function buildMonthKeyboard(prefix: string): { inline_keyboard: { text: s
     }
     rows.push(row);
   }
+  rows.push([{ text: "📅 Periode Kustom", callback_data: `${prefix}:custom` }]);
   return { inline_keyboard: rows };
 }
 

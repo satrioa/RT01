@@ -65,9 +65,10 @@ export async function calculatePocketMonthlySnapshot(
   rtId: string,
   pocketId: string,
   year: number,
-  month: number
+  month: number,
+  period?: { period_start: string; period_end: string }
 ): Promise<PocketMonthlySnapshot & { rt_id: string; year: number; month: number; period_start: string; period_end: string }> {
-  const { period_start, period_end } = getMonthPeriod(year, month);
+  const { period_start, period_end } = period ?? getMonthPeriod(year, month);
 
   const { data: pocket, error: pErr } = await supabase
     .from("pockets")

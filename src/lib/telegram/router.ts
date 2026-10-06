@@ -1,18 +1,19 @@
 /**
  * Intent router — separates webhook plumbing from business logic.
  */
-import { createPending, getActiveEditPending, setPendingStatus } from "./pending";
+import { createPending, getActiveEditPending, getActiveReportPeriodPending, setPendingStatus } from "./pending";
 import { handleDeterministic } from "@/lib/ai/deterministic";
 import {
   sendMessage,
   sendMessageWithConfirmation,
+  sendDocument,
   formatTransactionConfirmation,
   formatTransferConfirmation,
 } from "./client";
 import { getSaldoForPocket, getTransaksiSummary } from "./service";
 import type { TelegramAccount } from "./types";
 import { handleEditInput } from "./edit";
-import { buildReportTypeKeyboard } from "./report";
+import { buildReportTypeKeyboard, generateKasBopPeriodPdf, parsePeriodInput } from "./report";
 
 export async function routeMessage(
   chatId: number,
@@ -77,6 +78,50 @@ export async function routeMessage(
     }
   }
 
+  // --- Laporan periode kustom: if user has active report_period session, treat next text as date range ---
+  const activeReportPeriod = await getActiveReportPeriodPending(telegramUserId, chatId);
+  if (activeReportPeriod) {
+    if (trimmed.toLowerCase() === "/cancel") {
+      await setPendingStatus(activeReportPeriod.id, "cancelled");
+      await sendMessage(chatId, "Batal.");
+      return;
+    }
+    if (trimmed.startsWith("/")) {
+      await setPendingStatus(activeReportPeriod.id, "cancelled");
+    } else {
+      const parsed = parsePeriodInput(trimmed);
+      if (!parsed) {
+        await sendMessage(
+          chatId,
+          [
+            "Format tanggal tidak dikenali.",
+            "",
+            "Contoh: 05/03/2026 - 20/03/2026",
+            "atau satu tanggal: 05/03/2026",
+            "/cancel untuk batal.",
+          ].join("\n")
+        );
+        return;
+      }
+      await setPendingStatus(activeReportPeriod.id, "confirmed");
+      await sendMessage(chatId, "📊 Membuat laporan…");
+      try {
+        const { buffer, filename, caption } = await generateKasBopPeriodPdf(
+          activeReportPeriod.rt_id,
+          activeReportPeriod.payload.reportType ?? "kas",
+          parsed.start,
+          parsed.end
+        );
+        await sendDocument(chatId, buffer, filename, caption);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Gagal membuat laporan";
+        console.error("[telegram report period] error", e);
+        await sendMessage(chatId, `❌ Gagal membuat laporan: ${msg}\nSilakan coba lagi.`);
+      }
+      return;
+    }
+  }
+
   // Commands
   if (trimmed === "/start") {
     await sendMessage(
@@ -89,6 +134,7 @@ export async function routeMessage(
         "/saldo [kantong] — cek saldo",
         "/transaksi — 5 transaksi terbaru",
         "/laporan — ringkasan bulan ini",
+        "  (pilih \"📅 Periode Kustom\" untuk rentang tanggal bebas)",
         "",
         "Atau kirim natural language:",
         "• Beli konsumsi kerja bakti 75 ribu dari kas",
@@ -108,6 +154,7 @@ export async function routeMessage(
         "/saldo kas — saldo Kas",
         "/transaksi — 5 transaksi terbaru",
         "/laporan — pemasukan/pengeluaran bulan ini",
+        "  (tombol \"📅 Periode Kustom\" untuk rentang tanggal bebas, mis. 05/03/2026 - 20/03/2026)",
         "/unlink — putuskan hubungan",
         "",
         "Natural language juga didukung via AI parser, tapiSaldo/transaksi/laporan tidak pakai AI (hemat biaya).",
