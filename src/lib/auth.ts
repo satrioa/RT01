@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DEV_RT_ID } from "@/lib/env";
+import type { AuthProfile } from "@/types";
 import type { UserRole } from "@/types/database";
 
 /**
@@ -168,6 +169,36 @@ export async function getAuthRtId(): Promise<string | null> {
       .maybeSingle();
 
     return (profile?.rt_id as string) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Profil user yang sedang login (nama, email, role, rt) untuk halaman /akun.
+ * Mengembalikan null jika tidak ada sesi valid.
+ */
+export async function getCurrentUserProfile(): Promise<AuthProfile | null> {
+  try {
+    const user = await getUserFromCookies();
+    if (!user) return null;
+
+    const service = createServiceClient();
+    const { data: profile } = await service
+      .from("profiles")
+      .select("name, role, rt_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const row = profile as { name?: string; role?: UserRole; rt_id?: string } | null;
+
+    return {
+      id: user.id,
+      email: user.email ?? null,
+      name: row?.name ?? user.email ?? "Pengguna",
+      role: row?.role ?? "viewer",
+      rtId: row?.rt_id ?? null,
+    };
   } catch {
     return null;
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Receipt, BarChart3, Settings, Plus } from "lucide-react";
+import { Home, Receipt, BarChart3, Settings, Plus, UserRound } from "lucide-react";
 import { GlassToggleGroup, GlassToggleGroupItem } from "@/components/glass-toggle-group";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 import { cn } from "@/lib/utils";
@@ -22,12 +22,14 @@ const ADMIN_NAV: NavItem[] = [
   { value: "/transactions/new", label: "Tambah", icon: Plus, fab: true },
   { value: "/reports", label: "Laporan", icon: BarChart3 },
   { value: "/pengaturan", label: "Pengaturan", icon: Settings },
+  { value: "/akun", label: "Akun", icon: UserRound },
 ];
 
 const VIEWER_NAV: NavItem[] = [
   { value: "/", label: "Home", icon: Home },
   { value: "/transactions", label: "Transaksi", icon: Receipt },
   { value: "/reports", label: "Laporan", icon: BarChart3 },
+  { value: "/akun", label: "Akun", icon: UserRound },
 ];
 
 function getNavItems(role: UserRole): NavItem[] {
@@ -41,6 +43,7 @@ function activeValue(pathname: string): string {
   if (pathname.startsWith("/transactions") || pathname.startsWith("/transaksi")) return "/transactions";
   if (pathname.startsWith("/reports") || pathname.startsWith("/laporan")) return "/reports";
   if (pathname.startsWith("/pengaturan")) return "/pengaturan";
+  if (pathname.startsWith("/akun")) return "/akun";
   return "";
 }
 
@@ -77,7 +80,7 @@ export function BottomNav() {
               aria-label={item.label}
               variant="dark"
               className={cn(
-                "px-3.5 py-2.5 text-white/60 hover:text-white data-checked:text-white",
+                "px-3 py-2.5 text-white/60 hover:text-white data-checked:text-white",
                 item.fab &&
                   "mx-0.5 bg-white text-zinc-900 hover:text-zinc-900 data-checked:text-zinc-900 hover:bg-white"
               )}
