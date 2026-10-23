@@ -143,6 +143,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(function
   {
     blur = 2,
     refraction = 15,
+    mapSize,
     bezel = 0.34,
     saturation = 1.28,
     className,
@@ -152,6 +153,9 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(function
   },
   ref,
 ) {
+  // Accepted for API compatibility; this SVG-filter implementation doesn't use it.
+  void mapSize;
+
   const rawId = useId();
   const filterId = useMemo(() => `liquid-glass-${rawId.replace(/:/g, "")}`, [rawId]);
 

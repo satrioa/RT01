@@ -6,8 +6,24 @@ Dibangun dengan **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**
 
 ---
 
+## Screenshot
+
+<p align="center">
+  <img src="docs/screenshot-mobile.png" alt="Dashboard RT Finance di mobile" width="320" />
+</p>
+
+<details>
+<summary>Lihat versi desktop</summary>
+
+<img src="docs/screenshot-desktop.png" alt="Dashboard RT Finance di desktop" />
+
+</details>
+
+---
+
 ## Daftar Isi
 
+- [Screenshot](#screenshot)
 - [Fitur](#fitur)
 - [Prasyarat](#prasyarat)
 - [1. Setup Supabase](#1-setup-supabase)
