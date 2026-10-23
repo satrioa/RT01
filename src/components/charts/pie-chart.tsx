@@ -271,6 +271,8 @@ const PieChartCore = memo(function PieChartCore({
     if (geometryScrubbing) {
       return;
     }
+    // Reset sebelum replay animasi enter.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoaded(false);
     const timer = setTimeout(() => {
       setIsLoaded(true);

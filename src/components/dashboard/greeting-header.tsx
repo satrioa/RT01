@@ -4,7 +4,6 @@ import { greetingForHour } from "@/lib/format";
 
 export function GreetingHeader({
   rtName,
-  rtNumber,
   rwNumber,
 }: {
   rtName: string;

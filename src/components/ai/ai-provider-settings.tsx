@@ -38,16 +38,17 @@ export function AiProviderSettings({
     return base;
   }, [providerOpt.models, model]);
 
-  // when provider changes, reset model to recommended only jika model saat ini bukan custom yang sengaja
-  React.useEffect(() => {
-    const p = getProvider(provider as import("@/types/database").AiProviderId);
-    if (p && !p.models.some((m) => m.id === model)) {
-      // Jangan auto-reset jika model adalah custom (mis. dari env) — biarkan user lihat
-      if (models.some((m) => m.id === model && m.description.includes("custom"))) return;
-      const rec = p.models.find((m) => m.recommended)?.id ?? p.models[0]?.id;
-      if (rec) setModel(rec);
-    }
-  }, [provider, model, models]);
+  // when provider changes, reset model to recommended — kecuali model custom dari env/DB
+  function handleProviderChange(nextProvider: string) {
+    setProvider(nextProvider);
+    const next = getProvider(nextProvider as import("@/types/database").AiProviderId);
+    if (!next) return;
+    // Model saat ini custom (tidak ada di daftar provider lama) → biarkan apa adanya.
+    if (!providerOpt.models.some((m) => m.id === model)) return;
+    if (next.models.some((m) => m.id === model)) return;
+    const rec = next.models.find((m) => m.recommended)?.id ?? next.models[0]?.id;
+    if (rec) setModel(rec);
+  }
 
   const envOk = providerOpt.envKey ? (envStatus[providerOpt.envKey] ?? false) : true;
   const isMock = provider === "mock";
@@ -104,7 +105,7 @@ export function AiProviderSettings({
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-2">
             <Label>Provider</Label>
-            <Select value={provider} onValueChange={setProvider}>
+            <Select value={provider} onValueChange={handleProviderChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih provider" />
               </SelectTrigger>

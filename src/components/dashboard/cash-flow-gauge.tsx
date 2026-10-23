@@ -4,7 +4,6 @@ import * as React from "react";
 import { Gauge } from "@/components/charts/gauge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { formatRupiah } from "@/lib/format";
 
 type Category = "pemasukan" | "pengeluaran";
 

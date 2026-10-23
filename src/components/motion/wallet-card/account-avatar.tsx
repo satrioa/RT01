@@ -12,6 +12,7 @@ export function AccountAvatar({
   if (account.avatar) return <>{account.avatar}</>;
   return (
     // biome-ignore lint/performance/noImgElement: remote DiceBear SVG, no next/image benefit
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={diceBearGlassUrl(account.id || account.address)}
       alt={account.name}

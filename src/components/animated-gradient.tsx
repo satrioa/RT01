@@ -220,6 +220,8 @@ export default function AnimatedGradient({
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
+    // Hydration guard: render server dan client pertama harus sama.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);

@@ -1,0 +1,47 @@
+name: Bug report
+description: Laporkan bug atau perilaku yang tidak sesuai
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Terima kasih sudah melapor. Jangan sertakan kunci rahasia
+        (`SUPABASE_SERVICE_ROLE_KEY`, token bot, API key) di laporan.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Ringkasan
+      description: Apa yang terjadi?
+      placeholder: Laporan bulanan tidak muncul setelah klik "Buat Laporan".
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Langkah reproduksi
+      placeholder: |
+        1. Buka /reports
+        2. Pilih tab BOP
+        3. Klik Buat Laporan
+        4. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Perilaku yang diharapkan
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, OS, dan mode (lokal/Vercel)
+      placeholder: Chrome 130, Windows 11, lokal
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log / screenshot
+      description: Tempel error dari console atau server (hapus data sensitif)
+      render: shell

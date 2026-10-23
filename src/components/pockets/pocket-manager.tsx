@@ -47,32 +47,36 @@ function PocketForm({
 
   // keep in sync when switching between pockets without remount edge
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setColor(initial?.color ?? "#111827");
   }, [initial?.color, initial?.id]);
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGradientC1(initial?.gradient_c1 ?? null);
   }, [initial?.gradient_c1, initial?.id]);
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGradientC3(initial?.gradient_c3 ?? null);
   }, [initial?.gradient_c3, initial?.id]);
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGradientC4(initial?.gradient_c4 ?? null);
   }, [initial?.gradient_c4, initial?.id]);
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCustomGradient(!!initial?.gradient_c1 || !!initial?.gradient_c3 || !!initial?.gradient_c4);
   }, [initial?.gradient_c1, initial?.gradient_c3, initial?.gradient_c4, initial?.id]);
   React.useEffect(() => {
+    // Reset form saat dialog berpindah ke kantong lain.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGradientPreset(initial?.gradient_preset ?? null);
   }, [initial?.gradient_preset, initial?.id]);
 
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+    // Reset form saat dialog berpindah ke kantong lain.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsActive(initial ? String(initial.is_active) : "true");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial?.is_active, initial?.id]);
 
   const preview = React.useMemo(() => {

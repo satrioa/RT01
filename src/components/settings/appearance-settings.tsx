@@ -25,7 +25,7 @@ const ANIMATED_PRESET_OPTIONS: { id: AnimatedGradientPreset; label: string }[] =
 
 export function AppearanceSettings({ initial }: { initial: RtAppearanceSettings | null }) {
   const { toast } = useToast();
-  const [style, setStyle] = React.useState(initial?.style ?? "sunset");
+  const style = initial?.style ?? "sunset";
   const legacyPreset = GRADIENT_PRESETS.find((p) => p.id === (initial?.style ?? "sunset")) ?? GRADIENT_PRESETS.find((p) => p.id === "sunset")!;
   const [gradientPreset, setGradientPreset] = React.useState<AnimatedGradientPreset>(initial?.gradient_preset ?? "custom");
   const presetC4Fallback =

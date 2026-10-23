@@ -46,6 +46,8 @@ function useNumberFlowElementReady(): boolean {
       return;
     }
     if (customElements.get("number-flow-react")) {
+      // Sinkronisasi dengan custom element yang sudah terdaftar.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReady(true);
       return;
     }

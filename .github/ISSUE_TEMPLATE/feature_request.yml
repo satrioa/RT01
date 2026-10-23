@@ -1,0 +1,37 @@
+name: Feature request
+description: Usulkan fitur atau perbaikan
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Masalah yang ingin diselesaikan
+      description: Jelaskan kebutuhan atau kesulitan yang dialami.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Usulan solusi
+      description: Bagaimana fitur ini sebaiknya bekerja?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatif yang sudah dicoba
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Dashboard
+        - Transaksi
+        - Kantong
+        - Laporan
+        - Import Excel
+        - Smart Input / AI
+        - Telegram
+        - Pengaturan
+        - Lainnya

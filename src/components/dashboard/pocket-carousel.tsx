@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { formatRupiah } from "@/lib/format";
 import { motion } from "framer-motion";
 import { Wallet, Building2, Heart, Calendar, PiggyBank } from "lucide-react";

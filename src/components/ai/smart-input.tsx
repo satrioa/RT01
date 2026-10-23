@@ -36,8 +36,13 @@ export function SmartInput() {
   const { toast } = useToast();
   const router = useRouter();
   const [cats, setCats] = React.useState<{ id: string; name: string; type: string }[]>([]);
-  const [editedCatId, setEditedCatId] = React.useState<string | null>(null);
-  const [editedCatName, setEditedCatName] = React.useState<string | null>(null);
+  const [catOverride, setCatOverride] = React.useState<{ id: string | null; name: string | null } | null>(null);
+
+  // Kategori hasil AI adalah default; override hanya dipakai setelah user memilih.
+  const resultCategoryId = result?.type === "transaction" ? result.data.categoryId ?? null : null;
+  const resultCategoryName = result?.type === "transaction" ? result.data.category ?? null : null;
+  const editedCatId = catOverride ? catOverride.id : resultCategoryId;
+  const editedCatName = catOverride ? catOverride.name : resultCategoryName;
 
   // fetch kategori untuk dropdown edit
   React.useEffect(() => {
@@ -53,16 +58,6 @@ export function SmartInput() {
   }, []);
 
   // sinkron kategori AI ke state editable saat result berubah
-  React.useEffect(() => {
-    if (result?.type === "transaction") {
-      setEditedCatId(result.data.categoryId ?? null);
-      setEditedCatName(result.data.category ?? null);
-    } else {
-      setEditedCatId(null);
-      setEditedCatName(null);
-    }
-  }, [result]);
-
   // Typewriter untuk placeholder
   React.useEffect(() => {
     if (input) return; // pause saat user mengetik
@@ -82,14 +77,11 @@ export function SmartInput() {
     return () => clearTimeout(timeout);
   }, [typedPlaceholder, exampleIdx, isDeleting, input]);
 
-  React.useEffect(() => {
-    if (input) setTypedPlaceholder("");
-  }, [input]);
-
   async function handleSubmit() {
     if (!input.trim() || parsing) return;
     setParsing(true);
     setResult(null);
+    setCatOverride(null);
     const res = await parseSmartInputAction(input.trim());
     setParsing(false);
     setResult(res);
@@ -164,7 +156,16 @@ export function SmartInput() {
         duration={3.1}
         staticColors
       >
-        <PromptInput value={input} onValueChange={setInput} isLoading={parsing} onSubmit={handleSubmit} className="bg-card">
+        <PromptInput
+          value={input}
+          onValueChange={(v) => {
+            setInput(v);
+            if (v) setTypedPlaceholder("");
+          }}
+          isLoading={parsing}
+          onSubmit={handleSubmit}
+          className="bg-card"
+        >
           <div className="flex items-center gap-1.5 px-1 pb-1">
             <Sparkles className="size-3.5 text-primary/60" />
             <span className="text-xs font-medium text-muted-foreground">Smart Input</span>
@@ -276,13 +277,11 @@ export function SmartInput() {
                           value={editedCatId ?? undefined}
                           onValueChange={(v) => {
                             if (v === "__clear__") {
-                              setEditedCatId(null);
-                              setEditedCatName(null);
+                              setCatOverride(null);
                               return;
                             }
                             const c = cats.find((x) => x.id === v);
-                            setEditedCatId(v);
-                            setEditedCatName(c?.name ?? null);
+                            setCatOverride({ id: v, name: c?.name ?? null });
                           }}
                         >
                           <SelectTrigger className="mt-1 h-8 rounded-lg bg-card text-sm">

@@ -38,6 +38,8 @@ export function AccountSwitcher({
 
   useEffect(() => {
     if (!open) {
+      // Reset hover saat panel ditutup.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setArmed(false);
       return;
     }

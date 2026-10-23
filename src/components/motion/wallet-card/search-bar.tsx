@@ -50,6 +50,8 @@ export function SearchBar({
 
   useEffect(() => {
     if (!open) {
+      // Reset hover saat dropdown ditutup.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setArmed(false);
       return;
     }

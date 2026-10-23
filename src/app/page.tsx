@@ -19,9 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function Page() {
   const [data, appearance, role] = await Promise.all([getHomeData(), getAppearanceSettings().catch(() => null), getCurrentUserRole()]);
 
-  // Fetch income/expense for current month directly from DB
-  let totalIncome = 0;
-  let totalExpense = 0;
+  // Fetch expense categories for current day/month/year directly from DB
   const now = new Date();
   const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -64,15 +62,11 @@ export default async function Page() {
   if (hasSupabaseEnv()) {
     const supabase = createServiceClient();
     const chartStart = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString();
-    const [incRes, expRes, expCatTodayRes, expCatMonthRes, expCatYearRes] = await Promise.all([
-      supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "income").gte("transaction_date", startMonth),
-      supabase.from("transactions").select("amount").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", startMonth),
+    const [expCatTodayRes, expCatMonthRes, expCatYearRes] = await Promise.all([
       supabase.from("transactions").select("amount, category:categories(name)").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", startToday).limit(2000),
       supabase.from("transactions").select("amount, category:categories(name)").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", startMonth).limit(2000),
       supabase.from("transactions").select("amount, category:categories(name)").eq("rt_id", DEV_RT_ID).eq("type", "expense").gte("transaction_date", startYear).limit(2000),
     ]);
-    totalIncome = (incRes.data ?? []).reduce((s: number, r: { amount: string }) => s + Number(r.amount), 0);
-    totalExpense = (expRes.data ?? []).reduce((s: number, r: { amount: string }) => s + Number(r.amount), 0);
     expenseByCategoryToday = mapByCat(expCatTodayRes.data as unknown);
     expenseByCategoryMonth = mapByCat(expCatMonthRes.data as unknown);
     expenseByCategoryYear = mapByCat(expCatYearRes.data as unknown);

@@ -56,24 +56,12 @@ const AnimatedGroupItem = ({
 
 export function TransactionGroupedList({ txs }: { txs: TxWithMeta[] }) {
   const groups = React.useMemo(() => groupByMonth(txs), [txs]);
-  const [open, setOpen] = React.useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {};
-    groups.forEach((g, idx) => {
-      init[g.key] = idx === 0; // most recent open, others collapsed
-    });
-    return init;
-  });
+  // Explicit overrides only: the first group defaults to open without syncing
+  // state in an effect, so filter changes still reopen the newest month.
+  const [open, setOpen] = React.useState<Record<string, boolean>>({});
 
-  // sync when txs change (filter change) -> reopen first group
-  React.useEffect(() => {
-    const init: Record<string, boolean> = {};
-    groups.forEach((g, idx) => {
-      init[g.key] = idx === 0;
-    });
-    setOpen(init);
-  }, [groups]);
-
-  const toggle = (key: string) => setOpen((s) => ({ ...s, [key]: !s[key] }));
+  const toggle = (key: string, currentlyOpen: boolean) =>
+    setOpen((s) => ({ ...s, [key]: !currentlyOpen }));
 
   if (groups.length === 0) return null;
 
@@ -86,8 +74,8 @@ export function TransactionGroupedList({ txs }: { txs: TxWithMeta[] }) {
       </p>
 
       <div className="space-y-3">
-        {groups.map((g) => {
-          const isOpen = open[g.key] ?? false;
+        {groups.map((g, idx) => {
+          const isOpen = open[g.key] ?? idx === 0;
           const income = g.items.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
           const expense = g.items.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
           const net = income - expense;
@@ -96,7 +84,7 @@ export function TransactionGroupedList({ txs }: { txs: TxWithMeta[] }) {
             <div key={g.key} className="overflow-hidden rounded-[16px] border bg-card">
               <button
                 type="button"
-                onClick={() => toggle(g.key)}
+                onClick={() => toggle(g.key, isOpen)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-accent/40"
               >
                 <div className="min-w-0 flex-1">

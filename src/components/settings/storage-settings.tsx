@@ -43,8 +43,21 @@ export function StorageSettings() {
   }, []);
 
   React.useEffect(() => {
-    void loadStats();
-  }, [loadStats]);
+    let cancelled = false;
+    getStorageStatsAction()
+      .then((next) => {
+        if (!cancelled) setStats(next);
+      })
+      .catch(() => {
+        // biarkan kosong; tombol refresh tetap tersedia
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingStats(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleBackup() {
     setExporting(true);

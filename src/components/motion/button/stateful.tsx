@@ -100,6 +100,8 @@ function TextSlot({
   // Measure strings with the same per-letter layout as the cascade. Measuring
   // the whole string preserves kerning, which can make it narrower than the
   // inline-block letters and clip the final glyph during the width animation.
+  // Measure on every render: font loading and label changes both affect width.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     const nextWidth = measureRef.current?.offsetWidth;
     if (!nextWidth) return;
