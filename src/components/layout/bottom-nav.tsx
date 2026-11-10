@@ -14,6 +14,7 @@ type NavItem = {
   icon: typeof Home;
   fab?: boolean;
   adminOnly?: boolean;
+  profile?: boolean;
 };
 
 const ADMIN_NAV: NavItem[] = [
@@ -22,14 +23,14 @@ const ADMIN_NAV: NavItem[] = [
   { value: "/transactions/new", label: "Tambah", icon: Plus, fab: true },
   { value: "/reports", label: "Laporan", icon: BarChart3 },
   { value: "/pengaturan", label: "Pengaturan", icon: Settings },
-  { value: "/akun", label: "Akun", icon: UserRound },
+  { value: "/akun", label: "Akun", icon: UserRound, profile: true },
 ];
 
 const VIEWER_NAV: NavItem[] = [
   { value: "/", label: "Home", icon: Home },
   { value: "/transactions", label: "Transaksi", icon: Receipt },
   { value: "/reports", label: "Laporan", icon: BarChart3 },
-  { value: "/akun", label: "Akun", icon: UserRound },
+  { value: "/akun", label: "Akun", icon: UserRound, profile: true },
 ];
 
 function getNavItems(role: UserRole): NavItem[] {
@@ -80,12 +81,15 @@ export function BottomNav() {
               aria-label={item.label}
               variant="dark"
               className={cn(
-                "px-3 py-2.5 text-white/60 hover:text-white data-checked:text-white",
+                "flex-col gap-0.5 px-2.5 py-2 text-white/60 hover:text-white data-checked:text-white",
                 item.fab &&
                   "mx-0.5 bg-white text-zinc-900 hover:text-zinc-900 data-checked:text-zinc-900 hover:bg-white"
               )}
             >
               <item.icon className="size-5 text-current" strokeWidth={active === item.value ? 2.2 : 1.8} />
+              {!item.profile && (
+                <span className="text-[10px] font-medium leading-none">{item.label}</span>
+              )}
             </GlassToggleGroupItem>
           ))}
         </GlassToggleGroup>
@@ -95,5 +99,5 @@ export function BottomNav() {
 }
 
 export function BottomNavSpacer() {
-  return <div aria-hidden className="h-[88px] shrink-0" />;
+  return <div aria-hidden className="h-[100px] shrink-0" />;
 }
